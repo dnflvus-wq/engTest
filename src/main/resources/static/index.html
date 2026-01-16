@@ -19,11 +19,22 @@
     <div class="app-layout">
         <!-- Sidebar -->
         <nav class="sidebar hidden" id="mainSidebar">
-            <div class="logo-area" onclick="backToDashboard()">
-                <div class="logo-icon">
-                    <i class="fa-solid fa-layer-group"></i>
+            <div class="sidebar-header">
+                <div class="logo-area" onclick="backToDashboard()">
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <span class="logo-text">EstellExam</span>
                 </div>
-                <span class="logo-text">EstellExam</span>
+                <!-- 사이드바 헤더 우측: 다크모드 + 로그아웃 -->
+                <div class="sidebar-header-actions">
+                    <div class="theme-toggle-header" onclick="toggleTheme()" title="Toggle Dark Mode">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </div>
+                    <div class="logout-icon" id="logoutIcon" onclick="logout()" title="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </div>
+                </div>
             </div>
 
             <ul class="nav-links">
@@ -36,28 +47,28 @@
                     <span>Admin</span>
                 </li>
             </ul>
-
-
-            <div class="nav-item logout-btn" onclick="logout()">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Logout</span>
-            </div>
         </nav>
 
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Header -->
             <header class="top-header">
-                <div class="header-title">
-                    <h1 id="headerTitle">Welcome</h1>
+                <div class="header-title" id="headerTitleArea">
+                    <!-- 로고 (기본 표시) -->
+                    <div class="header-logo" id="headerLogo" onclick="backToDashboard()">
+                        <div class="logo-icon-sm">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <span class="logo-text-sm">EstellExam</span>
+                    </div>
+                    <!-- Close 버튼 (섹션 진입 시 표시) -->
+                    <button class="clay-btn btn-secondary btn-small hidden" id="headerCloseBtn"
+                        onclick="showSection('menuSection')">
+                        <i class="fa-solid fa-arrow-left"></i> Close
+                    </button>
                 </div>
 
                 <div class="header-right" style="display:flex; align-items:center; gap:20px;">
-                    <!-- Theme Toggle (Always Visible) -->
-                    <div class="theme-toggle-header" onclick="toggleTheme()" title="Toggle Dark Mode">
-                        <i id="themeIcon" class="fa-solid fa-moon"></i>
-                    </div>
-
                     <div class="user-profile hidden" id="userProfileArea">
                         <div class="avatar-circle">
                             <i class="fa-solid fa-user"></i>
@@ -136,10 +147,16 @@
                     </div>
                 </div>
 
-                <!-- Round Selection (Appears below widgets) -->
-                <div id="roundListContainer" class="hidden mt-large">
-                    <h3 class="section-heading">Available Exams <span class="badge" id="examCount">0</span></h3>
-                    <div id="roundList" class="card-grid">
+            </section>
+
+            <!-- EXAM LIST SECTION (분리됨) -->
+            <section id="examListSection" class="hidden-section">
+                <div class="clay-card">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-file-pen"></i> Available Exams <span class="badge"
+                                id="examCount">0</span></h2>
+                    </div>
+                    <div id="roundList" class="card-grid mt-medium">
                         <!-- Round items injected here -->
                     </div>
                 </div>
@@ -272,10 +289,8 @@
             <!-- 7. STATS SECTION -->
             <section id="statsSection" class="hidden-section">
                 <div class="clay-card">
-                    <div class="card-header">
+                    <div class="section-header">
                         <h2><i class="fa-solid fa-chart-pie"></i> Analytics Dashboard</h2>
-                        <button class="clay-btn btn-secondary btn-small"
-                            onclick="showSection('menuSection')">Close</button>
                     </div>
 
                     <!-- Overall Stats -->
@@ -324,10 +339,8 @@
             <!-- 8. HISTORY SECTION -->
             <section id="historySection" class="hidden-section">
                 <div class="clay-card">
-                    <div class="card-header">
+                    <div class="section-header">
                         <h2><i class="fa-solid fa-clock-rotate-left"></i> My Exam History</h2>
-                        <button class="clay-btn btn-secondary btn-small"
-                            onclick="showSection('menuSection')">Close</button>
                     </div>
                     <div id="historyList" class="mt-medium">
                         <!-- History items injected here -->

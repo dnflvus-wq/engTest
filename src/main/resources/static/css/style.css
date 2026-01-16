@@ -137,12 +137,26 @@ body {
     z-index: 10;
 }
 
+/* Sidebar Header: Logo + Actions */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding: 0 5px;
+}
+
+.sidebar-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .logo-area {
     display: flex;
     align-items: center;
     gap: 15px;
-    margin-bottom: 50px;
-    padding: 0 10px;
+    padding: 0;
 }
 
 .logo-icon {
@@ -704,17 +718,25 @@ body {
         height: auto;
         flex-direction: row;
         align-items: center;
-        padding: 10px 20px;
+        justify-content: space-between;
+        padding: 10px 15px;
+    }
+
+    .sidebar-header {
+        margin-bottom: 0;
+        flex: 1;
     }
 
     .logo-area {
         margin-bottom: 0;
     }
 
+    .logo-text {
+        display: none;
+    }
+
     .nav-links {
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
+        display: none;
     }
 
     .nav-item span {
@@ -1563,4 +1585,115 @@ body {
     color: var(--text-muted);
     padding: 40px;
     font-size: 1.1rem;
+}
+
+/* ========================================
+   HEADER LOGO & CLOSE BUTTON
+   ======================================== */
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.header-logo:hover {
+    transform: scale(1.02);
+}
+
+.header-logo:active {
+    transform: scale(0.98);
+}
+
+.logo-icon-sm {
+    width: 38px;
+    height: 38px;
+    background: var(--clay-surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1rem;
+    box-shadow: var(--clay-shadow-out-sm);
+}
+
+.logo-text-sm {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--text-main);
+}
+
+/* Logout Icon in Header */
+.logout-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--clay-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    box-shadow: var(--clay-shadow-out-sm);
+    transition: all 0.3s ease;
+}
+
+.logout-icon:hover {
+    color: var(--danger);
+    transform: scale(1.1);
+}
+
+.logout-icon:active {
+    box-shadow: var(--clay-shadow-in);
+}
+
+/* Section Header (for Analytics, History, ExamList) */
+.section-header {
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-header h2 i {
+    color: var(--primary);
+}
+
+/* Badge style for exam count */
+.section-header .badge {
+    background: var(--primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+/* Responsive adjustments for header */
+@media (max-width: 768px) {
+    .logo-text-sm {
+        display: none;
+    }
+
+    .header-logo {
+        gap: 0;
+    }
+
+    .logout-icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    #headerCloseBtn {
+        padding: 10px 15px;
+        font-size: 0.85rem;
+    }
 }

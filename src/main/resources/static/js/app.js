@@ -109,6 +109,19 @@ function showSection(sectionId) {
         target.classList.remove('hidden-section');
         target.classList.add('active-section');
     }
+
+    // 헤더 상태 관리: Close 버튼과 로고 토글
+    const closeBtn = document.getElementById('headerCloseBtn');
+    const logo = document.getElementById('headerLogo');
+    const sectionsWithCloseBtn = ['statsSection', 'historySection', 'examListSection'];
+
+    if (sectionsWithCloseBtn.includes(sectionId)) {
+        closeBtn.classList.remove('hidden');
+        logo.classList.add('hidden');
+    } else {
+        closeBtn.classList.add('hidden');
+        logo.classList.remove('hidden');
+    }
 }
 
 // Theme Management
@@ -183,7 +196,6 @@ async function login() {
 }
 
 function logout() {
-    currentUser = null;
     currentUser = null;
     document.getElementById('userProfileArea').classList.add('hidden');
     document.getElementById('mainSidebar').classList.add('hidden'); // Hide Sidebar
@@ -312,15 +324,10 @@ async function viewExamResult(examId) {
     }
 }
 
-// Dashboard: Load Rounds
+// Dashboard: Load Rounds (이제 별도 섹션으로 전환)
 async function loadRounds() {
-    const container = document.getElementById('roundListContainer');
+    showSection('examListSection');
     const list = document.getElementById('roundList');
-
-    if (!container.classList.contains('hidden')) {
-        container.classList.add('hidden'); // Toggle off
-        return;
-    }
 
     try {
         showLoading();
@@ -328,7 +335,7 @@ async function loadRounds() {
         document.getElementById('examCount').textContent = rounds.length;
 
         if (rounds.length === 0) {
-            list.innerHTML = '<p class="text-muted">No active exams found.</p>';
+            list.innerHTML = '<p class="text-muted" style="text-align:center; padding:40px;">No active exams found.</p>';
         } else {
             list.innerHTML = rounds.map(r => `
                 <div class="clay-card round-item-card" onclick="selectRound(${r.id}, '${r.title.replace(/'/g, "\\'")}', ${r.questionCount})">
@@ -342,7 +349,6 @@ async function loadRounds() {
                 </div>
             `).join('');
         }
-        container.classList.remove('hidden');
     } catch (e) {
         showAlert('Failed to load rounds: ' + e.message);
     } finally {
