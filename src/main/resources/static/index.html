@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>estellExam System</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Style -->
+    <link rel="stylesheet" href="/css/style.css?v=3">
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar hidden" id="mainSidebar">
+            <div class="logo-area" onclick="backToDashboard()">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <span class="logo-text">EstellExam</span>
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item active" onclick="showSection('menuSection')">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" onclick="window.location.href='/admin.html'">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Admin</span>
+                </li>
+            </ul>
+
+
+            <div class="nav-item logout-btn" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="headerTitle">Welcome</h1>
+                </div>
+
+                <div class="header-right" style="display:flex; align-items:center; gap:20px;">
+                    <!-- Theme Toggle (Always Visible) -->
+                    <div class="theme-toggle-header" onclick="toggleTheme()" title="Toggle Dark Mode">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </div>
+
+                    <div class="user-profile hidden" id="userProfileArea">
+                        <div class="avatar-circle">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <span id="headerUserName">Guest</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 1. LOGIN SECTION -->
+            <section id="loginSection" class="active-section">
+                <div class="center-container">
+                    <div class="clay-card login-card">
+                        <div class="login-icon">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <h2>Let's Start Learning!</h2>
+                        <p class="subtitle">Please select your profile</p>
+
+                        <div class="login-input-group">
+                            <div class="custom-select-wrapper" id="userSelectWrapper">
+                                <div class="custom-select-trigger" onclick="toggleUserDropdown()">
+                                    <span id="selectedUserText">Select Profile</span>
+                                    <i class="fa-solid fa-chevron-down arrow"></i>
+                                </div>
+                                <div class="custom-options hidden" id="customOptions">
+                                    <!-- Options injected via JS -->
+                                </div>
+                                <input type="hidden" id="userSelectValue">
+                            </div>
+                            <button onclick="login()" class="clay-btn btn-primary btn-block">
+                                Login <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. DASHBOARD (MENU) SECTION -->
+            <section id="menuSection" class="hidden-section">
+                <div class="dashboard-grid">
+                    <!-- Exam Widget -->
+                    <div class="clay-card widget" onclick="loadRounds()">
+                        <div class="widget-icon color-purple">
+                            <i class="fa-solid fa-file-pen"></i>
+                        </div>
+                        <div class="widget-info">
+                            <h3>Take Exam</h3>
+                            <p>Start a new test</p>
+                        </div>
+                        <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                    </div>
+
+                    <!-- Stats Widget -->
+                    <div class="clay-card widget" onclick="showStats()">
+                        <div class="widget-icon color-mint">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div class="widget-info">
+                            <h3>Analytics</h3>
+                            <p>Check your progress</p>
+                        </div>
+                        <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                    </div>
+
+                    <!-- History Widget -->
+                    <div class="clay-card widget" onclick="showHistory()">
+                        <div class="widget-icon color-pink">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div class="widget-info">
+                            <h3>History</h3>
+                            <p>Past results</p>
+                        </div>
+                        <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                    </div>
+                </div>
+
+                <!-- Round Selection (Appears below widgets) -->
+                <div id="roundListContainer" class="hidden mt-large">
+                    <h3 class="section-heading">Available Exams <span class="badge" id="examCount">0</span></h3>
+                    <div id="roundList" class="card-grid">
+                        <!-- Round items injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. MODE SELECTION SECTION -->
+            <section id="modeSection" class="hidden-section center-container">
+                <div class="mode-selection-container">
+                    <h2 class="mb-medium">Choose Exam Mode</h2>
+                    <div class="mode-cards">
+                        <div class="clay-card mode-card" onclick="selectMode('ONLINE')">
+                            <div class="mode-icon"><i class="fa-solid fa-laptop-code"></i></div>
+                            <h3>Online</h3>
+                            <p>Direct CBT Test</p>
+                        </div>
+                        <div class="clay-card mode-card" onclick="selectMode('OFFLINE')">
+                            <div class="mode-icon"><i class="fa-solid fa-file-signature"></i></div>
+                            <h3>Offline</h3>
+                            <p>Paper & Upload</p>
+                        </div>
+                    </div>
+                    <button class="clay-btn btn-text mt-medium" onclick="showSection('menuSection')">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+                    </button>
+                </div>
+            </section>
+
+            <!-- 4. ONLINE EXAM SECTION -->
+            <section id="examSection" class="hidden-section">
+                <div class="exam-layout">
+                    <!-- Progress Sidebar -->
+                    <div class="exam-sidebar">
+                        <div class="clay-card timer-card">
+                            <span class="label">Time Remaining</span>
+                            <div class="timer-display">
+                                <i class="fa-regular fa-clock"></i> <span id="examTimer">00:00</span>
+                            </div>
+                        </div>
+                        <div class="clay-card progress-card">
+                            <span class="label">Progress</span>
+                            <div class="progress-text"><span id="examProgress">1 / 10</span></div>
+                            <div class="progress-bar-bg">
+                                <div id="progressBarFill" class="progress-bar-fill" style="width: 10%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Area -->
+                    <div class="exam-main">
+                        <div class="clay-card question-card">
+                            <div class="question-header">
+                                <span class="q-badge">Question</span>
+                            </div>
+                            <div id="questionArea" class="question-body">
+                                <!-- Question Content -->
+                            </div>
+
+                            <div class="exam-footer">
+                                <button id="prevBtn" class="clay-btn btn-secondary"
+                                    onclick="prevQuestion()">Previous</button>
+                                <button id="nextBtn" class="clay-btn btn-primary" onclick="nextQuestion()">Next</button>
+                                <button id="submitBtn" class="clay-btn btn-danger hidden" onclick="submitExam()">Finish
+                                    Exam</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. OFFLINE EXAM SECTION -->
+            <section id="offlineExamSection" class="hidden-section">
+                <div class="clay-card" style="max-width: 800px; margin: 0 auto;">
+                    <div class="card-header">
+                        <h2>Offline Exam Sheet</h2>
+                        <button class="clay-btn btn-small btn-secondary"
+                            onclick="showSection('modeSection')">Close</button>
+                    </div>
+                    <div id="allQuestionsArea" class="all-questions-list"></div>
+
+                    <div class="upload-zone mt-large">
+                        <h3><i class="fa-solid fa-upload"></i> Submit Answer Sheet</h3>
+                        <p>Please upload a clear photo of your answer sheet.</p>
+                        <label class="file-upload-box hidden">
+                            <!-- Original area hidden, replacing with Custom Input -->
+                        </label>
+
+                        <div class="file-input-wrapper mb-medium">
+                            <input type="file" id="answerSheetInput" accept="image/*" multiple class="hidden-file-input"
+                                onchange="updateFileName(this, 'offlineFileDisplay')">
+                            <label for="answerSheetInput" class="clay-btn btn-secondary file-btn">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> <span id="offlineFileDisplay">Select Answer
+                                    Sheet Photos...</span>
+                            </label>
+                        </div>
+
+                        <div id="filePreviewArea" class="mt-medium"></div>
+                        <button onclick="submitOfflineExam()" class="clay-btn btn-primary btn-block mt-medium">Submit
+                            Answers</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. RESULT SECTION -->
+            <section id="resultSection" class="hidden-section center-container">
+                <div class="clay-card result-card">
+                    <div class="confetti-icon">🎉</div>
+                    <h2>Exam Completed!</h2>
+                    <div class="score-display-large" id="scoreDisplay">0</div>
+                    <p class="score-subtitle" id="scoreDetail">0 / 0 Correct</p>
+
+                    <!-- Ranking Display -->
+                    <div id="myRankingBox" class="my-ranking-box hidden">
+                        <span class="my-ranking-label">Your Rank:</span>
+                        <span class="my-ranking-value" id="myRankingValue">#1</span>
+                        <span class="my-ranking-total" id="myRankingTotal">of 10</span>
+                    </div>
+
+                    <div class="result-btn-group">
+                        <button onclick="toggleRanking()" class="clay-btn btn-secondary"><i
+                                class="fa-solid fa-trophy"></i> View Ranking</button>
+                        <button onclick="toggleWrongAnswers()" class="clay-btn btn-secondary">Review Answers</button>
+                        <button onclick="backToDashboard()" class="clay-btn btn-primary">Back Home</button>
+                    </div>
+
+                    <div id="roundRankingList" class="round-ranking-list hidden"></div>
+                    <div id="wrongAnswersList" class="wrong-answers-box hidden"></div>
+                </div>
+            </section>
+
+            <!-- 7. STATS SECTION -->
+            <section id="statsSection" class="hidden-section">
+                <div class="clay-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-chart-pie"></i> Analytics Dashboard</h2>
+                        <button class="clay-btn btn-secondary btn-small"
+                            onclick="showSection('menuSection')">Close</button>
+                    </div>
+
+                    <!-- Overall Stats -->
+                    <div class="stats-overview mt-medium">
+                        <div class="stat-card">
+                            <div class="stat-icon color-purple"><i class="fa-solid fa-users"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statTotalUsers">0</span>
+                                <span class="stat-label">Total Users</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon color-mint"><i class="fa-solid fa-file-lines"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statTotalRounds">0</span>
+                                <span class="stat-label">Total Exams</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon color-pink"><i class="fa-solid fa-star"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statAvgScore">0</span>
+                                <span class="stat-label">Avg Score</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Ranking -->
+                    <div class="mt-large">
+                        <h3 class="section-heading"><i class="fa-solid fa-trophy"></i> User Ranking</h3>
+                        <div id="userRankingList" class="ranking-list">
+                            <!-- Ranking items injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Round Stats -->
+                    <div class="mt-large">
+                        <h3 class="section-heading"><i class="fa-solid fa-chart-bar"></i> Exam Statistics</h3>
+                        <div id="roundStatsList" class="card-grid">
+                            <!-- Round stats injected here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. HISTORY SECTION -->
+            <section id="historySection" class="hidden-section">
+                <div class="clay-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> My Exam History</h2>
+                        <button class="clay-btn btn-secondary btn-small"
+                            onclick="showSection('menuSection')">Close</button>
+                    </div>
+                    <div id="historyList" class="mt-medium">
+                        <!-- History items injected here -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading-overlay hidden">
+        <div class="clay-spinner"></div>
+        <div class="loading-text">Processing...</div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="clayModal" class="modal-overlay hidden">
+        <div class="clay-card modal-box">
+            <h3 id="modalTitle" class="modal-title">Notice</h3>
+            <p id="modalMessage" class="modal-message"></p>
+            <div class="modal-footer">
+                <button class="clay-btn btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirmModal" class="modal-overlay hidden">
+        <div class="clay-card modal-box">
+            <h3 class="modal-title"><i class="fa-solid fa-circle-question" style="color: var(--primary)"></i> Confirm
+            </h3>
+            <p id="confirmMessage" class="modal-message">Submit your exam?</p>
+            <div class="modal-footer" style="display: flex; gap: 15px; justify-content: center;">
+                <button class="clay-btn btn-secondary" onclick="handleConfirm(false)">Cancel</button>
+                <button class="clay-btn btn-primary" onclick="handleConfirm(true)">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+
+</html>

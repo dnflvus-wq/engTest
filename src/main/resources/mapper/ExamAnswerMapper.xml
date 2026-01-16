@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.ExamAnswerMapper">
+
+    <resultMap id="examAnswerResultMap" type="com.example.engTest.dto.ExamAnswer">
+        <id property="id" column="id"/>
+        <result property="examId" column="exam_id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="userAnswer" column="user_answer"/>
+        <result property="isCorrect" column="is_correct"/>
+        <result property="ocrRawText" column="ocr_raw_text"/>
+        <result property="imagePath" column="image_path"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="questionText" column="question_text"/>
+        <result property="correctAnswer" column="correct_answer"/>
+    </resultMap>
+
+    <select id="findByExamId" resultMap="examAnswerResultMap">
+        SELECT ea.*, q.question_text, q.answer as correct_answer
+        FROM exam_answers ea
+        LEFT JOIN questions q ON ea.question_id = q.id
+        WHERE ea.exam_id = #{examId}
+        ORDER BY q.seq_no
+    </select>
+
+    <select id="findById" resultMap="examAnswerResultMap">
+        SELECT ea.*, q.question_text, q.answer as correct_answer
+        FROM exam_answers ea
+        LEFT JOIN questions q ON ea.question_id = q.id
+        WHERE ea.id = #{id}
+    </select>
+
+    <select id="findByExamAndQuestion" resultMap="examAnswerResultMap">
+        SELECT ea.*, q.question_text, q.answer as correct_answer
+        FROM exam_answers ea
+        LEFT JOIN questions q ON ea.question_id = q.id
+        WHERE ea.exam_id = #{examId} AND ea.question_id = #{questionId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exam_answers (exam_id, question_id, user_answer, is_correct, ocr_raw_text, image_path)
+        VALUES (#{examId}, #{questionId}, #{userAnswer}, #{isCorrect}, #{ocrRawText}, #{imagePath})
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO exam_answers (exam_id, question_id, user_answer, is_correct, ocr_raw_text, image_path)
+        VALUES
+        <foreach collection="list" item="a" separator=",">
+            (#{a.examId}, #{a.questionId}, #{a.userAnswer}, #{a.isCorrect}, #{a.ocrRawText}, #{a.imagePath})
+        </foreach>
+    </insert>
+
+    <update id="update">
+        UPDATE exam_answers SET
+            user_answer = #{userAnswer},
+            is_correct = #{isCorrect},
+            ocr_raw_text = #{ocrRawText},
+            image_path = #{imagePath}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateAnswer">
+        UPDATE exam_answers SET
+            user_answer = #{userAnswer},
+            is_correct = #{isCorrect},
+            ocr_raw_text = #{ocrRawText}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM exam_answers WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByExamId">
+        DELETE FROM exam_answers WHERE exam_id = #{examId}
+    </delete>
+
+    <select id="countCorrectByExamId" resultType="int">
+        SELECT COUNT(*) FROM exam_answers WHERE exam_id = #{examId} AND is_correct = TRUE
+    </select>
+
+    <select id="findWrongAnswersByExamId" resultMap="examAnswerResultMap">
+        SELECT ea.*, q.question_text, q.answer as correct_answer
+        FROM exam_answers ea
+        LEFT JOIN questions q ON ea.question_id = q.id
+        WHERE ea.exam_id = #{examId} AND ea.is_correct = FALSE
+        ORDER BY q.seq_no
+    </select>
+
+</mapper>

@@ -1,0 +1,523 @@
+package com.example.engTest.service;
+
+import com.example.engTest.config.ApiConfig;
+import com.example.engTest.dto.Question;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class GeminiService {
+
+    private final ApiConfig apiConfig;
+    private final ObjectMapper objectMapper;
+    private final WebClient.Builder webClientBuilder;
+
+    private static final String UPLOAD_DIR = "uploads/";
+
+    /**
+     * AI를 사용하여 영어 문제 자동 생성
+     */
+    public List<Question> generateQuestions(Long roundId, String prompt, int count, String difficulty,
+            String questionType) {
+        try {
+            String response = callGemini(prompt);
+            return parseQuestions(response, roundId, questionType);
+        } catch (Exception e) {
+            log.error("Failed to generate questions from Gemini", e);
+            throw new RuntimeException("문제 생성에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 이미지 기반 채점 (Vision API로 손글씨 인식 + 정답 비교)
+     */
+    /**
+     * 이미지 기반 채점 (Vision API로 손글씨 인식 + 정답 비교)
+     */
+    public GradeResult gradeImageAnswer(MultipartFile image, String promptTemplate, String correctAnswer)
+            throws IOException {
+        // 이미지 저장
+        String imagePath = saveImage(image);
+
+        // 이미지를 Base64로 인코딩
+        String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
+        String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
+
+        // Gemini Vision으로 이미지 분석 및 채점
+        String prompt = String.format(promptTemplate, correctAnswer);
+
+        try {
+            String response = callGeminiWithImage(prompt, base64Image, mimeType);
+            return parseGradeResult(response, correctAnswer, imagePath);
+        } catch (Exception e) {
+            log.error("Failed to grade image answer", e);
+            throw new RuntimeException("이미지 채점에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 텍스트 기반 채점 (유사도 비교)
+     */
+    public GradeResult gradeTextAnswer(String userAnswer, String correctAnswer) {
+        if (userAnswer == null || correctAnswer == null) {
+            return new GradeResult(userAnswer, false, "답안 또는 정답이 없습니다.", null);
+        }
+
+        // 정규화: 소문자로 변환, 불필요한 공백 제거, 특수문자 제거
+        String normalized1 = normalizeText(userAnswer);
+        String normalized2 = normalizeText(correctAnswer);
+
+        // 완전 일치 확인
+        if (normalized1.equals(normalized2)) {
+            return new GradeResult(userAnswer, true, "정답입니다!", null);
+        }
+
+        // 유사도 검사 (Levenshtein distance 기반)
+        double similarity = calculateSimilarity(normalized1, normalized2);
+        boolean isCorrect = similarity >= 0.8; // 80% 이상 유사하면 정답 처리
+
+        String feedback = isCorrect
+                ? "정답입니다! (유사도: " + Math.round(similarity * 100) + "%)"
+                : "오답입니다. 정답은 '" + correctAnswer + "'입니다.";
+
+        return new GradeResult(userAnswer, isCorrect, feedback, null);
+    }
+
+    /**
+     * 이미지 파일 저장
+     */
+    public String saveImage(MultipartFile file) throws IOException {
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : ".jpg";
+
+        String filename = UUID.randomUUID() + extension;
+        Path filePath = uploadPath.resolve(filename);
+
+        Files.copy(file.getInputStream(), filePath);
+
+        return filePath.toString();
+    }
+
+    /**
+     * 이미지들에서 영어 단어/문장 추출
+     */
+    public List<String> extractWordsFromImages(List<MultipartFile> images, String customPrompt) throws IOException {
+        List<String> allWords = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+
+        for (MultipartFile image : images) {
+            String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
+            String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
+
+            // 프론트엔드에서 전달받은 프롬프트 사용
+            String prompt = customPrompt;
+
+            try {
+                String response = callGeminiWithImage(prompt, base64Image, mimeType);
+                List<String> words = parseExtractedWords(response);
+                allWords.addAll(words);
+            } catch (Exception e) {
+                log.error("Failed to extract words from image: {}", image.getOriginalFilename(), e);
+                errors.add(image.getOriginalFilename() + ": " + e.getMessage());
+            }
+        }
+
+        // 모든 이미지가 실패하면 에러 던지기
+        if (allWords.isEmpty() && !errors.isEmpty()) {
+            throw new RuntimeException("이미지에서 단어를 추출할 수 없습니다: " + String.join(", ", errors));
+        }
+
+        return allWords;
+    }
+
+    /**
+     * 추출된 단어로 문제 생성 (난이도별)
+     */
+    public List<Question> generateQuestionsFromWords(String prompt, Long roundId, String difficulty) {
+        try {
+            String response = callGemini(prompt);
+            return parseQuestionsWithType(response, roundId, difficulty);
+        } catch (Exception e) {
+            log.error("Failed to generate questions from words", e);
+            throw new RuntimeException("문제 생성에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 오프라인 답안지 이미지 채점
+     */
+    public List<OfflineGradeResult> gradeOfflineAnswerSheet(MultipartFile answerSheet, String promptTemplate,
+            List<Question> questions)
+            throws IOException {
+        String base64Image = Base64.getEncoder().encodeToString(answerSheet.getBytes());
+        String mimeType = answerSheet.getContentType() != null ? answerSheet.getContentType() : "image/jpeg";
+
+        StringBuilder questionInfo = new StringBuilder();
+        for (int i = 0; i < questions.size(); i++) {
+            Question q = questions.get(i);
+            questionInfo.append(String.format("%d번: 정답=%s\n", i + 1, q.getAnswer()));
+        }
+
+        // 프론트엔드에서 받은 템플릿에 문제 정보 주입
+        String prompt = String.format(promptTemplate, questionInfo);
+
+        try {
+            String response = callGeminiWithImage(prompt, base64Image, mimeType);
+            return parseOfflineGradeResults(response);
+        } catch (Exception e) {
+            log.error("Failed to grade offline answer sheet", e);
+            throw new RuntimeException("답안지 채점에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    // ========== Private Methods ==========
+
+    private List<String> parseExtractedWords(String response) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String text = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+
+        List<String> words = new ArrayList<>();
+        for (String line : text.split("\n")) {
+            line = line.trim();
+            if (!line.isEmpty()) {
+                words.add(line);
+            }
+        }
+
+        return words;
+    }
+
+    private List<Question> parseQuestionsWithType(String response, Long roundId, String difficulty) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
+        }
+
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String jsonContent = content.asText();
+
+        if (jsonContent.contains("```")) {
+            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+
+        JsonNode questionsArray = objectMapper.readTree(jsonContent);
+
+        List<Question> questions = new ArrayList<>();
+        int seqNo = 1;
+
+        for (JsonNode q : questionsArray) {
+            String questionText = q.path("questionText").asText();
+            String answer = q.path("answer").asText();
+            String answerType = q.path("answerType").asText("CHOICE");
+
+            JsonNode optionsNode = q.path("options");
+            List<String> options = new ArrayList<>();
+            for (JsonNode opt : optionsNode) {
+                options.add(opt.asText());
+            }
+
+            // 객관식이면 정답 포함하여 셔플
+            if ("CHOICE".equals(answerType) && !options.isEmpty()) {
+                options.add(answer);
+                Collections.shuffle(options);
+            }
+
+            Question question = Question.builder()
+                    .roundId(roundId)
+                    .questionType(difficulty)
+                    .answerType(answerType)
+                    .questionText(questionText)
+                    .answer(answer)
+                    .option1(options.size() > 0 ? options.get(0) : null)
+                    .option2(options.size() > 1 ? options.get(1) : null)
+                    .option3(options.size() > 2 ? options.get(2) : null)
+                    .option4(options.size() > 3 ? options.get(3) : null)
+                    .seqNo(seqNo++)
+                    .build();
+
+            questions.add(question);
+        }
+
+        return questions;
+    }
+
+    private List<OfflineGradeResult> parseOfflineGradeResults(String response) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
+        }
+
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String jsonContent = content.asText();
+
+        if (jsonContent.contains("```")) {
+            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+
+        JsonNode resultsArray = objectMapper.readTree(jsonContent);
+
+        List<OfflineGradeResult> results = new ArrayList<>();
+        for (JsonNode r : resultsArray) {
+            int questionNumber = r.path("questionNumber").asInt();
+            String userAnswer = r.path("userAnswer").asText("");
+            boolean isCorrect = r.path("isCorrect").asBoolean(false);
+            String feedback = r.path("feedback").asText("");
+
+            results.add(new OfflineGradeResult(questionNumber, userAnswer, isCorrect, feedback));
+        }
+
+        return results;
+    }
+
+    // ========== Original Private Methods ==========
+
+    private String callGemini(String prompt) {
+        String apiKey = apiConfig.getGemini().getKey();
+        String model = apiConfig.getGemini().getModel();
+        String baseUrl = apiConfig.getGemini().getUrl();
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new RuntimeException("Gemini API 키가 설정되지 않았습니다.");
+        }
+
+        String url = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
+
+        Map<String, Object> textPart = new HashMap<>();
+        textPart.put("text", prompt);
+
+        Map<String, Object> content = new HashMap<>();
+        content.put("parts", List.of(textPart));
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(content));
+
+        WebClient webClient = webClientBuilder.build();
+
+        String response = webClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        log.debug("Gemini response: {}", response);
+        return response;
+    }
+
+    private String callGeminiWithImage(String prompt, String base64Image, String mimeType) {
+        String apiKey = apiConfig.getGemini().getKey();
+        String model = apiConfig.getGemini().getModel();
+        String baseUrl = apiConfig.getGemini().getUrl();
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new RuntimeException("Gemini API 키가 설정되지 않았습니다.");
+        }
+
+        String url = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
+
+        // 텍스트 파트
+        Map<String, Object> textPart = new HashMap<>();
+        textPart.put("text", prompt);
+
+        // 이미지 파트
+        Map<String, Object> inlineData = new HashMap<>();
+        inlineData.put("mimeType", mimeType);
+        inlineData.put("data", base64Image);
+
+        Map<String, Object> imagePart = new HashMap<>();
+        imagePart.put("inlineData", inlineData);
+
+        Map<String, Object> content = new HashMap<>();
+        content.put("parts", List.of(textPart, imagePart));
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(content));
+
+        WebClient webClient = webClientBuilder.build();
+
+        String response = webClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        clientResponse -> clientResponse.bodyToMono(String.class)
+                                .doOnNext(errorBody -> log.error("Gemini API error response: {}", errorBody))
+                                .flatMap(errorBody -> reactor.core.publisher.Mono.error(
+                                        new RuntimeException("Gemini API error: " + errorBody))))
+                .bodyToMono(String.class)
+                .block();
+
+        log.debug("Gemini Vision response: {}", response);
+        return response;
+    }
+
+    private List<Question> parseQuestions(String response, Long roundId, String questionType) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
+        }
+
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String jsonContent = content.asText();
+
+        // JSON 배열 추출 (마크다운 코드 블록 제거)
+        if (jsonContent.contains("```")) {
+            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+
+        JsonNode questionsArray = objectMapper.readTree(jsonContent);
+
+        List<Question> questions = new ArrayList<>();
+        int seqNo = 1;
+
+        for (JsonNode q : questionsArray) {
+            String questionText = q.path("questionText").asText();
+            String answer = q.path("answer").asText();
+
+            JsonNode optionsNode = q.path("options");
+            List<String> options = new ArrayList<>();
+            for (JsonNode opt : optionsNode) {
+                options.add(opt.asText());
+            }
+
+            // 정답을 포함하여 4개 보기 만들기 (셔플)
+            options.add(answer);
+            Collections.shuffle(options);
+
+            Question question = Question.builder()
+                    .roundId(roundId)
+                    .questionType(questionType)
+                    .questionText(questionText)
+                    .answer(answer)
+                    .option1(options.size() > 0 ? options.get(0) : null)
+                    .option2(options.size() > 1 ? options.get(1) : null)
+                    .option3(options.size() > 2 ? options.get(2) : null)
+                    .option4(options.size() > 3 ? options.get(3) : null)
+                    .seqNo(seqNo++)
+                    .build();
+
+            questions.add(question);
+        }
+
+        return questions;
+    }
+
+    private GradeResult parseGradeResult(String response, String correctAnswer, String imagePath) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
+        }
+
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String jsonContent = content.asText();
+
+        // JSON 추출 (마크다운 코드 블록 제거)
+        if (jsonContent.contains("```")) {
+            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+
+        JsonNode result = objectMapper.readTree(jsonContent);
+
+        String extractedText = result.path("extractedText").asText("");
+        boolean isCorrect = result.path("isCorrect").asBoolean(false);
+        String feedback = result.path("feedback").asText("");
+
+        return new GradeResult(extractedText, isCorrect, feedback, imagePath);
+    }
+
+    private String normalizeText(String text) {
+        return text.toLowerCase()
+                .replaceAll("[^a-z0-9\\s]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private double calculateSimilarity(String s1, String s2) {
+        int maxLength = Math.max(s1.length(), s2.length());
+        if (maxLength == 0) {
+            return 1.0;
+        }
+        int distance = levenshteinDistance(s1, s2);
+        return 1.0 - ((double) distance / maxLength);
+    }
+
+    private int levenshteinDistance(String s1, String s2) {
+        int[][] dp = new int[s1.length() + 1][s2.length() + 1];
+
+        for (int i = 0; i <= s1.length(); i++) {
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                } else if (j == 0) {
+                    dp[i][j] = i;
+                } else {
+                    int cost = s1.charAt(i - 1) == s2.charAt(j - 1) ? 0 : 1;
+                    dp[i][j] = Math.min(
+                            Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                            dp[i - 1][j - 1] + cost);
+                }
+            }
+        }
+
+        return dp[s1.length()][s2.length()];
+    }
+
+    // ========== Inner Classes ==========
+
+    /**
+     * 채점 결과를 담는 레코드
+     */
+    public record GradeResult(
+            String extractedText,
+            boolean isCorrect,
+            String feedback,
+            String imagePath) {
+    }
+
+    /**
+     * 오프라인 채점 결과를 담는 레코드
+     */
+    public record OfflineGradeResult(
+            int questionNumber,
+            String userAnswer,
+            boolean isCorrect,
+            String feedback) {
+    }
+}

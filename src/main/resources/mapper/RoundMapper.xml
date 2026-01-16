@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.RoundMapper">
+
+    <resultMap id="roundResultMap" type="com.example.engTest.dto.Round">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="questionCount" column="question_count"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="roundStatsResultMap" type="com.example.engTest.dto.RoundStats">
+        <result property="roundId" column="round_id"/>
+        <result property="roundTitle" column="round_title"/>
+        <result property="examCount" column="exam_count"/>
+        <result property="userCount" column="user_count"/>
+        <result property="avgScore" column="avg_score"/>
+        <result property="maxScore" column="max_score"/>
+        <result property="minScore" column="min_score"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="roundResultMap">
+        SELECT * FROM rounds ORDER BY created_at DESC
+    </select>
+
+    <select id="findActiveRounds" resultMap="roundResultMap">
+        SELECT * FROM rounds WHERE status = 'ACTIVE' ORDER BY created_at DESC
+    </select>
+
+    <select id="findById" resultMap="roundResultMap">
+        SELECT * FROM rounds WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rounds (title, description, question_count, difficulty, status)
+        VALUES (#{title}, #{description}, #{questionCount}, #{difficulty}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE rounds SET
+            title = #{title},
+            description = #{description},
+            question_count = #{questionCount},
+            difficulty = #{difficulty},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE rounds SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM rounds WHERE id = #{id}
+    </delete>
+
+    <select id="getRoundStats" resultMap="roundStatsResultMap">
+        SELECT round_id, round_title, exam_count, user_count, avg_score, max_score, min_score
+        FROM v_round_stats
+        ORDER BY round_id DESC
+    </select>
+
+    <select id="getRoundStatsById" resultMap="roundStatsResultMap">
+        SELECT round_id, round_title, exam_count, user_count, avg_score, max_score, min_score
+        FROM v_round_stats
+        WHERE round_id = #{roundId}
+    </select>
+
+</mapper>

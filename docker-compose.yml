@@ -1,0 +1,50 @@
+services:
+  # Spring Boot 애플리케이션
+  app:
+    build: .
+    container_name: engtest-app
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=engtest
+      - DB_USER=engtest
+      - DB_PASSWORD=engtest123!
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # Hot Reloading for Static Resources
+      - SPRING_WEB_RESOURCES_STATIC_LOCATIONS=file:/app/static/
+    volumes:
+      - uploads:/app/uploads
+      - ./src/main/resources/static:/app/static # Mount local static files to container
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # MariaDB
+  db:
+    image: mariadb:10.11
+    container_name: engtest-db
+    environment:
+      - MARIADB_ROOT_PASSWORD=root123!
+      - MARIADB_DATABASE=engtest
+      - MARIADB_USER=engtest
+      - MARIADB_PASSWORD=engtest123!
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./src/main/resources/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  uploads:

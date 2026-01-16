@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 영어 시험 시스템</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 관리자 페이지</h1>
+            <a href="/" class="btn-small">메인으로</a>
+        </header>
+
+        <main id="mainContent">
+            <!-- 관리자 메인 -->
+            <div id="adminSection" class="section">
+                <div class="admin-actions">
+                    <button onclick="showCreateRound()" class="btn-primary">새 회차 생성</button>
+                </div>
+                <div id="adminRoundList" class="round-list"></div>
+            </div>
+
+            <!-- 회차 생성 - 1단계: 이미지 업로드 -->
+            <div id="uploadImagesSection" class="section hidden">
+                <div class="section-header">
+                    <h2>1단계: 단어 이미지 업로드</h2>
+                    <button onclick="showAdminSection()" class="btn-secondary">뒤로</button>
+                </div>
+                <div class="form-group">
+                    <label>회차 제목</label>
+                    <input type="text" id="roundTitle" placeholder="예: 1회차 단어 시험">
+                </div>
+                <div class="form-group">
+                    <label>설명</label>
+                    <textarea id="roundDescription" placeholder="시험에 대한 설명"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>난이도</label>
+                    <select id="difficulty">
+                        <option value="EASY">쉬움 (객관식 100%)</option>
+                        <option value="MEDIUM" selected>보통 (객관식 30% + 주관식 70%)</option>
+                        <option value="HARD">어려움 (문장 응용 - 주관식)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>단어 이미지 업로드 (여러 장 가능)</label>
+                    <input type="file" id="wordImages" accept="image/*" multiple onchange="previewImages(this)">
+                    <div id="imagePreviewArea" class="image-preview-area"></div>
+                </div>
+                <button onclick="extractWords()" class="btn-primary btn-large">단어 추출하기</button>
+                <p class="hint">* 이미지에서 영어 단어를 자동으로 추출합니다.</p>
+            </div>
+
+            <!-- 회차 생성 - 2단계: 단어 확인/수정 -->
+            <div id="reviewWordsSection" class="section hidden">
+                <div class="section-header">
+                    <h2>2단계: 추출된 단어 확인</h2>
+                    <button onclick="showUploadImages()" class="btn-secondary">뒤로</button>
+                </div>
+                <p class="hint">추출된 단어를 확인하고 수정하세요. 각 줄에 하나씩, "영어:한글" 형식으로 입력합니다.</p>
+                <div class="form-group">
+                    <textarea id="extractedWords" rows="15" placeholder="apple:사과&#10;banana:바나나"></textarea>
+                </div>
+                <button onclick="generateQuestions()" class="btn-success btn-large">문제 생성하기</button>
+            </div>
+
+            <!-- 회차 상세 보기 -->
+            <div id="roundDetailSection" class="section hidden">
+                <div class="section-header">
+                    <h2 id="roundDetailTitle">회차 상세</h2>
+                    <button onclick="showAdminSection()" class="btn-secondary">뒤로</button>
+                </div>
+                <div id="roundQuestionsList" class="questions-list"></div>
+                <div class="admin-actions">
+                    <button onclick="deleteCurrentRound()" class="btn-danger">회차 삭제</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>처리 중...</p>
+    </div>
+
+    <script>
+        // 관리자 페이지 전용 스크립트
+        let currentRoundId = null;
+        let extractedWordsList = [];
+
+        // 페이지 로드 시 회차 목록 로드
+        document.addEventListener('DOMContentLoaded', loadAdminRounds);
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        function showAdminSection() {
+            showSection('adminSection');
+            loadAdminRounds();
+        }
+
+        function showCreateRound() {
+            showSection('uploadImagesSection');
+            document.getElementById('roundTitle').value = '';
+            document.getElementById('roundDescription').value = '';
+            document.getElementById('wordImages').value = '';
+            document.getElementById('imagePreviewArea').innerHTML = '';
+        }
+
+        function showUploadImages() {
+            showSection('uploadImagesSection');
+        }
+
+        async function loadAdminRounds() {
+            try {
+                const response = await fetch('/api/rounds');
+                const rounds = await response.json();
+
+                const listHtml = rounds.length === 0
+                    ? '<p class="empty-message">생성된 회차가 없습니다.</p>'
+                    : rounds.map(r => `
+                        <div class="round-card" onclick="viewRoundDetail(${r.id})">
+                            <h3>${r.title}</h3>
+                            <p>${r.description || ''}</p>
+                            <div class="round-meta">
+                                <span>문제 수: ${r.questionCount}</span>
+                                <span>난이도: ${r.difficulty}</span>
+                                <span class="status-badge ${r.status.toLowerCase()}">${r.status}</span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                document.getElementById('adminRoundList').innerHTML = listHtml;
+            } catch (error) {
+                console.error('Failed to load rounds:', error);
+            }
+        }
+
+        function previewImages(input) {
+            const previewArea = document.getElementById('imagePreviewArea');
+            previewArea.innerHTML = '';
+
+            if (input.files && input.files.length > 0) {
+                for (const file of input.files) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList.add('preview-image');
+                        previewArea.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        async function extractWords() {
+            const title = document.getElementById('roundTitle').value.trim();
+            const fileInput = document.getElementById('wordImages');
+
+            if (!title) {
+                alert('회차 제목을 입력하세요.');
+                return;
+            }
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('이미지를 업로드하세요.');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const formData = new FormData();
+                for (const file of fileInput.files) {
+                    formData.append('images', file);
+                }
+
+                // 숨겨진 프롬프트 정의
+                const customPrompt = `당신은 영어 학습 교재에서 영어 표현을 추출하는 전문가입니다.
+
+이미지에서 다음 규칙에 따라 영어 표현을 추출해주세요:
+
+## 추출 규칙
+1. **핵심 표현만 추출**:
+   - 박스, 테이블, 리스트 안의 핵심 표현만 추출
+   - "영어표현:한글뜻" 또는 "영어문장:한글번역" 형태로 추출
+   - 짧은 단어/구/문장만 추출 (긴 문단 제외)
+
+2. **제외 항목**:
+   - 페이지 제목, 섹션 헤더 (Day 01, Unit 01 등)
+   - 긴 설명 문단, 부연 설명
+   - Tip 박스, 문법 설명
+   - 예시를 설명하는 긴 문장
+
+3. **출력 형식**:
+   - 한 줄에 하나씩
+   - "영어:한글" 형태
+   - 다른 설명 없이 추출된 내용만
+   - 영어:한글 형태가 안되는 경우 추출 제외
+
+예시 출력:
+get a message:메시지를 받다
+get a text:문자를 받다
+live in:~에 살다
+work in:~에서 일하다`;
+
+                formData.append('prompt', customPrompt);
+
+                const response = await fetch('/api/rounds/extract-words', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('단어 추출 실패');
+                }
+
+                const data = await response.json();
+                extractedWordsList = data.words || [];
+
+                document.getElementById('extractedWords').value = extractedWordsList.join('\n');
+                showSection('reviewWordsSection');
+            } catch (error) {
+                console.error('Failed to extract words:', error);
+                alert('단어 추출에 실패했습니다: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function generateQuestions() {
+            const title = document.getElementById('roundTitle').value.trim();
+            const description = document.getElementById('roundDescription').value.trim();
+            const difficulty = document.getElementById('difficulty').value;
+            const wordsText = document.getElementById('extractedWords').value.trim();
+
+            if (!wordsText) {
+                alert('단어가 없습니다.');
+                return;
+            }
+
+            const words = wordsText.split('\n').filter(w => w.trim());
+
+            showLoading();
+
+            try {
+                // 1. 회차 생성
+                const roundResponse = await fetch('/api/rounds', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        questionCount: words.length,
+                        difficulty: difficulty,
+                        status: 'ACTIVE'
+                    })
+                });
+
+                if (!roundResponse.ok) {
+                    throw new Error('회차 생성 실패');
+                }
+
+                const round = await roundResponse.json();
+
+                // 2. 단어 기반 문제 생성
+                const wordListStr = words.join('\n');
+
+                // 난이도별 프롬프트 템플릿 정의
+                const prompts = {
+                    'EASY': `당신은 영어 시험 문제 출제 전문가입니다.
+다음 단어들을 사용하여 **객관식 문제만** 만들어주세요.
+
+단어 목록:
+${wordListStr}
+
+응답 형식 (JSON 배열):
+[
+  {
+    "questionText": "한글 뜻",
+    "answer": "정답 영어 단어",
+    "answerType": "CHOICE",
+    "options": ["오답1", "오답2", "오답3"]
+  }
+]
+
+규칙:
+1. 모든 문제는 객관식입니다.
+2. options에는 정답과 비슷한 오답 3개를 넣어주세요.
+3. JSON 형식만 응답하세요.`,
+
+                    'MEDIUM': `당신은 영어 시험 문제 출제 전문가입니다.
+다음 단어들을 사용하여 **객관식 30%, 주관식 70%** 비율로 문제를 만들어주세요.
+
+단어 목록:
+${wordListStr}
+
+응답 형식 (JSON 배열):
+[
+  {
+    "questionText": "한글 뜻 또는 문장",
+    "answer": "정답 영어",
+    "answerType": "CHOICE" 또는 "TEXT",
+    "options": ["오답1", "오답2", "오답3"] (객관식일 때만)
+  }
+]
+
+규칙:
+1. 객관식(CHOICE)과 주관식(TEXT)를 섞어주세요.
+2. 주관식은 options를 빈 배열로 두세요.
+3. JSON 형식만 응답하세요.`,
+
+                    'HARD': `당신은 영어 시험 문제 출제 전문가입니다.
+다음 단어들을 **응용한 간단한 영어 문장 문제**를 만들어주세요.
+
+단어 목록:
+${wordListStr}
+
+응답 형식 (JSON 배열):
+[
+  {
+    "questionText": "한글 문장 (번역할 문장)",
+    "answer": "정답 영어 문장",
+    "answerType": "TEXT",
+    "options": []
+  }
+]
+
+규칙:
+1. 모든 문제는 주관식입니다.
+2. 단어들을 활용한 간단한 문장을 만들어주세요.
+3. options는 빈 배열로 두세요.
+4. JSON 형식만 응답하세요.`
+                };
+
+                const prompt = prompts[difficulty] || prompts['MEDIUM'];
+
+                const generateResponse = await fetch(`/api/rounds/${round.id}/generate-from-words`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        words: words,
+                        difficulty: difficulty,
+                        prompt: prompt
+                    })
+                });
+
+                if (!generateResponse.ok) {
+                    throw new Error('문제 생성 실패');
+                }
+
+                const result = await generateResponse.json();
+                alert(`${result.count}개의 문제가 생성되었습니다!`);
+
+                showAdminSection();
+            } catch (error) {
+                console.error('Failed to generate questions:', error);
+                alert('문제 생성에 실패했습니다: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function viewRoundDetail(roundId) {
+            currentRoundId = roundId;
+            showLoading();
+
+            try {
+                const [roundRes, questionsRes] = await Promise.all([
+                    fetch(`/api/rounds/${roundId}`),
+                    fetch(`/api/rounds/${roundId}/questions`)
+                ]);
+
+                const round = await roundRes.json();
+                const questions = await questionsRes.json();
+
+                document.getElementById('roundDetailTitle').textContent = round.title;
+
+                const questionsHtml = questions.length === 0
+                    ? '<p class="empty-message">문제가 없습니다.</p>'
+                    : questions.map((q, i) => `
+                        <div class="question-card">
+                            <div class="question-number">${i + 1}번</div>
+                            <div class="question-content">
+                                <p class="question-text">${q.questionText}</p>
+                                <p class="answer"><strong>정답:</strong> ${q.answer}</p>
+                                ${q.answerType === 'CHOICE' ? `
+                                    <div class="options">
+                                        <span>① ${q.option1 || ''}</span>
+                                        <span>② ${q.option2 || ''}</span>
+                                        <span>③ ${q.option3 || ''}</span>
+                                        <span>④ ${q.option4 || ''}</span>
+                                    </div>
+                                ` : '<span class="badge">주관식</span>'}
+                            </div>
+                        </div>
+                    `).join('');
+
+                document.getElementById('roundQuestionsList').innerHTML = questionsHtml;
+                showSection('roundDetailSection');
+            } catch (error) {
+                console.error('Failed to load round detail:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteCurrentRound() {
+            if (!currentRoundId) return;
+
+            if (!confirm('정말 이 회차를 삭제하시겠습니까?')) return;
+
+            showLoading();
+
+            try {
+                await fetch(`/api/rounds/${currentRoundId}`, { method: 'DELETE' });
+                alert('회차가 삭제되었습니다.');
+                showAdminSection();
+            } catch (error) {
+                console.error('Failed to delete round:', error);
+                alert('삭제에 실패했습니다.');
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+
+</html>

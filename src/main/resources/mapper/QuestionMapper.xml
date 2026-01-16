@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.QuestionMapper">
+
+    <resultMap id="questionResultMap" type="com.example.engTest.dto.Question">
+        <id property="id" column="id"/>
+        <result property="roundId" column="round_id"/>
+        <result property="questionType" column="question_type"/>
+        <result property="answerType" column="answer_type"/>
+        <result property="questionText" column="question_text"/>
+        <result property="answer" column="answer"/>
+        <result property="option1" column="option1"/>
+        <result property="option2" column="option2"/>
+        <result property="option3" column="option3"/>
+        <result property="option4" column="option4"/>
+        <result property="hint" column="hint"/>
+        <result property="seqNo" column="seq_no"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findByRoundId" resultMap="questionResultMap">
+        SELECT * FROM questions WHERE round_id = #{roundId} ORDER BY seq_no
+    </select>
+
+    <select id="findById" resultMap="questionResultMap">
+        SELECT * FROM questions WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no)
+        VALUES (#{roundId}, #{questionType}, #{answerType}, #{questionText}, #{answer}, #{option1}, #{option2}, #{option3}, #{option4}, #{hint}, #{seqNo})
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no)
+        VALUES
+        <foreach collection="list" item="q" separator=",">
+            (#{q.roundId}, #{q.questionType}, #{q.answerType}, #{q.questionText}, #{q.answer}, #{q.option1}, #{q.option2}, #{q.option3}, #{q.option4}, #{q.hint}, #{q.seqNo})
+        </foreach>
+    </insert>
+
+    <update id="update">
+        UPDATE questions SET
+            question_type = #{questionType},
+            question_text = #{questionText},
+            answer = #{answer},
+            option1 = #{option1},
+            option2 = #{option2},
+            option3 = #{option3},
+            option4 = #{option4},
+            hint = #{hint},
+            seq_no = #{seqNo}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM questions WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByRoundId">
+        DELETE FROM questions WHERE round_id = #{roundId}
+    </delete>
+
+    <select id="countByRoundId" resultType="int">
+        SELECT COUNT(*) FROM questions WHERE round_id = #{roundId}
+    </select>
+
+</mapper>

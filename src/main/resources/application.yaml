@@ -1,0 +1,48 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: engTest
+
+  # DataSource
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:engtest}?useUnicode=true&characterEncoding=utf8
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  # File Upload
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  # Static Resources
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+# Server
+server:
+  port: 8080
+
+# MyBatis
+mybatis:
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: com.example.engTest.dto
+  configuration:
+    map-underscore-to-camel-case: true
+
+# API Keys (환경 변수로 주입)
+api:
+  gemini:
+    key: ${GEMINI_API_KEY:}
+    model: gemini-2.0-flash
+    url: https://generativelanguage.googleapis.com/v1beta/models
+
+# Logging
+logging:
+  level:
+    com.example.engTest: DEBUG
+    org.springframework.web: INFO

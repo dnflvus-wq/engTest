@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.UserMapper">
+
+    <resultMap id="userResultMap" type="com.example.engTest.dto.User">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="userStatsResultMap" type="com.example.engTest.dto.UserStats">
+        <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="totalExams" column="total_exams"/>
+        <result property="avgScore" column="avg_score"/>
+        <result property="maxScore" column="max_score"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="userResultMap">
+        SELECT id, name, created_at FROM users ORDER BY name
+    </select>
+
+    <select id="findById" resultMap="userResultMap">
+        SELECT id, name, created_at FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findByName" resultMap="userResultMap">
+        SELECT id, name, created_at FROM users WHERE name = #{name}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (name) VALUES (#{name})
+    </insert>
+
+    <update id="update">
+        UPDATE users SET name = #{name} WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <select id="getUserStats" resultMap="userStatsResultMap">
+        SELECT user_id, user_name, total_exams, avg_score, max_score
+        FROM v_user_stats
+        ORDER BY avg_score DESC
+    </select>
+
+    <select id="getUserStatsById" resultMap="userStatsResultMap">
+        SELECT user_id, user_name, total_exams, avg_score, max_score
+        FROM v_user_stats
+        WHERE user_id = #{userId}
+    </select>
+
+</mapper>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.ExamMapper">
+
+    <resultMap id="examResultMap" type="com.example.engTest.dto.Exam">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="roundId" column="round_id"/>
+        <result property="mode" column="mode"/>
+        <result property="totalCount" column="total_count"/>
+        <result property="correctCount" column="correct_count"/>
+        <result property="score" column="score"/>
+        <result property="status" column="status"/>
+        <result property="startedAt" column="started_at"/>
+        <result property="submittedAt" column="submitted_at"/>
+        <result property="userName" column="user_name"/>
+        <result property="roundTitle" column="round_title"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        ORDER BY e.started_at DESC
+    </select>
+
+    <select id="findByUserId" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        WHERE e.user_id = #{userId}
+        ORDER BY e.started_at DESC
+    </select>
+
+    <select id="findByRoundId" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        WHERE e.round_id = #{roundId}
+        ORDER BY e.score DESC
+    </select>
+
+    <select id="findById" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        WHERE e.id = #{id}
+    </select>
+
+    <select id="findByUserAndRound" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        WHERE e.user_id = #{userId} AND e.round_id = #{roundId}
+        ORDER BY e.started_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exams (user_id, round_id, mode, total_count, correct_count, score, status)
+        VALUES (#{userId}, #{roundId}, #{mode}, #{totalCount}, #{correctCount}, #{score}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE exams SET
+            correct_count = #{correctCount},
+            score = #{score},
+            status = #{status},
+            submitted_at = #{submittedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateScore">
+        UPDATE exams SET correct_count = #{correctCount}, score = #{score} WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE exams SET status = #{status}, submitted_at = CURRENT_TIMESTAMP WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM exams WHERE id = #{id}
+    </delete>
+
+    <select id="getRankingByRound" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        WHERE e.round_id = #{roundId} AND e.status = 'COMPLETED'
+        ORDER BY e.score DESC, e.submitted_at ASC
+    </select>
+
+</mapper>

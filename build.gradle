@@ -1,0 +1,56 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.1'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'engTest project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// MyBatis
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+	// MariaDB
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// JSON 처리
+	implementation 'org.springframework.boot:spring-boot-starter-json'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+	// HTTP Client (Gemini API 호출용)
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// 파일 업로드
+	implementation 'commons-io:commons-io:2.15.1'
+
+	// DevTools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
