@@ -14,6 +14,9 @@ import java.util.List;
 public class RoundService {
 
     private final RoundMapper roundMapper;
+    private final QuestionService questionService;
+    private final VocabularyService vocabularyService;
+    private final MaterialService materialService;
 
     public List<Round> getAllRounds() {
         return roundMapper.findAll();
@@ -54,6 +57,11 @@ public class RoundService {
 
     @Transactional
     public void deleteRound(Long id) {
+        // 연관 데이터를 먼저 삭제 (외래키 제약조건 해결)
+        // 순서: Questions → Vocabulary → Materials → Round
+        questionService.deleteQuestionsByRoundId(id);
+        vocabularyService.deleteByRoundId(id);
+        materialService.deleteByRoundId(id);
         roundMapper.delete(id);
     }
 

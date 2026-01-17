@@ -133,11 +133,31 @@ public class RoundController {
             @RequestParam("images") List<MultipartFile> images,
             @RequestParam(value = "prompt", required = false) String customPrompt) {
         try {
+            // 유효성 검사
+            if (images == null || images.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "이미지를 업로드해주세요."));
+            }
+
+            log.info("Extracting words from {} images", images.size());
+
             List<String> words = geminiService.extractWordsFromImages(images, customPrompt);
+
+            if (words.isEmpty()) {
+                log.warn("No words extracted from images");
+                return ResponseEntity.ok()
+                        .body(Map.of(
+                                "words", words,
+                                "warning", "추출된 단어가 없습니다. 이미지에 텍스트가 명확한지 확인해주세요."));
+            }
+
+            log.info("Successfully extracted {} words", words.size());
             return ResponseEntity.ok(Map.of("words", words));
         } catch (Exception e) {
             log.error("Failed to extract words from images", e);
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류가 발생했습니다";
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "단어 추출 실패: " + errorMessage));
         }
     }
 
