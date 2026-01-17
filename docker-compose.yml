@@ -13,7 +13,7 @@ services:
       - DB_NAME=engtest
       - DB_USER=engtest
       - DB_PASSWORD=engtest123!
-      - GEMINI_API_KEY=AIzaSyDs_s8rOV9GZyTi7bOyOELyCVNwPwHm5Ws
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       # Hot Reloading for Static Resources
       - SPRING_WEB_RESOURCES_STATIC_LOCATIONS=file:/app/static/
     volumes:
