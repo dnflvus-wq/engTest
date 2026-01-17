@@ -6,6 +6,7 @@ import com.example.engTest.dto.RoundStats;
 import com.example.engTest.service.GeminiService;
 import com.example.engTest.service.QuestionService;
 import com.example.engTest.service.RoundService;
+import com.example.engTest.service.VocabularyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ public class RoundController {
     private final RoundService roundService;
     private final QuestionService questionService;
     private final GeminiService geminiService;
+    private final VocabularyService vocabularyService;
 
     @GetMapping
     public ResponseEntity<List<Round>> getAllRounds() {
@@ -167,6 +169,9 @@ public class RoundController {
             // 단어 기반 문제 생성
             List<Question> questions = geminiService.generateQuestionsFromWords(prompt, id, difficulty);
             questionService.createQuestions(questions);
+
+            // 단어장 저장
+            vocabularyService.saveVocabulary(id, words);
 
             // 회차 정보 업데이트
             round.setQuestionCount(questions.size());

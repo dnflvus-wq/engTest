@@ -74,7 +74,47 @@
                     <h2 id="roundDetailTitle">회차 상세</h2>
                     <button onclick="showAdminSection()" class="btn-secondary">뒤로</button>
                 </div>
-                <div id="roundQuestionsList" class="questions-list"></div>
+
+                <!-- 탭 메뉴 -->
+                <div class="tab-menu">
+                    <button class="tab-btn active" onclick="switchTab('questions')">문제 목록</button>
+                    <button class="tab-btn" onclick="switchTab('materials')">교육자료</button>
+                </div>
+
+                <!-- 문제 목록 탭 -->
+                <div id="questionsTab" class="tab-content active">
+                    <div id="roundQuestionsList" class="questions-list"></div>
+                </div>
+
+                <!-- 교육자료 탭 -->
+                <div id="materialsTab" class="tab-content hidden">
+                    <!-- 유튜브 영상 추가 -->
+                    <div class="material-add-section">
+                        <h3>📺 유튜브 영상 추가</h3>
+                        <div class="form-row">
+                            <input type="text" id="youtubeTitle" placeholder="영상 제목 (선택)">
+                            <input type="text" id="youtubeUrl" placeholder="유튜브 URL">
+                            <button type="button" onclick="addYoutubeMaterial()" class="btn-primary">추가</button>
+                        </div>
+                    </div>
+
+                    <!-- PPT 자료 업로드 -->
+                    <div class="material-add-section">
+                        <h3>📄 PPT/PDF 자료 업로드</h3>
+                        <div class="form-row">
+                            <input type="text" id="pptTitle" placeholder="자료 제목 (선택)">
+                            <input type="file" id="pptFile" accept=".ppt,.pptx,.pdf,.doc,.docx">
+                            <button type="button" onclick="addPptMaterial()" class="btn-primary">업로드</button>
+                        </div>
+                    </div>
+
+                    <!-- 등록된 교육자료 목록 -->
+                    <div class="material-list-section">
+                        <h3>📋 등록된 교육자료</h3>
+                        <div id="materialsList"></div>
+                    </div>
+                </div>
+
                 <div class="admin-actions">
                     <button onclick="deleteCurrentRound()" class="btn-danger">회차 삭제</button>
                 </div>
@@ -433,6 +473,153 @@ ${wordListStr}
                 showAdminSection();
             } catch (error) {
                 console.error('Failed to delete round:', error);
+                alert('삭제에 실패했습니다.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ===== 탭 전환 =====
+        function switchTab(tabName) {
+            // 탭 버튼 상태 변경
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 탭 내용 표시/숨김
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('active');
+            });
+
+            if (tabName === 'questions') {
+                document.getElementById('questionsTab').classList.remove('hidden');
+                document.getElementById('questionsTab').classList.add('active');
+            } else if (tabName === 'materials') {
+                document.getElementById('materialsTab').classList.remove('hidden');
+                document.getElementById('materialsTab').classList.add('active');
+                loadMaterials();
+            }
+        }
+
+        // ===== 교육자료 관리 =====
+        async function loadMaterials() {
+            if (!currentRoundId) return;
+
+            try {
+                const response = await fetch(`/api/rounds/${currentRoundId}/materials`);
+                const materials = await response.json();
+
+                const listHtml = materials.length === 0
+                    ? '<p class="empty-message">등록된 교육자료가 없습니다.</p>'
+                    : materials.map(m => {
+                        const icon = m.materialType === 'YOUTUBE' ? '📺' : '📄';
+                        const displayUrl = m.materialType === 'YOUTUBE'
+                            ? getYoutubeThumbnail(m.url)
+                            : m.fileName || m.url;
+                        return `
+                            <div class="material-card">
+                                <span class="material-icon">${icon}</span>
+                                <div class="material-info">
+                                    <div class="material-title">${m.title || (m.materialType === 'YOUTUBE' ? '유튜브 영상' : '자료')}</div>
+                                    <div class="material-url">${m.materialType === 'YOUTUBE' ? m.url : m.fileName}</div>
+                                </div>
+                                <button onclick="deleteMaterial(${m.id})" class="btn-danger btn-small">삭제</button>
+                            </div>
+                        `;
+                    }).join('');
+
+                document.getElementById('materialsList').innerHTML = listHtml;
+            } catch (error) {
+                console.error('Failed to load materials:', error);
+            }
+        }
+
+        function getYoutubeThumbnail(url) {
+            const videoId = extractYoutubeId(url);
+            return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
+        }
+
+        function extractYoutubeId(url) {
+            const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            return match ? match[1] : null;
+        }
+
+        async function addYoutubeMaterial() {
+            const title = document.getElementById('youtubeTitle').value.trim();
+            const url = document.getElementById('youtubeUrl').value.trim();
+
+            if (!url) {
+                alert('유튜브 URL을 입력하세요.');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`/api/rounds/${currentRoundId}/materials/youtube`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, url })
+                });
+
+                if (!response.ok) throw new Error('추가 실패');
+
+                document.getElementById('youtubeTitle').value = '';
+                document.getElementById('youtubeUrl').value = '';
+                loadMaterials();
+                alert('유튜브 영상이 추가되었습니다.');
+            } catch (error) {
+                console.error('Failed to add youtube:', error);
+                alert('유튜브 영상 추가에 실패했습니다.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function addPptMaterial() {
+            const title = document.getElementById('pptTitle').value.trim();
+            const fileInput = document.getElementById('pptFile');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('파일을 선택하세요.');
+                return;
+            }
+
+            showLoading();
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                if (title) formData.append('title', title);
+
+                const response = await fetch(`/api/rounds/${currentRoundId}/materials/ppt`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('업로드 실패');
+
+                document.getElementById('pptTitle').value = '';
+                fileInput.value = '';
+                loadMaterials();
+                alert('파일이 업로드되었습니다.');
+            } catch (error) {
+                console.error('Failed to upload ppt:', error);
+                alert('파일 업로드에 실패했습니다.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteMaterial(id) {
+            if (!confirm('이 자료를 삭제하시겠습니까?')) return;
+
+            showLoading();
+            try {
+                await fetch(`/api/materials/${id}`, { method: 'DELETE' });
+                loadMaterials();
+            } catch (error) {
+                console.error('Failed to delete material:', error);
                 alert('삭제에 실패했습니다.');
             } finally {
                 hideLoading();

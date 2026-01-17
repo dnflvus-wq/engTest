@@ -59,6 +59,20 @@ function backToDashboard() {
     }
 }
 
+// Profile Dropdown
+function toggleProfileMenu(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('profileDropdown');
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('mainSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('hidden');
+}
+
 function toggleUserDropdown() {
     const options = document.getElementById('customOptions');
     options.classList.toggle('hidden');
@@ -77,10 +91,26 @@ function selectUser(id, name) {
 }
 
 // Close Dropdown if clicked outside
+// Close Dropdown if clicked outside
 window.addEventListener('click', (e) => {
+    // 1. User Select
     const wrapper = document.getElementById('userSelectWrapper');
     if (wrapper && !wrapper.contains(e.target)) {
-        document.getElementById('customOptions').classList.add('hidden');
+        const options = document.getElementById('customOptions');
+        if (options) options.classList.add('hidden');
+    }
+
+    // 2. Profile Dropdown
+    const profileDropdown = document.getElementById('profileDropdown');
+    const profileArea = document.getElementById('userProfileArea');
+    // If click is outside profile area
+    if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
+        // 이미 toggleProfileMenu에서 stopPropagation을 했다면 이 로직은 트리거 되지 않음(프로필 클릭시)
+        // 따라서 여기로 들어왔다는 건 프로필 영역 '밖'을 클릭했다는 뜻 (또는 stopPropagation 안된 내부)
+        // 안전하게 영역 체크
+        if (profileArea && !profileArea.contains(e.target)) {
+            profileDropdown.classList.add('hidden');
+        }
     }
 });
 
@@ -110,17 +140,14 @@ function showSection(sectionId) {
         target.classList.add('active-section');
     }
 
-    // 헤더 상태 관리: Close 버튼과 로고 토글
+    // 헤더 상태 관리: Close 버튼
     const closeBtn = document.getElementById('headerCloseBtn');
-    const logo = document.getElementById('headerLogo');
-    const sectionsWithCloseBtn = ['statsSection', 'historySection', 'examListSection'];
+    const sectionsWithCloseBtn = ['statsSection', 'historySection', 'examListSection', 'studySection'];
 
     if (sectionsWithCloseBtn.includes(sectionId)) {
         closeBtn.classList.remove('hidden');
-        logo.classList.add('hidden');
     } else {
         closeBtn.classList.add('hidden');
-        logo.classList.remove('hidden');
     }
 }
 
@@ -671,6 +698,162 @@ async function toggleWrongAnswers() {
         showAlert(e.message);
     } finally {
         hideLoading();
+    }
+}
+
+// ===== STUDY MATERIALS =====
+
+async function showStudyMaterials() {
+    showSection('studySection');
+
+    // 회차 목록 로드
+    try {
+        const rounds = await api('/api/rounds/active');
+        const select = document.getElementById('studyRoundSelect');
+        select.innerHTML = '<option value="">-- Select Round --</option>';
+        rounds.forEach(r => {
+            select.innerHTML += `<option value="${r.id}">${r.title}</option>`;
+        });
+
+        // 초기 상태 - 빈 영역
+        document.getElementById('vocabularyGrid').innerHTML = '<p class="empty-state"><i class="fa-solid fa-spell-check"></i><span>Select a round to view vocabulary</span></p>';
+        document.getElementById('youtubeGrid').innerHTML = '';
+        document.getElementById('pptList').innerHTML = '';
+    } catch (e) {
+        showAlert('Failed to load rounds: ' + e.message);
+    }
+}
+
+async function loadStudyMaterials(roundId) {
+    if (!roundId) {
+        document.getElementById('vocabularyGrid').innerHTML = '<p class="empty-state"><i class="fa-solid fa-spell-check"></i><span>Select a round to view vocabulary</span></p>';
+        document.getElementById('youtubeGrid').innerHTML = '';
+        document.getElementById('pptList').innerHTML = '';
+        return;
+    }
+
+    showLoading();
+    try {
+        // 단어장 로드
+        const vocabulary = await api(`/api/rounds/${roundId}/vocabulary`);
+        const vocabGrid = document.getElementById('vocabularyGrid');
+
+        if (vocabulary.length === 0) {
+            vocabGrid.innerHTML = '<p class="empty-state"><i class="fa-solid fa-spell-check"></i><span>No vocabulary for this round</span></p>';
+        } else {
+            vocabGrid.innerHTML = vocabulary.map(v => `
+                <div class="vocab-card">
+                    <div class="vocab-english">
+                        ${v.english}
+                        <button class="speak-btn" onclick="speakWord('${v.english.replace(/'/g, "\\'")}')">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    ${v.phonetic ? `<div class="vocab-phonetic">${v.phonetic}</div>` : ''}
+                    <div class="vocab-korean">${v.korean || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        // 교육자료 로드
+        const materials = await api(`/api/rounds/${roundId}/materials`);
+
+        // 유튜브 영상
+        const youtubeItems = materials.filter(m => m.materialType === 'YOUTUBE');
+        const youtubeGrid = document.getElementById('youtubeGrid');
+        if (youtubeItems.length === 0) {
+            youtubeGrid.innerHTML = '<p class="text-muted">No video lessons available</p>';
+        } else {
+            youtubeGrid.innerHTML = youtubeItems.map(m => {
+                const videoId = extractYoutubeVideoId(m.url);
+                const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
+                return `
+                    <div class="youtube-card">
+                        <div class="youtube-player-wrapper" id="player-${videoId}">
+                            <img class="youtube-thumbnail" src="${thumbnail}" alt="${m.title || 'Video'}" onclick="playYoutubeEmbed('${videoId}')">
+                            <div class="play-overlay" onclick="playYoutubeEmbed('${videoId}')">
+                                <i class="fa-solid fa-play"></i>
+                            </div>
+                        </div>
+                        <div class="youtube-info">
+                            <div class="youtube-title">${m.title || 'Video Lesson'}</div>
+                            <div class="youtube-actions">
+                                <button class="btn-secondary btn-small" onclick="playYoutubeEmbed('${videoId}')">
+                                    <i class="fa-solid fa-play"></i> 재생
+                                </button>
+                                <button class="btn-secondary btn-small" onclick="openYoutube('${m.url}')">
+                                    <i class="fa-brands fa-youtube"></i> 유튜브로 가기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // PPT/문서 자료
+        const pptItems = materials.filter(m => m.materialType === 'PPT');
+        const pptList = document.getElementById('pptList');
+        if (pptItems.length === 0) {
+            pptList.innerHTML = '<p class="text-muted">No documents available</p>';
+        } else {
+            pptList.innerHTML = pptItems.map(m => `
+                <div class="ppt-item">
+                    <span class="ppt-icon"><i class="fa-solid fa-file-powerpoint"></i></span>
+                    <div class="ppt-info">
+                        <div class="ppt-title">${m.title || m.fileName || 'Document'}</div>
+                    </div>
+                    <a class="ppt-link" href="${m.url}" target="_blank" download>
+                        <i class="fa-solid fa-download"></i> Download
+                    </a>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        showAlert('Failed to load materials: ' + e.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+function speakWord(text) {
+    if ('speechSynthesis' in window) {
+        // 이전 음성 취소
+        speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.8; // 천천히 발음
+        utterance.pitch = 1;
+
+        speechSynthesis.speak(utterance);
+    } else {
+        showAlert('Your browser does not support text-to-speech.');
+    }
+}
+
+function extractYoutubeVideoId(url) {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+}
+
+function openYoutube(url) {
+    window.open(url, '_blank');
+}
+
+function playYoutubeEmbed(videoId) {
+    const wrapper = document.getElementById(`player-${videoId}`);
+    if (wrapper) {
+        wrapper.innerHTML = `
+            <iframe 
+                class="youtube-iframe"
+                src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        `;
     }
 }
 

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.VocabularyMapper">
+
+    <resultMap id="vocabularyResultMap" type="com.example.engTest.dto.VocabularyWord">
+        <id property="id" column="id"/>
+        <result property="roundId" column="round_id"/>
+        <result property="english" column="english"/>
+        <result property="korean" column="korean"/>
+        <result property="phonetic" column="phonetic"/>
+        <result property="seqNo" column="seq_no"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findByRoundId" resultMap="vocabularyResultMap">
+        SELECT * FROM round_vocabulary WHERE round_id = #{roundId} ORDER BY seq_no, id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO round_vocabulary (round_id, english, korean, phonetic, seq_no)
+        VALUES (#{roundId}, #{english}, #{korean}, #{phonetic}, #{seqNo})
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO round_vocabulary (round_id, english, korean, phonetic, seq_no)
+        VALUES
+        <foreach collection="list" item="word" separator=",">
+            (#{word.roundId}, #{word.english}, #{word.korean}, #{word.phonetic}, #{word.seqNo})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByRoundId">
+        DELETE FROM round_vocabulary WHERE round_id = #{roundId}
+    </delete>
+
+</mapper>

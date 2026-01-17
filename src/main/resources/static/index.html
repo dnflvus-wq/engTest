@@ -17,6 +17,8 @@
 
 <body>
     <div class="app-layout">
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebarOverlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
         <!-- Sidebar -->
         <nav class="sidebar hidden" id="mainSidebar">
             <div class="sidebar-header">
@@ -25,15 +27,6 @@
                         <i class="fa-solid fa-layer-group"></i>
                     </div>
                     <span class="logo-text">EstellExam</span>
-                </div>
-                <!-- 사이드바 헤더 우측: 다크모드 + 로그아웃 -->
-                <div class="sidebar-header-actions">
-                    <div class="theme-toggle-header" onclick="toggleTheme()" title="Toggle Dark Mode">
-                        <i id="themeIcon" class="fa-solid fa-moon"></i>
-                    </div>
-                    <div class="logout-icon" id="logoutIcon" onclick="logout()" title="Logout">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </div>
                 </div>
             </div>
 
@@ -47,20 +40,27 @@
                     <span>Admin</span>
                 </li>
             </ul>
+
+            <!-- Logout Button Removed -->
         </nav>
 
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Header -->
-            <header class="top-header">
-                <div class="header-title" id="headerTitleArea">
-                    <!-- 로고 (기본 표시) -->
-                    <div class="header-logo" id="headerLogo" onclick="backToDashboard()">
-                        <div class="logo-icon-sm">
-                            <i class="fa-solid fa-layer-group"></i>
+            <header class="top-header" style="flex-wrap: nowrap;">
+                <div class="header-title" id="headerTitleArea" style="display:flex; align-items:center; gap:10px;">
+                    <!-- Mobile Menu & Logo -->
+                    <div class="header-left-mobile mobile-only"
+                        style="display:none; align-items:center; gap:10px; margin-right:10px;">
+                        <i class="fa-solid fa-bars" style="font-size:1.4rem; cursor:pointer; color:var(--text-main);"
+                            onclick="toggleSidebar()"></i>
+                        <div class="logo-area-mobile"
+                            style="font-size:1.2rem; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i>
+                            <span>EstellExam</span>
                         </div>
-                        <span class="logo-text-sm">EstellExam</span>
                     </div>
+
                     <!-- Close 버튼 (섹션 진입 시 표시) -->
                     <button class="clay-btn btn-secondary btn-small hidden" id="headerCloseBtn"
                         onclick="showSection('menuSection')">
@@ -68,12 +68,29 @@
                     </button>
                 </div>
 
-                <div class="header-right" style="display:flex; align-items:center; gap:20px;">
-                    <div class="user-profile hidden" id="userProfileArea">
-                        <div class="avatar-circle">
-                            <i class="fa-solid fa-user"></i>
+                <div class="header-right" style="display:flex; align-items:center; gap:15px; flex-shrink: 0;">
+                    <!-- Dark Mode Toggle -->
+                    <div class="theme-toggle-header" onclick="toggleTheme()" title="Toggle Dark Mode">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="user-profile-container hidden" id="userProfileArea">
+                        <div class="user-profile" onclick="toggleProfileMenu(event)">
+                            <div class="avatar-circle">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <span id="headerUserName">Guest</span>
+                            <i class="fa-solid fa-caret-down" style="font-size: 0.8rem; margin-left: 5px;"></i>
                         </div>
-                        <span id="headerUserName">Guest</span>
+
+                        <!-- Dropdown Menu -->
+                        <div class="profile-dropdown hidden" id="profileDropdown">
+                            <div class="dropdown-item" onclick="logout()">
+                                <i class="fa-solid fa-right-from-bracket" style="color: var(--danger);"></i>
+                                Logout
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -142,6 +159,18 @@
                         <div class="widget-info">
                             <h3>History</h3>
                             <p>Past results</p>
+                        </div>
+                        <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                    </div>
+
+                    <!-- Study Materials Widget (NEW) -->
+                    <div class="clay-card widget" onclick="showStudyMaterials()">
+                        <div class="widget-icon color-blue">
+                            <i class="fa-solid fa-book-open-reader"></i>
+                        </div>
+                        <div class="widget-info">
+                            <h3>Study</h3>
+                            <p>Learning materials</p>
                         </div>
                         <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
                     </div>
@@ -344,6 +373,47 @@
                     </div>
                     <div id="historyList" class="mt-medium">
                         <!-- History items injected here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. STUDY MATERIALS SECTION (NEW) -->
+            <section id="studySection" class="hidden-section">
+                <div class="clay-card">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-book-open-reader"></i> Study Materials</h2>
+                    </div>
+
+                    <!-- 회차 선택 -->
+                    <div class="study-round-select">
+                        <label class="label">Select Exam Round</label>
+                        <select id="studyRoundSelect" class="clay-select" onchange="loadStudyMaterials(this.value)">
+                            <option value="">-- Select Round --</option>
+                        </select>
+                    </div>
+
+                    <!-- 단어장 영역 -->
+                    <div id="vocabularyArea">
+                        <h3 class="section-heading"><i class="fa-solid fa-spell-check"></i> Vocabulary</h3>
+                        <div id="vocabularyGrid" class="vocabulary-grid">
+                            <!-- Vocabulary cards injected here -->
+                        </div>
+                    </div>
+
+                    <!-- 유튜브 영상 영역 -->
+                    <div id="youtubeArea" class="youtube-section">
+                        <h3><i class="fa-brands fa-youtube" style="color: #ff0000;"></i> Video Lessons</h3>
+                        <div id="youtubeGrid" class="youtube-grid">
+                            <!-- Youtube cards injected here -->
+                        </div>
+                    </div>
+
+                    <!-- PPT 자료 영역 -->
+                    <div id="pptArea" class="ppt-section">
+                        <h3><i class="fa-solid fa-file-powerpoint" style="color: #d24726;"></i> Documents</h3>
+                        <div id="pptList" class="ppt-list">
+                            <!-- PPT items injected here -->
+                        </div>
                     </div>
                 </div>
             </section>
