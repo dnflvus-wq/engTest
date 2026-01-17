@@ -87,6 +87,10 @@
         DELETE FROM exams WHERE id = #{id}
     </delete>
 
+    <delete id="deleteByRoundId">
+        DELETE FROM exams WHERE round_id = #{roundId}
+    </delete>
+
     <select id="getRankingByRound" resultMap="examResultMap">
         SELECT e.*, u.name as user_name, r.title as round_title
         FROM exams e

@@ -17,6 +17,7 @@ public class RoundService {
     private final QuestionService questionService;
     private final VocabularyService vocabularyService;
     private final MaterialService materialService;
+    private final ExamService examService;
 
     public List<Round> getAllRounds() {
         return roundMapper.findAll();
@@ -58,7 +59,8 @@ public class RoundService {
     @Transactional
     public void deleteRound(Long id) {
         // 연관 데이터를 먼저 삭제 (외래키 제약조건 해결)
-        // 순서: Questions → Vocabulary → Materials → Round
+        // 순서: Exams (+ Answers) → Questions → Vocabulary → Materials → Round
+        examService.deleteByRoundId(id);
         questionService.deleteQuestionsByRoundId(id);
         vocabularyService.deleteByRoundId(id);
         materialService.deleteByRoundId(id);

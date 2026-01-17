@@ -125,4 +125,14 @@ public class ExamService {
         examAnswerMapper.deleteByExamId(id);
         examMapper.delete(id);
     }
+
+    @Transactional
+    public void deleteByRoundId(Long roundId) {
+        // 해당 회차의 모든 Exam들을 찾아서 삭제
+        List<Exam> exams = examMapper.findByRoundId(roundId);
+        for (Exam exam : exams) {
+            examAnswerMapper.deleteByExamId(exam.getId());
+        }
+        examMapper.deleteByRoundId(roundId);
+    }
 }
