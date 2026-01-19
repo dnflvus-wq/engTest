@@ -12,27 +12,26 @@
 <body>
     <div class="app-layout">
         <div id="sidebarOverlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
-        <nav class="sidebar hidden" id="mainSidebar">
+        <nav class="sidebar" id="mainSidebar">
             <div class="sidebar-header">
                 <div class="logo-area" onclick="location.href='/'">
                     <div class="logo-icon"><i class="fa-solid fa-layer-group"></i></div>
-                    <div class="logo-text">
-                        <h2>EstellExam</h2><span class="badge"
-                            style="background:var(--primary); color:white;">Admin</span>
-                    </div>
+                    <span class="logo-text">EstellExam</span>
                 </div>
             </div>
             <ul class="nav-links">
-                <li class="nav-item active" onclick="location.reload()"><i
-                        class="fa-solid fa-gear"></i><span>Dashboard</span></li>
-                <li class="nav-item" onclick="location.href='/'"><i class="fa-solid fa-house"></i><span>Main Site</span>
+                <li class="nav-item" onclick="location.href='/'">
+                    <i class="fa-solid fa-house"></i><span>Dashboard</span>
+                </li>
+                <li class="nav-item active" onclick="location.reload()">
+                    <i class="fa-solid fa-gear"></i><span>Admin</span>
                 </li>
             </ul>
         </nav>
         <main class="main-content">
             <header class="top-header" style="flex-wrap: nowrap;">
                 <div class="header-title" style="display:flex; align-items:center; gap:10px;">
-                    <button class="clay-btn btn-secondary btn-small hidden" id="headerCloseBtn"
+                    <button class="clay-btn btn-secondary btn-small" id="headerCloseBtn"
                         onclick="location.href='/'"><i class="fa-solid fa-arrow-left"></i> Close</button>
                     <div class="header-left-mobile mobile-only"
                         style="display:none; align-items:center; gap:10px; margin-right:10px;">
@@ -45,12 +44,9 @@
                     </div>
                 </div>
                 <div class="header-right" style="display:flex; align-items:center; gap:20px;">
-                    <!-- Dark Mode Toggle -->
                     <div class="theme-toggle-header" onclick="toggleTheme()" title="Toggle Dark Mode">
                         <i id="themeIcon" class="fa-solid fa-moon"></i>
                     </div>
-
-                    <!-- User Profile Dropdown -->
                     <div class="user-profile-container" id="userProfileArea">
                         <div class="user-profile" onclick="toggleProfileMenu(event)">
                             <div class="avatar-circle">
@@ -59,20 +55,12 @@
                             <span id="headerUserName" class="pc-only">Admin</span>
                             <i class="fa-solid fa-caret-down"></i>
                         </div>
-
                         <div class="profile-dropdown hidden" id="profileDropdown">
                             <div class="dropdown-item" onclick="location.href='/'">
                                 <i class="fa-solid fa-right-from-bracket" style="color: var(--danger);"></i> Exit
                             </div>
                         </div>
                     </div>
-
-                    <!-- Close Button (Original Style from index.html) -->
-                    <a href="/" class="clay-btn btn-secondary btn-small"
-                        style="text-decoration:none; display:flex; align-items:center; gap:8px;">
-                        <i class="fa-solid fa-arrow-left"></i>
-                        <span>Close</span>
-                    </a>
                 </div>
             </header>
             <div class="container" style="padding-top:20px;">
@@ -85,58 +73,21 @@
                         <div id="adminRoundList" class="round-list"></div>
                     </div>
 
-                    <!-- 회차 생성 - 1단계: 이미지 업로드 -->
-                    <div id="uploadImagesSection" class="section hidden">
+                    <!-- 회차 생성 (간소화) -->
+                    <div id="createRoundSection" class="section hidden">
                         <div class="section-header">
-                            <h2>1단계: 단어 이미지 업로드</h2>
+                            <h2>새 회차 생성</h2>
                             <button onclick="showAdminSection()" class="btn-secondary">뒤로</button>
                         </div>
                         <div class="form-group">
                             <label>회차 제목</label>
-                            <input type="text" id="roundTitle" placeholder="예: 1회차 단어 시험">
+                            <input type="text" id="roundTitle" placeholder="예: 1회차 단어 시험" class="clay-input">
                         </div>
                         <div class="form-group">
                             <label>설명</label>
-                            <textarea id="roundDescription" placeholder="시험에 대한 설명"></textarea>
+                            <textarea id="roundDescription" placeholder="시험에 대한 설명" class="clay-input"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label>난이도</label>
-                            <select id="difficulty">
-                                <option value="EASY">쉬움 (객관식 100%)</option>
-                                <option value="MEDIUM" selected>보통 (객관식 30% + 주관식 70%)</option>
-                                <option value="HARD">어려움 (문장 응용 - 주관식)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>단어 이미지 업로드 (여러 장 가능)</label>
-                            <div class="file-upload-wrapper">
-                                <input type="file" id="wordImages" accept="image/*" multiple
-                                    onchange="previewImages(this)" class="hidden-file-input">
-                                <label for="wordImages" class="file-upload-label clay-card-upload" id="imageDropZone">
-                                    <div class="upload-icon-circle">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    </div>
-                                    <span class="upload-primary-text">클릭하여 이미지 선택</span>
-                                    <span class="upload-secondary-text">또는 파일을 이곳에 드래그하세요</span>
-                                </label>
-                            </div>
-                            <div id="imagePreviewArea" class="image-preview-area"></div>
-                        </div>
-                        <button onclick="extractWords()" class="btn-primary btn-large">단어 추출하기</button>
-                        <p class="hint">* 이미지에서 영어 단어를 자동으로 추출합니다.</p>
-                    </div>
-
-                    <!-- 회차 생성 - 2단계: 단어 확인/수정 -->
-                    <div id="reviewWordsSection" class="section hidden">
-                        <div class="section-header">
-                            <h2>2단계: 추출된 단어 확인</h2>
-                            <button onclick="showUploadImages()" class="btn-secondary">뒤로</button>
-                        </div>
-                        <p class="hint">추출된 단어를 확인하고 수정하세요. 각 줄에 하나씩, "영어:한글" 형식으로 입력합니다.</p>
-                        <div class="form-group">
-                            <textarea id="extractedWords" rows="15" placeholder="apple:사과&#10;banana:바나나"></textarea>
-                        </div>
-                        <button onclick="generateQuestions()" class="btn-success btn-large">문제 생성하기</button>
+                        <button onclick="createRound()" class="btn-primary btn-large">생성하기</button>
                     </div>
 
                     <!-- 회차 상세 보기 -->
@@ -148,18 +99,69 @@
 
                         <!-- 탭 메뉴 -->
                         <div class="tab-menu">
-                            <button class="tab-btn active" onclick="switchTab('questions', this)">문제 목록</button>
+                            <button class="tab-btn active" onclick="switchTab('vocabulary', this)">단어 입력</button>
                             <button class="tab-btn" onclick="switchTab('materials', this)">교육자료</button>
                         </div>
 
-                        <!-- 문제 목록 탭 -->
-                        <div id="questionsTab" class="tab-content active">
-                            <div id="roundQuestionsList" class="questions-list"></div>
+                        <!-- 단어 입력 탭 -->
+                        <div id="vocabularyTab" class="tab-content active">
+                            <!-- 단어 목록 -->
+                            <div class="material-add-section">
+                                <h3>📋 등록된 단어 목록</h3>
+                                <div id="vocabularyList" class="vocabulary-list">
+                                    <p class="empty-message">등록된 단어가 없습니다.</p>
+                                </div>
+                            </div>
+
+                            <!-- 2단 그리드: 수동 입력 + 이미지 추출 -->
+                            <div class="two-column-grid">
+                                <!-- 수동 단어 입력 -->
+                                <div class="material-add-section">
+                                    <h3>✏️ 수동 단어 입력</h3>
+                                    <p class="hint">각 줄에 하나씩, "영어:한글" 형식으로 입력하세요.</p>
+                                    <div class="form-group">
+                                        <textarea id="manualWords" rows="8" placeholder="apple:사과&#10;banana:바나나&#10;get a message:메시지를 받다" class="clay-input"></textarea>
+                                    </div>
+                                    <button onclick="saveManualWords()" class="btn-primary" style="width:100%;">단어 저장</button>
+                                </div>
+
+                                <!-- 이미지로 단어 추출 -->
+                                <div class="material-add-section">
+                                    <h3>🖼️ 이미지에서 단어 추출</h3>
+                                    <div class="file-upload-wrapper">
+                                        <input type="file" id="wordImages" accept="image/*" multiple
+                                            onchange="previewImages(this)" class="hidden-file-input">
+                                        <label for="wordImages" class="file-upload-label clay-card-upload" id="imageDropZone">
+                                            <div class="upload-icon-circle">
+                                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            </div>
+                                            <span class="upload-primary-text">클릭하여 이미지 선택</span>
+                                            <span class="upload-secondary-text">또는 파일을 이곳에 드래그하세요</span>
+                                        </label>
+                                    </div>
+                                    <div id="imagePreviewArea" class="image-preview-area"></div>
+                                    <button onclick="extractWordsFromImages()" class="btn-primary" style="width:100%; margin-top:15px;">이미지에서 단어 추출</button>
+                                </div>
+                            </div>
+
+                            <!-- 문제 생성 영역 -->
+                            <div class="material-add-section" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid var(--primary);">
+                                <h3>🚀 문제 생성</h3>
+                                <p class="hint">위에서 입력/추출한 단어들을 기반으로 시험 문제를 자동 생성합니다.</p>
+                                <div class="form-group" style="margin-bottom: 15px;">
+                                    <label>난이도 선택</label>
+                                    <select id="difficulty" class="clay-input">
+                                        <option value="EASY">쉬움 (객관식 100%)</option>
+                                        <option value="MEDIUM" selected>보통 (객관식 30% + 주관식 70%)</option>
+                                        <option value="HARD">어려움 (문장 응용 - 주관식)</option>
+                                    </select>
+                                </div>
+                                <button onclick="generateQuestionsFromVocabulary()" class="btn-success btn-large" style="width:100%;">문제 생성하기</button>
+                            </div>
                         </div>
 
                         <!-- 교육자료 탭 -->
                         <div id="materialsTab" class="tab-content hidden">
-                            <!-- 유튜브 영상 추가 -->
                             <div class="material-add-section">
                                 <h3>📺 유튜브 영상 추가</h3>
                                 <div class="form-row">
@@ -168,8 +170,6 @@
                                     <button type="button" onclick="addYoutubeMaterial()" class="btn-primary">추가</button>
                                 </div>
                             </div>
-
-                            <!-- PPT 자료 업로드 -->
                             <div class="material-add-section">
                                 <h3>📄 PDF 자료 업로드</h3>
                                 <input type="text" id="pptTitle" placeholder="자료 제목 (선택)" class="clay-input"
@@ -188,15 +188,13 @@
                                 <button type="button" onclick="addPptMaterial()" class="btn-primary"
                                     style="margin-top: 15px; width: 100%;">업로드</button>
                             </div>
-
-                            <!-- 등록된 교육자료 목록 -->
                             <div class="material-list-section">
                                 <h3>📋 등록된 교육자료</h3>
                                 <div id="materialsList"></div>
                             </div>
                         </div>
 
-                        <div class="admin-actions">
+                        <div class="admin-actions" style="margin-top: 30px;">
                             <button onclick="deleteCurrentRound()" class="btn-danger">회차 삭제</button>
                         </div>
                     </div>
@@ -240,20 +238,14 @@
             });
         });
 
-        // 관리자 페이지 전용 스크립트
+        // ===== 관리자 페이지 전용 스크립트 =====
         let currentRoundId = null;
-        let extractedWordsList = [];
+        let currentRoundData = null;
 
-        // 페이지 로드 시 회차 목록 로드
         document.addEventListener('DOMContentLoaded', loadAdminRounds);
 
-        function showLoading() {
-            document.getElementById('loading').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').classList.add('hidden');
-        }
+        function showLoading() { document.getElementById('loading').classList.remove('hidden'); }
+        function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -266,15 +258,10 @@
         }
 
         function showCreateRound() {
-            showSection('uploadImagesSection');
+            showSection('createRoundSection');
             document.getElementById('roundTitle').value = '';
             document.getElementById('roundDescription').value = '';
-            document.getElementById('wordImages').value = '';
-            document.getElementById('imagePreviewArea').innerHTML = '';
-        }
-
-        function showUploadImages() {
-            showSection('uploadImagesSection');
+            document.getElementById('difficulty').value = 'MEDIUM';
         }
 
         async function loadAdminRounds() {
@@ -302,6 +289,138 @@
             }
         }
 
+        // ===== 회차 생성 =====
+        async function createRound() {
+            const title = document.getElementById('roundTitle').value.trim();
+            const description = document.getElementById('roundDescription').value.trim();
+
+            if (!title) {
+                alert('회차 제목을 입력하세요.');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch('/api/rounds', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        questionCount: 0,
+                        difficulty: 'MEDIUM',
+                        status: 'ACTIVE'
+                    })
+                });
+
+                if (!response.ok) throw new Error('회차 생성 실패');
+
+                const round = await response.json();
+                alert('회차가 생성되었습니다. 이제 단어를 입력하세요.');
+                viewRoundDetail(round.id);
+            } catch (error) {
+                console.error('Failed to create round:', error);
+                alert('회차 생성에 실패했습니다: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ===== 회차 상세 =====
+        async function viewRoundDetail(roundId) {
+            currentRoundId = roundId;
+            showLoading();
+
+            try {
+                const [roundRes, vocabRes] = await Promise.all([
+                    fetch(`/api/rounds/${roundId}`),
+                    fetch(`/api/rounds/${roundId}/vocabulary`)
+                ]);
+
+                currentRoundData = await roundRes.json();
+                const vocabulary = await vocabRes.json();
+
+                document.getElementById('roundDetailTitle').textContent = currentRoundData.title;
+                renderVocabularyList(vocabulary);
+
+                // 탭 초기화
+                switchTab('vocabulary', document.querySelector('.tab-btn'));
+                showSection('roundDetailSection');
+            } catch (error) {
+                console.error('Failed to load round detail:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderVocabularyList(vocabulary) {
+            const listEl = document.getElementById('vocabularyList');
+            if (!vocabulary || vocabulary.length === 0) {
+                listEl.innerHTML = '<p class="empty-message">등록된 단어가 없습니다.</p>';
+                return;
+            }
+
+            listEl.innerHTML = `
+                <div class="vocab-table">
+                    <div class="vocab-header">
+                        <span>영어</span>
+                        <span>한글</span>
+                    </div>
+                    ${vocabulary.map(v => `
+                        <div class="vocab-row">
+                            <span class="vocab-english">${v.english}</span>
+                            <span class="vocab-korean">${v.korean || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <p class="hint" style="margin-top:10px;">총 ${vocabulary.length}개 단어</p>
+            `;
+        }
+
+        // ===== 수동 단어 저장 =====
+        async function saveManualWords() {
+            const wordsText = document.getElementById('manualWords').value.trim();
+            if (!wordsText) {
+                alert('단어를 입력하세요.');
+                return;
+            }
+
+            // "영어:한글" 형식의 문자열 배열로 변환 (백엔드 List<String> 형식에 맞춤)
+            const words = wordsText.split('\n')
+                .map(line => line.trim())
+                .filter(line => line && line.includes(':'));
+
+            if (words.length === 0) {
+                alert('올바른 형식의 단어가 없습니다. "영어:한글" 형식으로 입력하세요.');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`/api/rounds/${currentRoundId}/vocabulary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(words)
+                });
+
+                if (!response.ok) throw new Error('저장 실패');
+
+                document.getElementById('manualWords').value = '';
+                alert(`${words.length}개 단어가 저장되었습니다.`);
+
+                // 단어 목록 새로고침
+                const vocabRes = await fetch(`/api/rounds/${currentRoundId}/vocabulary`);
+                const vocabulary = await vocabRes.json();
+                renderVocabularyList(vocabulary);
+            } catch (error) {
+                console.error('Failed to save words:', error);
+                alert('단어 저장에 실패했습니다: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ===== 이미지에서 단어 추출 =====
         function previewImages(input) {
             const previewArea = document.getElementById('imagePreviewArea');
             previewArea.innerHTML = '';
@@ -320,96 +439,8 @@
             }
         }
 
-        // 드래그 앤 드롭 기능 초기화
-        document.addEventListener('DOMContentLoaded', function () {
-            // 이미지 업로드 드래그 앤 드롭
-            setupDragDrop('imageDropZone', 'wordImages', function (files) {
-                const input = document.getElementById('wordImages');
-                const dt = new DataTransfer();
-                for (const file of files) {
-                    if (file.type.startsWith('image/')) {
-                        dt.items.add(file);
-                    }
-                }
-                input.files = dt.files;
-                previewImages(input);
-            });
-
-            // PPT/PDF 업로드 드래그 앤 드롭
-            setupDragDrop('pptDropZone', 'pptFile', function (files) {
-                const input = document.getElementById('pptFile');
-                if (files.length > 0) {
-                    // PDF 파일 검사
-                    if (files[0].type !== 'application/pdf' && !files[0].name.toLowerCase().endsWith('.pdf')) {
-                        alert('PDF 파일만 업로드 가능합니다.');
-                        return;
-                    }
-
-                    const dt = new DataTransfer();
-                    dt.items.add(files[0]); // 첫 번째 파일만
-                    input.files = dt.files;
-                    updatePptFileName(files[0].name);
-                }
-            });
-
-            // PPT 파일 선택 시 파일명 표시
-            document.getElementById('pptFile').addEventListener('change', function () {
-                if (this.files.length > 0) {
-                    updatePptFileName(this.files[0].name);
-                } else {
-                    updatePptFileName('');
-                }
-            });
-        });
-
-        function setupDragDrop(dropZoneId, inputId, onDropCallback) {
-            const dropZone = document.getElementById(dropZoneId);
-            if (!dropZone) return;
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, preventDefaults, false);
-            });
-
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropZone.addEventListener(eventName, () => {
-                    dropZone.classList.add('drag-over');
-                }, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, () => {
-                    dropZone.classList.remove('drag-over');
-                }, false);
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    onDropCallback(files);
-                }
-            }, false);
-        }
-
-        function updatePptFileName(fileName) {
-            const el = document.getElementById('pptFileName');
-            if (el) {
-                el.textContent = fileName ? `📎 ${fileName}` : '';
-            }
-        }
-
-        async function extractWords() {
-            const title = document.getElementById('roundTitle').value.trim();
+        async function extractWordsFromImages() {
             const fileInput = document.getElementById('wordImages');
-
-            if (!title) {
-                alert('회차 제목을 입력하세요.');
-                return;
-            }
 
             if (!fileInput.files || fileInput.files.length === 0) {
                 alert('이미지를 업로드하세요.');
@@ -424,7 +455,6 @@
                     formData.append('images', file);
                 }
 
-                // 숨겨진 프롬프트 정의
                 const customPrompt = `당신은 영어 학습 교재에서 영어 표현을 추출하는 전문가입니다.
 
 이미지에서 다음 규칙에 따라 영어 표현을 추출해주세요:
@@ -460,15 +490,28 @@ work in:~에서 일하다`;
                     body: formData
                 });
 
-                if (!response.ok) {
-                    throw new Error('단어 추출 실패');
-                }
+                if (!response.ok) throw new Error('단어 추출 실패');
 
                 const data = await response.json();
-                extractedWordsList = data.words || [];
+                const extractedWords = data.words || [];
 
-                document.getElementById('extractedWords').value = extractedWordsList.join('\n');
-                showSection('reviewWordsSection');
+                if (extractedWords.length === 0) {
+                    alert('추출된 단어가 없습니다.');
+                    return;
+                }
+
+                // 추출된 단어를 수동 입력창에 추가
+                const currentText = document.getElementById('manualWords').value.trim();
+                const newText = extractedWords.join('\n');
+                document.getElementById('manualWords').value = currentText
+                    ? currentText + '\n' + newText
+                    : newText;
+
+                // 이미지 초기화
+                fileInput.value = '';
+                document.getElementById('imagePreviewArea').innerHTML = '';
+
+                alert(`${extractedWords.length}개 단어가 추출되었습니다. 확인 후 "단어 저장" 버튼을 눌러주세요.`);
             } catch (error) {
                 console.error('Failed to extract words:', error);
                 alert('단어 추출에 실패했습니다: ' + error.message);
@@ -477,45 +520,25 @@ work in:~에서 일하다`;
             }
         }
 
-        async function generateQuestions() {
-            const title = document.getElementById('roundTitle').value.trim();
-            const description = document.getElementById('roundDescription').value.trim();
-            const difficulty = document.getElementById('difficulty').value;
-            const wordsText = document.getElementById('extractedWords').value.trim();
-
-            if (!wordsText) {
-                alert('단어가 없습니다.');
-                return;
-            }
-
-            const words = wordsText.split('\n').filter(w => w.trim());
-
+        // ===== 문제 생성 =====
+        async function generateQuestionsFromVocabulary() {
             showLoading();
 
             try {
-                // 1. 회차 생성
-                const roundResponse = await fetch('/api/rounds', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: title,
-                        description: description,
-                        questionCount: words.length,
-                        difficulty: difficulty,
-                        status: 'ACTIVE'
-                    })
-                });
+                // 현재 단어 목록 가져오기
+                const vocabRes = await fetch(`/api/rounds/${currentRoundId}/vocabulary`);
+                const vocabulary = await vocabRes.json();
 
-                if (!roundResponse.ok) {
-                    throw new Error('회차 생성 실패');
+                if (!vocabulary || vocabulary.length === 0) {
+                    alert('먼저 단어를 입력하세요.');
+                    hideLoading();
+                    return;
                 }
 
-                const round = await roundResponse.json();
-
-                // 2. 단어 기반 문제 생성
+                const words = vocabulary.map(v => `${v.english}:${v.korean || ''}`);
                 const wordListStr = words.join('\n');
+                const difficulty = document.getElementById('difficulty').value;
 
-                // 난이도별 프롬프트 템플릿 정의
                 const prompts = {
                     'EASY': `당신은 영어 시험 문제 출제 전문가입니다.
 다음 단어들을 사용하여 **객관식 문제만** 만들어주세요.
@@ -584,7 +607,7 @@ ${wordListStr}
 
                 const prompt = prompts[difficulty] || prompts['MEDIUM'];
 
-                const generateResponse = await fetch(`/api/rounds/${round.id}/generate-from-words`, {
+                const generateResponse = await fetch(`/api/rounds/${currentRoundId}/generate-from-words`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -594,14 +617,13 @@ ${wordListStr}
                     })
                 });
 
-                if (!generateResponse.ok) {
-                    throw new Error('문제 생성 실패');
-                }
+                if (!generateResponse.ok) throw new Error('문제 생성 실패');
 
                 const result = await generateResponse.json();
                 alert(`${result.count}개의 문제가 생성되었습니다!`);
 
-                showAdminSection();
+                // 회차 정보 새로고침
+                viewRoundDetail(currentRoundId);
             } catch (error) {
                 console.error('Failed to generate questions:', error);
                 alert('문제 생성에 실패했습니다: ' + error.message);
@@ -610,50 +632,7 @@ ${wordListStr}
             }
         }
 
-        async function viewRoundDetail(roundId) {
-            currentRoundId = roundId;
-            showLoading();
-
-            try {
-                const [roundRes, questionsRes] = await Promise.all([
-                    fetch(`/api/rounds/${roundId}`),
-                    fetch(`/api/rounds/${roundId}/questions`)
-                ]);
-
-                const round = await roundRes.json();
-                const questions = await questionsRes.json();
-
-                document.getElementById('roundDetailTitle').textContent = round.title;
-
-                const questionsHtml = questions.length === 0
-                    ? '<p class="empty-message">문제가 없습니다.</p>'
-                    : questions.map((q, i) => `
-                        <div class="question-card">
-                            <div class="question-number">${i + 1}번</div>
-                            <div class="question-content">
-                                <p class="question-text">${q.questionText}</p>
-                                <p class="answer"><strong>정답:</strong> ${q.answer}</p>
-                                ${q.answerType === 'CHOICE' ? `
-                                    <div class="options">
-                                        <span>① ${q.option1 || ''}</span>
-                                        <span>② ${q.option2 || ''}</span>
-                                        <span>③ ${q.option3 || ''}</span>
-                                        <span>④ ${q.option4 || ''}</span>
-                                    </div>
-                                ` : '<span class="badge">주관식</span>'}
-                            </div>
-                        </div>
-                    `).join('');
-
-                document.getElementById('roundQuestionsList').innerHTML = questionsHtml;
-                showSection('roundDetailSection');
-            } catch (error) {
-                console.error('Failed to load round detail:', error);
-            } finally {
-                hideLoading();
-            }
-        }
-
+        // ===== 회차 삭제 =====
         async function deleteCurrentRound() {
             if (!currentRoundId) {
                 alert('삭제할 회차가 선택되지 않았습니다.');
@@ -663,7 +642,6 @@ ${wordListStr}
             if (!confirm('정말 이 회차를 삭제하시겠습니까?')) return;
 
             showLoading();
-
             try {
                 await fetch(`/api/rounds/${currentRoundId}`, { method: 'DELETE' });
                 alert('회차가 삭제되었습니다.');
@@ -678,21 +656,17 @@ ${wordListStr}
 
         // ===== 탭 전환 =====
         function switchTab(tabName, clickedBtn) {
-            // 탭 버튼 상태 변경
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             if (clickedBtn) clickedBtn.classList.add('active');
 
-            // 탭 내용 표시/숨김
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.add('hidden');
                 content.classList.remove('active');
             });
 
-            if (tabName === 'questions') {
-                document.getElementById('questionsTab').classList.remove('hidden');
-                document.getElementById('questionsTab').classList.add('active');
+            if (tabName === 'vocabulary') {
+                document.getElementById('vocabularyTab').classList.remove('hidden');
+                document.getElementById('vocabularyTab').classList.add('active');
             } else if (tabName === 'materials') {
                 document.getElementById('materialsTab').classList.remove('hidden');
                 document.getElementById('materialsTab').classList.add('active');
@@ -712,9 +686,6 @@ ${wordListStr}
                     ? '<p class="empty-message">등록된 교육자료가 없습니다.</p>'
                     : materials.map(m => {
                         const icon = m.materialType === 'YOUTUBE' ? '📺' : '📄';
-                        const displayUrl = m.materialType === 'YOUTUBE'
-                            ? getYoutubeThumbnail(m.url)
-                            : m.fileName || m.url;
                         const isPdf = m.fileName && m.fileName.toLowerCase().endsWith('.pdf');
                         const previewHtml = isPdf
                             ? `<div class="pdf-preview" style="margin-top:15px; width:100%; height:600px; border-radius:10px; overflow:hidden; box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff;">
@@ -743,16 +714,6 @@ ${wordListStr}
             } catch (error) {
                 console.error('Failed to load materials:', error);
             }
-        }
-
-        function getYoutubeThumbnail(url) {
-            const videoId = extractYoutubeId(url);
-            return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
-        }
-
-        function extractYoutubeId(url) {
-            const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-            return match ? match[1] : null;
         }
 
         async function addYoutubeMaterial() {
@@ -810,6 +771,7 @@ ${wordListStr}
 
                 document.getElementById('pptTitle').value = '';
                 fileInput.value = '';
+                updatePptFileName('');
                 loadMaterials();
                 alert('파일이 업로드되었습니다.');
             } catch (error) {
@@ -833,6 +795,72 @@ ${wordListStr}
             } finally {
                 hideLoading();
             }
+        }
+
+        function updatePptFileName(fileName) {
+            const el = document.getElementById('pptFileName');
+            if (el) {
+                el.textContent = fileName ? `📎 ${fileName}` : '';
+            }
+        }
+
+        // ===== 드래그 앤 드롭 =====
+        document.addEventListener('DOMContentLoaded', function () {
+            setupDragDrop('imageDropZone', 'wordImages', function (files) {
+                const input = document.getElementById('wordImages');
+                const dt = new DataTransfer();
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        dt.items.add(file);
+                    }
+                }
+                input.files = dt.files;
+                previewImages(input);
+            });
+
+            setupDragDrop('pptDropZone', 'pptFile', function (files) {
+                const input = document.getElementById('pptFile');
+                if (files.length > 0) {
+                    if (files[0].type !== 'application/pdf' && !files[0].name.toLowerCase().endsWith('.pdf')) {
+                        alert('PDF 파일만 업로드 가능합니다.');
+                        return;
+                    }
+                    const dt = new DataTransfer();
+                    dt.items.add(files[0]);
+                    input.files = dt.files;
+                    updatePptFileName(files[0].name);
+                }
+            });
+
+            document.getElementById('pptFile')?.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    updatePptFileName(this.files[0].name);
+                } else {
+                    updatePptFileName('');
+                }
+            });
+        });
+
+        function setupDragDrop(dropZoneId, inputId, onDropCallback) {
+            const dropZone = document.getElementById(dropZoneId);
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) onDropCallback(files);
+            }, false);
         }
     </script>
 </body>

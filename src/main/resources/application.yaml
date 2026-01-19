@@ -26,6 +26,14 @@ spring:
 # Server
 server:
   port: 8080
+  servlet:
+    session:
+      timeout: 0
+      cookie:
+        http-only: true
+        max-age: 2147483647
+        path: /
+        secure: false
 
 # MyBatis
 mybatis:

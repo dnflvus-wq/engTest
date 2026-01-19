@@ -178,7 +178,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateThemeIcon();
     }
     await loadUsers();
+    await checkSession();
 });
+
+// Check existing session (auto-login)
+async function checkSession() {
+    try {
+        const response = await fetch('/api/users/me');
+        if (response.ok) {
+            currentUser = await response.json();
+            document.getElementById('headerUserName').textContent = currentUser.name;
+            document.getElementById('userProfileArea').classList.remove('hidden');
+            document.getElementById('mainSidebar').classList.remove('hidden');
+            showSection('menuSection');
+        }
+    } catch (e) {
+        // No session, stay on login page
+    }
+}
 
 async function loadUsers() {
     let users = [];
@@ -205,12 +222,15 @@ async function loadUsers() {
 
 // Login/Logout
 async function login() {
-    const userId = document.getElementById('userSelectValue').value;
-    if (!userId) { showAlert('Please select a user'); return; }
+    const userName = document.getElementById('selectedUserText').textContent;
+    if (!userName || userName === 'Select Profile') { showAlert('Please select a user'); return; }
 
     try {
         showLoading();
-        currentUser = await api(`/api/users/${userId}`);
+        currentUser = await api('/api/users/login', {
+            method: 'POST',
+            body: JSON.stringify({ name: userName })
+        });
         document.getElementById('headerUserName').textContent = currentUser.name;
         document.getElementById('userProfileArea').classList.remove('hidden');
         document.getElementById('mainSidebar').classList.remove('hidden'); // Show Sidebar
@@ -222,7 +242,12 @@ async function login() {
     }
 }
 
-function logout() {
+async function logout() {
+    try {
+        await api('/api/users/logout', { method: 'POST' });
+    } catch (e) {
+        console.error('Logout error:', e);
+    }
     currentUser = null;
     document.getElementById('userProfileArea').classList.add('hidden');
     document.getElementById('mainSidebar').classList.add('hidden'); // Hide Sidebar

@@ -2355,3 +2355,66 @@ body {
     font-weight: 700;
     color: var(--primary);
 }
+
+/* ===== Admin 2-Column Grid ===== */
+.two-column-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .two-column-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Vocabulary Table ===== */
+.vocab-table {
+    width: 100%;
+    background: var(--clay-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--clay-shadow-out-sm);
+}
+
+.vocab-header {
+    display: flex;
+    padding: 12px 20px;
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+}
+
+.vocab-header span {
+    flex: 1;
+}
+
+.vocab-row {
+    display: flex;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.vocab-row:last-child {
+    border-bottom: none;
+}
+
+.vocab-row:nth-child(odd) {
+    background: rgba(0,0,0,0.02);
+}
+
+.vocab-row:hover {
+    background: rgba(52, 211, 153, 0.1);
+}
+
+.vocab-english {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.vocab-korean {
+    flex: 1;
+    color: var(--text-muted);
+}
