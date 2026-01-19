@@ -801,8 +801,8 @@ async function loadStudyMaterials(roundId) {
                 const isPdf = m.fileName && m.fileName.toLowerCase().endsWith('.pdf');
                 const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-powerpoint';
                 const previewHtml = isPdf
-                    ? `<div class="pdf-preview" style="margin-top:15px; width:100%; height:500px; border-radius:10px; overflow:hidden; box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff;">
-                         <iframe src="${m.url}" style="width:100%; height:100%; border:none;"></iframe>
+                    ? `<div class="pdf-preview" style="margin-top:15px; width:100%; height:600px; border-radius:10px; overflow:hidden; box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff;">
+                         <iframe src="${m.url}#view=FitH" style="width:100%; height:100%; border:none;"></iframe>
                        </div>`
                     : '';
 
