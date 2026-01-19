@@ -21,16 +21,16 @@ public class VocabularyService {
 
     @Transactional
     public void saveVocabulary(Long roundId, List<String> words) {
-        // 기존 단어 삭제
-        vocabularyMapper.deleteByRoundId(roundId);
-
         if (words == null || words.isEmpty()) {
             return;
         }
 
+        // 기존 단어 개수 파악 (seqNo 계산용)
+        List<VocabularyWord> existingWords = vocabularyMapper.findByRoundId(roundId);
+        int seqNo = existingWords.size() + 1;
+
         // 새 단어 파싱 및 저장
         List<VocabularyWord> vocabularyWords = new ArrayList<>();
-        int seqNo = 1;
 
         for (String word : words) {
             if (word == null || word.trim().isEmpty()) {

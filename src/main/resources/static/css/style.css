@@ -2372,49 +2372,75 @@ body {
 /* ===== Vocabulary Table ===== */
 .vocab-table {
     width: 100%;
+    /* max-width removed to fill container as requested */
     background: var(--clay-surface);
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--clay-shadow-out-sm);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    /* Subtle border */
 }
 
 .vocab-header {
     display: flex;
     padding: 12px 20px;
+    /* Comfortable header padding */
     background: var(--primary);
     color: white;
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .vocab-header span {
     flex: 1;
+    text-align: center;
+    /* Center align header text */
+}
+
+/* First column (English) alignment */
+.vocab-header span:first-child {
+    text-align: left;
+    padding-left: 10px;
 }
 
 .vocab-row {
     display: flex;
-    padding: 12px 20px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding: 10px 20px;
+    /* Balanced padding */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    align-items: center;
+    transition: background 0.2s;
 }
 
 .vocab-row:last-child {
     border-bottom: none;
 }
 
-.vocab-row:nth-child(odd) {
-    background: rgba(0,0,0,0.02);
+/* Alternating Row Colors (Zebra Striping) */
+.vocab-row:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
 }
 
 .vocab-row:hover {
-    background: rgba(52, 211, 153, 0.1);
+    background: rgba(52, 211, 153, 0.15) !important;
+    /* Highlight on hover */
 }
 
 .vocab-english {
     flex: 1;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-main);
+    font-size: 1.05rem !important;
+    /* Slightly larger for emphasis */
+    padding-left: 10px;
 }
 
 .vocab-korean {
     flex: 1;
     color: var(--text-muted);
+    font-size: 0.95rem;
+    text-align: center;
+    /* Center Korean text to match header */
 }

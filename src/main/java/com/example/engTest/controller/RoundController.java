@@ -7,6 +7,7 @@ import com.example.engTest.service.GeminiService;
 import com.example.engTest.service.QuestionService;
 import com.example.engTest.service.RoundService;
 import com.example.engTest.service.VocabularyService;
+import com.example.engTest.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ public class RoundController {
     private final QuestionService questionService;
     private final GeminiService geminiService;
     private final VocabularyService vocabularyService;
+    private final ExamService examService;
 
     @GetMapping
     public ResponseEntity<List<Round>> getAllRounds() {
@@ -69,7 +71,8 @@ public class RoundController {
                 return ResponseEntity.badRequest().body(Map.of("error", "프롬프트가 누락되었습니다."));
             }
 
-            // 기존 문제 삭제
+            // 기존 시험 기록 및 문제 삭제 (FK 에러 방지)
+            examService.deleteByRoundId(id);
             questionService.deleteQuestionsByRoundId(id);
 
             // Gemini로 새 문제 생성
@@ -183,7 +186,8 @@ public class RoundController {
                 return ResponseEntity.badRequest().body(Map.of("error", "프롬프트가 누락되었습니다."));
             }
 
-            // 기존 문제 삭제
+            // 기존 시험 기록 및 문제 삭제 (FK 에러 방지)
+            examService.deleteByRoundId(id);
             questionService.deleteQuestionsByRoundId(id);
 
             // 단어 기반 문제 생성

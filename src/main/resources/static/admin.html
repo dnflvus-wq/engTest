@@ -31,8 +31,8 @@
         <main class="main-content">
             <header class="top-header" style="flex-wrap: nowrap;">
                 <div class="header-title" style="display:flex; align-items:center; gap:10px;">
-                    <button class="clay-btn btn-secondary btn-small" id="headerCloseBtn"
-                        onclick="location.href='/'"><i class="fa-solid fa-arrow-left"></i> Close</button>
+                    <button class="clay-btn btn-secondary btn-small" id="headerCloseBtn" onclick="location.href='/'"><i
+                            class="fa-solid fa-arrow-left"></i> Close</button>
                     <div class="header-left-mobile mobile-only"
                         style="display:none; align-items:center; gap:10px; margin-right:10px;">
                         <i class="fa-solid fa-bars" style="font-size:1.1rem; cursor:pointer; color:var(--text-main);"
@@ -120,9 +120,12 @@
                                     <h3>✏️ 수동 단어 입력</h3>
                                     <p class="hint">각 줄에 하나씩, "영어:한글" 형식으로 입력하세요.</p>
                                     <div class="form-group">
-                                        <textarea id="manualWords" rows="8" placeholder="apple:사과&#10;banana:바나나&#10;get a message:메시지를 받다" class="clay-input"></textarea>
+                                        <textarea id="manualWords" rows="8"
+                                            placeholder="apple:사과&#10;banana:바나나&#10;get a message:메시지를 받다"
+                                            class="clay-input"></textarea>
                                     </div>
-                                    <button onclick="saveManualWords()" class="btn-primary" style="width:100%;">단어 저장</button>
+                                    <button onclick="saveManualWords()" class="btn-primary" style="width:100%;">단어
+                                        저장</button>
                                 </div>
 
                                 <!-- 이미지로 단어 추출 -->
@@ -131,7 +134,8 @@
                                     <div class="file-upload-wrapper">
                                         <input type="file" id="wordImages" accept="image/*" multiple
                                             onchange="previewImages(this)" class="hidden-file-input">
-                                        <label for="wordImages" class="file-upload-label clay-card-upload" id="imageDropZone">
+                                        <label for="wordImages" class="file-upload-label clay-card-upload"
+                                            id="imageDropZone">
                                             <div class="upload-icon-circle">
                                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                                             </div>
@@ -140,12 +144,14 @@
                                         </label>
                                     </div>
                                     <div id="imagePreviewArea" class="image-preview-area"></div>
-                                    <button onclick="extractWordsFromImages()" class="btn-primary" style="width:100%; margin-top:15px;">이미지에서 단어 추출</button>
+                                    <button onclick="extractWordsFromImages()" class="btn-primary"
+                                        style="width:100%; margin-top:15px;">이미지에서 단어 추출</button>
                                 </div>
                             </div>
 
                             <!-- 문제 생성 영역 -->
-                            <div class="material-add-section" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid var(--primary);">
+                            <div class="material-add-section"
+                                style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid var(--primary);">
                                 <h3>🚀 문제 생성</h3>
                                 <p class="hint">위에서 입력/추출한 단어들을 기반으로 시험 문제를 자동 생성합니다.</p>
                                 <div class="form-group" style="margin-bottom: 15px;">
@@ -156,7 +162,8 @@
                                         <option value="HARD">어려움 (문장 응용 - 주관식)</option>
                                     </select>
                                 </div>
-                                <button onclick="generateQuestionsFromVocabulary()" class="btn-success btn-large" style="width:100%;">문제 생성하기</button>
+                                <button onclick="generateQuestionsFromVocabulary()" class="btn-success btn-large"
+                                    style="width:100%;">문제 생성하기</button>
                             </div>
                         </div>
 
