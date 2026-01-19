@@ -171,12 +171,11 @@
 
                             <!-- PPT 자료 업로드 -->
                             <div class="material-add-section">
-                                <h3>📄 PPT/PDF 자료 업로드</h3>
+                                <h3>📄 PDF 자료 업로드</h3>
                                 <input type="text" id="pptTitle" placeholder="자료 제목 (선택)" class="clay-input"
                                     style="margin-bottom: 15px;">
                                 <div class="file-upload-wrapper">
-                                    <input type="file" id="pptFile" accept=".ppt,.pptx,.pdf,.doc,.docx"
-                                        class="hidden-file-input">
+                                    <input type="file" id="pptFile" accept=".pdf" class="hidden-file-input">
                                     <label for="pptFile" class="file-upload-label clay-card-upload" id="pptDropZone">
                                         <div class="upload-icon-circle">
                                             <i class="fa-solid fa-file-arrow-up"></i>
@@ -340,6 +339,12 @@
             setupDragDrop('pptDropZone', 'pptFile', function (files) {
                 const input = document.getElementById('pptFile');
                 if (files.length > 0) {
+                    // PDF 파일 검사
+                    if (files[0].type !== 'application/pdf' && !files[0].name.toLowerCase().endsWith('.pdf')) {
+                        alert('PDF 파일만 업로드 가능합니다.');
+                        return;
+                    }
+
                     const dt = new DataTransfer();
                     dt.items.add(files[0]); // 첫 번째 파일만
                     input.files = dt.files;
@@ -710,14 +715,26 @@ ${wordListStr}
                         const displayUrl = m.materialType === 'YOUTUBE'
                             ? getYoutubeThumbnail(m.url)
                             : m.fileName || m.url;
+                        const isPdf = m.fileName && m.fileName.toLowerCase().endsWith('.pdf');
+                        const previewHtml = isPdf
+                            ? `<div class="pdf-preview" style="margin-top:15px; width:100%; height:500px; border-radius:10px; overflow:hidden; box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff;">
+                                 <iframe src="/uploads/${m.fileName}" style="width:100%; height:100%; border:none;"></iframe>
+                               </div>`
+                            : '';
+
                         return `
-                            <div class="material-card">
-                                <span class="material-icon">${icon}</span>
-                                <div class="material-info">
-                                    <div class="material-title">${m.title || (m.materialType === 'YOUTUBE' ? '유튜브 영상' : '자료')}</div>
-                                    <div class="material-url">${m.materialType === 'YOUTUBE' ? m.url : m.fileName}</div>
+                            <div class="material-card" style="flex-direction: column; align-items: flex-start;">
+                                <div style="display:flex; width:100%; align-items:center; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <span class="material-icon">${icon}</span>
+                                        <div class="material-info">
+                                            <div class="material-title">${m.title || (m.materialType === 'YOUTUBE' ? '유튜브 영상' : '자료')}</div>
+                                            <div class="material-url">${m.materialType === 'YOUTUBE' ? m.url : m.fileName}</div>
+                                        </div>
+                                    </div>
+                                    <button onclick="deleteMaterial(${m.id})" class="btn-danger btn-small">삭제</button>
                                 </div>
-                                <button onclick="deleteMaterial(${m.id})" class="btn-danger btn-small">삭제</button>
+                                ${previewHtml}
                             </div>
                         `;
                     }).join('');
