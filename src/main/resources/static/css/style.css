@@ -2096,7 +2096,7 @@ body {
 
 .youtube-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 20px;
 }
 
@@ -2115,7 +2115,7 @@ body {
 
 .youtube-thumbnail {
     width: 100%;
-    height: 180px;
+    height: 100%;
     object-fit: cover;
     background: #000;
 }
@@ -2177,6 +2177,7 @@ body {
 .youtube-player-wrapper {
     position: relative;
     cursor: pointer;
+    aspect-ratio: 16 / 9;
 }
 
 .youtube-card {
@@ -2208,7 +2209,7 @@ body {
 
 .youtube-iframe {
     width: 100%;
-    height: 180px;
+    height: 100%;
     border-radius: var(--radius-md);
 }
 
@@ -2329,6 +2330,7 @@ body {
 .preview-image:hover {
     transform: scale(1.05);
 }
+
 /* Drag and Drop Visual Feedback */
 .clay-card-upload.drag-over {
     border-color: var(--primary) !important;
@@ -2347,4 +2349,3 @@ body {
     font-weight: 700;
     color: var(--primary);
 }
-
