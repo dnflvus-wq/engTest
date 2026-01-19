@@ -387,9 +387,16 @@
                     <!-- 회차 선택 -->
                     <div class="study-round-select">
                         <label class="label">Select Exam Round</label>
-                        <select id="studyRoundSelect" class="clay-select" onchange="loadStudyMaterials(this.value)">
-                            <option value="">-- Select Round --</option>
-                        </select>
+                        <div class="custom-select-wrapper" id="studyRoundSelectWrapper">
+                            <div class="custom-select-trigger" onclick="toggleStudyRoundDropdown()">
+                                <span id="selectedStudyRoundText">-- Select Round --</span>
+                                <i class="fa-solid fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="custom-options hidden" id="studyRoundOptions">
+                                <!-- Options injected via JS -->
+                            </div>
+                            <input type="hidden" id="studyRoundSelectValue">
+                        </div>
                     </div>
 
                     <!-- 단어장 영역 -->

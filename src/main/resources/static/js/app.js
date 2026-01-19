@@ -103,14 +103,17 @@ window.addEventListener('click', (e) => {
     // 2. Profile Dropdown
     const profileDropdown = document.getElementById('profileDropdown');
     const profileArea = document.getElementById('userProfileArea');
-    // If click is outside profile area
     if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
-        // 이미 toggleProfileMenu에서 stopPropagation을 했다면 이 로직은 트리거 되지 않음(프로필 클릭시)
-        // 따라서 여기로 들어왔다는 건 프로필 영역 '밖'을 클릭했다는 뜻 (또는 stopPropagation 안된 내부)
-        // 안전하게 영역 체크
         if (profileArea && !profileArea.contains(e.target)) {
             profileDropdown.classList.add('hidden');
         }
+    }
+
+    // 3. Study Round Select
+    const studyWrapper = document.getElementById('studyRoundSelectWrapper');
+    if (studyWrapper && !studyWrapper.contains(e.target)) {
+        const studyOptions = document.getElementById('studyRoundOptions');
+        if (studyOptions) studyOptions.classList.add('hidden');
     }
 });
 
@@ -734,11 +737,22 @@ async function showStudyMaterials() {
     // 회차 목록 로드
     try {
         const rounds = await api('/api/rounds/active');
-        const select = document.getElementById('studyRoundSelect');
-        select.innerHTML = '<option value="">-- Select Round --</option>';
-        rounds.forEach(r => {
-            select.innerHTML += `<option value="${r.id}">${r.title}</option>`;
-        });
+        const options = document.getElementById('studyRoundOptions');
+
+        if (rounds.length === 0) {
+            options.innerHTML = '<div class="custom-option">No rounds available</div>';
+        } else {
+            options.innerHTML = rounds.map(r => `
+                <div class="custom-option" onclick="selectStudyRound(${r.id}, '${r.title.replace(/'/g, "\\'")}')">
+                    ${r.title}
+                </div>
+            `).join('');
+        }
+
+        // Reset Selection
+        document.getElementById('selectedStudyRoundText').textContent = '-- Select Round --';
+        document.getElementById('studyRoundSelectValue').value = '';
+        document.getElementById('studyRoundOptions').classList.add('hidden');
 
         // 초기 상태 - 빈 영역
         document.getElementById('vocabularyGrid').innerHTML = '<p class="empty-state"><i class="fa-solid fa-spell-check"></i><span>Select a round to view vocabulary</span></p>';
@@ -747,6 +761,18 @@ async function showStudyMaterials() {
     } catch (e) {
         showAlert('Failed to load rounds: ' + e.message);
     }
+}
+
+function toggleStudyRoundDropdown() {
+    const options = document.getElementById('studyRoundOptions');
+    options.classList.toggle('hidden');
+}
+
+function selectStudyRound(id, title) {
+    document.getElementById('studyRoundSelectValue').value = id;
+    document.getElementById('selectedStudyRoundText').textContent = title;
+    document.getElementById('studyRoundOptions').classList.add('hidden');
+    loadStudyMaterials(id);
 }
 
 async function loadStudyMaterials(roundId) {
