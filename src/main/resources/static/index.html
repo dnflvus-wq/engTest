@@ -127,6 +127,18 @@
             <!-- 2. DASHBOARD (MENU) SECTION -->
             <section id="menuSection" class="hidden-section">
                 <div class="dashboard-grid">
+                    <!-- Study Materials Widget (NEW) -->
+                    <div class="clay-card widget" onclick="showStudyMaterials()">
+                        <div class="widget-icon color-blue">
+                            <i class="fa-solid fa-book-open-reader"></i>
+                        </div>
+                        <div class="widget-info">
+                            <h3>Study</h3>
+                            <p>Learning materials</p>
+                        </div>
+                        <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                    </div>
+
                     <!-- Exam Widget -->
                     <div class="clay-card widget" onclick="loadRounds()">
                         <div class="widget-icon color-purple">
@@ -135,18 +147,6 @@
                         <div class="widget-info">
                             <h3>Take Exam</h3>
                             <p>Start a new test</p>
-                        </div>
-                        <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
-                    </div>
-
-                    <!-- Stats Widget -->
-                    <div class="clay-card widget" onclick="showStats()">
-                        <div class="widget-icon color-mint">
-                            <i class="fa-solid fa-chart-pie"></i>
-                        </div>
-                        <div class="widget-info">
-                            <h3>Analytics</h3>
-                            <p>Check your progress</p>
                         </div>
                         <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
                     </div>
@@ -163,14 +163,14 @@
                         <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
                     </div>
 
-                    <!-- Study Materials Widget (NEW) -->
-                    <div class="clay-card widget" onclick="showStudyMaterials()">
-                        <div class="widget-icon color-blue">
-                            <i class="fa-solid fa-book-open-reader"></i>
+                    <!-- Stats Widget -->
+                    <div class="clay-card widget" onclick="showStats()">
+                        <div class="widget-icon color-mint">
+                            <i class="fa-solid fa-chart-pie"></i>
                         </div>
                         <div class="widget-info">
-                            <h3>Study</h3>
-                            <p>Learning materials</p>
+                            <h3>Analytics</h3>
+                            <p>Check your progress</p>
                         </div>
                         <div class="widget-arrow"><i class="fa-solid fa-chevron-right"></i></div>
                     </div>
