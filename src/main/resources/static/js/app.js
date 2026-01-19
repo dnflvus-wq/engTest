@@ -797,17 +797,32 @@ async function loadStudyMaterials(roundId) {
         if (pptItems.length === 0) {
             pptList.innerHTML = '<p class="text-muted">No documents available</p>';
         } else {
-            pptList.innerHTML = pptItems.map(m => `
-                <div class="ppt-item">
-                    <span class="ppt-icon"><i class="fa-solid fa-file-powerpoint"></i></span>
-                    <div class="ppt-info">
-                        <div class="ppt-title">${m.title || m.fileName || 'Document'}</div>
+            pptList.innerHTML = pptItems.map(m => {
+                const isPdf = m.fileName && m.fileName.toLowerCase().endsWith('.pdf');
+                const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-powerpoint';
+                const previewHtml = isPdf
+                    ? `<div class="pdf-preview" style="margin-top:15px; width:100%; height:500px; border-radius:10px; overflow:hidden; box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff;">
+                         <iframe src="${m.url}" style="width:100%; height:100%; border:none;"></iframe>
+                       </div>`
+                    : '';
+
+                return `
+                <div class="ppt-item" style="flex-direction: column; align-items: flex-start;">
+                    <div style="display:flex; width:100%; align-items:center; justify-content:space-between;">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span class="ppt-icon"><i class="fa-solid ${iconClass}"></i></span>
+                            <div class="ppt-info">
+                                <div class="ppt-title">${m.title || m.fileName || 'Document'}</div>
+                            </div>
+                        </div>
+                        <a class="ppt-link" href="${m.url}" target="_blank" download>
+                            <i class="fa-solid fa-download"></i> Download
+                        </a>
                     </div>
-                    <a class="ppt-link" href="${m.url}" target="_blank" download>
-                        <i class="fa-solid fa-download"></i> Download
-                    </a>
+                    ${previewHtml}
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
     } catch (e) {
         showAlert('Failed to load materials: ' + e.message);
