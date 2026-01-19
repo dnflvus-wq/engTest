@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 - 영어 시험 시스템</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=3">
 </head>
 
 <body>
@@ -109,7 +109,17 @@
                         </div>
                         <div class="form-group">
                             <label>단어 이미지 업로드 (여러 장 가능)</label>
-                            <input type="file" id="wordImages" accept="image/*" multiple onchange="previewImages(this)">
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="wordImages" accept="image/*" multiple
+                                    onchange="previewImages(this)" class="hidden-file-input">
+                                <label for="wordImages" class="file-upload-label clay-card-upload" id="imageDropZone">
+                                    <div class="upload-icon-circle">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    </div>
+                                    <span class="upload-primary-text">클릭하여 이미지 선택</span>
+                                    <span class="upload-secondary-text">또는 파일을 이곳에 드래그하세요</span>
+                                </label>
+                            </div>
                             <div id="imagePreviewArea" class="image-preview-area"></div>
                         </div>
                         <button onclick="extractWords()" class="btn-primary btn-large">단어 추출하기</button>
@@ -138,8 +148,8 @@
 
                         <!-- 탭 메뉴 -->
                         <div class="tab-menu">
-                            <button class="tab-btn active" onclick="switchTab('questions')">문제 목록</button>
-                            <button class="tab-btn" onclick="switchTab('materials')">교육자료</button>
+                            <button class="tab-btn active" onclick="switchTab('questions', this)">문제 목록</button>
+                            <button class="tab-btn" onclick="switchTab('materials', this)">교육자료</button>
                         </div>
 
                         <!-- 문제 목록 탭 -->
@@ -162,11 +172,22 @@
                             <!-- PPT 자료 업로드 -->
                             <div class="material-add-section">
                                 <h3>📄 PPT/PDF 자료 업로드</h3>
-                                <div class="form-row">
-                                    <input type="text" id="pptTitle" placeholder="자료 제목 (선택)">
-                                    <input type="file" id="pptFile" accept=".ppt,.pptx,.pdf,.doc,.docx">
-                                    <button type="button" onclick="addPptMaterial()" class="btn-primary">업로드</button>
+                                <input type="text" id="pptTitle" placeholder="자료 제목 (선택)" class="clay-input"
+                                    style="margin-bottom: 15px;">
+                                <div class="file-upload-wrapper">
+                                    <input type="file" id="pptFile" accept=".ppt,.pptx,.pdf,.doc,.docx"
+                                        class="hidden-file-input">
+                                    <label for="pptFile" class="file-upload-label clay-card-upload" id="pptDropZone">
+                                        <div class="upload-icon-circle">
+                                            <i class="fa-solid fa-file-arrow-up"></i>
+                                        </div>
+                                        <span class="upload-primary-text">클릭하여 파일 선택</span>
+                                        <span class="upload-secondary-text">또는 파일을 이곳에 드래그하세요</span>
+                                        <span class="upload-file-name" id="pptFileName"></span>
+                                    </label>
                                 </div>
+                                <button type="button" onclick="addPptMaterial()" class="btn-primary"
+                                    style="margin-top: 15px; width: 100%;">업로드</button>
                             </div>
 
                             <!-- 등록된 교육자료 목록 -->
@@ -297,6 +318,82 @@
                     };
                     reader.readAsDataURL(file);
                 }
+            }
+        }
+
+        // 드래그 앤 드롭 기능 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            // 이미지 업로드 드래그 앤 드롭
+            setupDragDrop('imageDropZone', 'wordImages', function (files) {
+                const input = document.getElementById('wordImages');
+                const dt = new DataTransfer();
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        dt.items.add(file);
+                    }
+                }
+                input.files = dt.files;
+                previewImages(input);
+            });
+
+            // PPT/PDF 업로드 드래그 앤 드롭
+            setupDragDrop('pptDropZone', 'pptFile', function (files) {
+                const input = document.getElementById('pptFile');
+                if (files.length > 0) {
+                    const dt = new DataTransfer();
+                    dt.items.add(files[0]); // 첫 번째 파일만
+                    input.files = dt.files;
+                    updatePptFileName(files[0].name);
+                }
+            });
+
+            // PPT 파일 선택 시 파일명 표시
+            document.getElementById('pptFile').addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    updatePptFileName(this.files[0].name);
+                } else {
+                    updatePptFileName('');
+                }
+            });
+        });
+
+        function setupDragDrop(dropZoneId, inputId, onDropCallback) {
+            const dropZone = document.getElementById(dropZoneId);
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('drag-over');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('drag-over');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    onDropCallback(files);
+                }
+            }, false);
+        }
+
+        function updatePptFileName(fileName) {
+            const el = document.getElementById('pptFileName');
+            if (el) {
+                el.textContent = fileName ? `📎 ${fileName}` : '';
             }
         }
 
@@ -553,7 +650,10 @@ ${wordListStr}
         }
 
         async function deleteCurrentRound() {
-            if (!currentRoundId) return;
+            if (!currentRoundId) {
+                alert('삭제할 회차가 선택되지 않았습니다.');
+                return;
+            }
 
             if (!confirm('정말 이 회차를 삭제하시겠습니까?')) return;
 
@@ -572,12 +672,12 @@ ${wordListStr}
         }
 
         // ===== 탭 전환 =====
-        function switchTab(tabName) {
+        function switchTab(tabName, clickedBtn) {
             // 탭 버튼 상태 변경
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (clickedBtn) clickedBtn.classList.add('active');
 
             // 탭 내용 표시/숨김
             document.querySelectorAll('.tab-content').forEach(content => {

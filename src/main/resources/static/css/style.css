@@ -2239,3 +2239,112 @@ body {
 .youtube-actions button:last-child {
     color: #ff0000;
 }
+
+/* FILE UPLOAD COMPONENT */
+.hidden-file-input {
+    display: none;
+}
+
+.file-upload-wrapper {
+    width: 100%;
+}
+
+.clay-card-upload {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--clay-shadow-in);
+    /* Default to inset for 'well' look, or outset */
+    /* Let's use outset with dashed border for better affordance */
+    box-shadow: var(--clay-shadow-out-sm);
+    border: 2px dashed rgba(163, 177, 198, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.clay-card-upload:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.clay-card-upload:active {
+    box-shadow: var(--clay-shadow-in);
+    transform: translateY(0);
+}
+
+.upload-icon-circle {
+    width: 60px;
+    height: 60px;
+    background: var(--clay-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary);
+    box-shadow: var(--clay-shadow-out);
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.clay-card-upload:hover .upload-icon-circle {
+    transform: scale(1.1);
+    color: var(--success);
+}
+
+.upload-primary-text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 5px;
+}
+
+.upload-secondary-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.image-preview-area {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.preview-image {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    box-shadow: var(--clay-shadow-out-sm);
+    border: 3px solid var(--clay-surface);
+    transition: transform 0.2s;
+}
+
+.preview-image:hover {
+    transform: scale(1.05);
+}
+/* Drag and Drop Visual Feedback */
+.clay-card-upload.drag-over {
+    border-color: var(--primary) !important;
+    background: rgba(52, 211, 153, 0.1);
+    transform: scale(1.02);
+}
+
+.clay-card-upload.drag-over .upload-icon-circle {
+    transform: scale(1.15);
+    color: var(--success);
+}
+
+.upload-file-name {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
