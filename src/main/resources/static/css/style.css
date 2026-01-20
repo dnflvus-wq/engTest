@@ -2534,3 +2534,58 @@ body {
         transform: translateY(0);
     }
 }
+
+/* Mobile Width Optimization */
+@media (max-width: 768px) {
+    .container {
+        padding: 5px !important;
+        /* Force minimal padding */
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    /* Make the main card/section wider */
+    .section {
+        padding: 10px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        border-radius: var(--radius-md);
+    }
+
+    /* Accordion header */
+    .study-accordion-header {
+        padding: 10px !important;
+    }
+
+    /* Accordion content area */
+    .study-accordion-content {
+        padding: 5px !important;
+        /* Almost edge-to-edge content */
+    }
+
+    /* Individual items */
+    .study-accordion-item {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    .vocab-row {
+        padding: 8px 2px !important;
+    }
+
+    .custom-select-trigger {
+        padding: 10px !important;
+    }
+
+    /* Ensure the vocab cards fit */
+    .vocabulary-grid {
+        grid-template-columns: 1fr !important;
+        /* Force single column */
+        gap: 10px !important;
+    }
+
+    .vocab-card {
+        padding: 15px !important;
+    }
+}

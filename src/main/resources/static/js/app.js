@@ -833,7 +833,7 @@ async function loadStudyMaterials(roundId) {
                                     <i class="fa-solid fa-play"></i> 재생
                                 </button>
                                 <button class="btn-secondary btn-small" onclick="openYoutube('${m.url}')">
-                                    <i class="fa-brands fa-youtube"></i> 유튜브로 가기
+                                    <i class="fa-brands fa-youtube"></i> 유튜브
                                 </button>
                             </div>
                         </div>
