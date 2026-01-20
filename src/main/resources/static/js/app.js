@@ -853,7 +853,7 @@ async function loadStudyMaterials(roundId) {
                 const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-powerpoint';
                 const previewHtml = isPdf
                     ? `<div class="pdf-preview">
-                         <iframe src="${m.url}#view=FitH"></iframe>
+                         <iframe src="https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(m.url)}"></iframe>
                        </div>`
                     : '';
 
