@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- 기본 사용자 추가
 INSERT IGNORE INTO users (id, name) VALUES 
-(1, '사용자 1'), (2, '사용자 2'), (3, '사용자 3'), (4, '사용자 4');
+(1, '이성현'), (2, '김주연'), (3, '김은별'), (4, '정하나');
 
 -- 회차 테이블
 CREATE TABLE IF NOT EXISTS rounds (

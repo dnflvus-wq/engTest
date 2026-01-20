@@ -9,4 +9,4 @@ ALTER TABLE questions ADD COLUMN IF NOT EXISTS answer_type VARCHAR(20) DEFAULT '
 
 -- 기본 사용자 추가 (중복 시 무시)
 INSERT IGNORE INTO users (id, name) VALUES 
-(1, '사용자 1'), (2, '사용자 2'), (3, '사용자 3'), (4, '사용자 4');
+(1, '이성현'), (2, '김주연'), (3, '김은별'), (4, '정하나');
