@@ -70,7 +70,7 @@
                     </div>
                 </div>
             </header>
-            <div class="container" style="padding-top:20px;">
+            <div class="container" style="padding-top:20px; height:auto; overflow:visible;">
                 <main id="mainContent">
                     <!-- 관리자 메인 -->
                     <div id="adminSection" class="section">
@@ -99,9 +99,21 @@
 
                     <!-- 회차 상세 보기 -->
                     <div id="roundDetailSection" class="section hidden">
-                        <div class="section-header">
-                            <h2 id="roundDetailTitle">회차 상세</h2>
-                            <button onclick="showAdminSection()" class="btn-secondary">뒤로</button>
+                        <div class="section-header" style="flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <h2 id="roundDetailTitle">회차 상세</h2>
+                                <span id="roundStatusBadge" class="status-badge closed">CLOSED</span>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button id="btnActivate" onclick="activateRound()" class="btn-success"
+                                    style="display:none;">
+                                    <i class="fa-solid fa-play"></i> 활성화
+                                </button>
+                                <button id="btnClose" onclick="closeRound()" class="btn-warning" style="display:none;">
+                                    <i class="fa-solid fa-stop"></i> 종료
+                                </button>
+                                <button onclick="showAdminSection()" class="btn-secondary">뒤로</button>
+                            </div>
                         </div>
 
                         <!-- 탭 메뉴 -->
@@ -112,11 +124,17 @@
 
                         <!-- 단어 입력 탭 -->
                         <div id="vocabularyTab" class="tab-content active">
-                            <!-- 단어 목록 -->
-                            <div class="material-add-section">
-                                <h3 style="padding-left: 10px;">📋 등록된 단어 목록</h3>
-                                <div id="vocabularyList" class="vocabulary-list">
-                                    <p class="empty-message">등록된 단어가 없습니다.</p>
+                            <!-- 단어 목록 (아코디언) -->
+                            <div class="study-accordion-item active" id="vocabListAccordion">
+                                <div class="study-accordion-header"
+                                    onclick="toggleAdminAccordion('vocabListAccordion')">
+                                    <span>📋 등록된 단어 목록</span>
+                                    <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                                </div>
+                                <div class="study-accordion-content">
+                                    <div id="vocabularyList" class="vocabulary-list">
+                                        <p class="empty-message">등록된 단어가 없습니다.</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -232,6 +250,14 @@
                                         document.getElementById('difficultyOptions').classList.add('hidden');
                                     }
                                 });
+
+                                // Toggle Admin Accordion
+                                function toggleAdminAccordion(id) {
+                                    const item = document.getElementById(id);
+                                    if (item) {
+                                        item.classList.toggle('active');
+                                    }
+                                }
                             </script>
                         </div>
 
@@ -418,12 +444,66 @@
 
                 document.getElementById('roundDetailTitle').textContent = currentRoundData.title;
                 renderVocabularyList(vocabulary);
+                updateRoundStatusUI(currentRoundData.status);
 
                 // 탭 초기화
                 switchTab('vocabulary', document.querySelector('.tab-btn'));
                 showSection('roundDetailSection');
             } catch (error) {
                 console.error('Failed to load round detail:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateRoundStatusUI(status) {
+            const badge = document.getElementById('roundStatusBadge');
+            const btnActivate = document.getElementById('btnActivate');
+            const btnClose = document.getElementById('btnClose');
+
+            badge.textContent = status;
+            badge.className = 'status-badge ' + status.toLowerCase();
+
+            // Show/hide buttons based on status
+            if (status === 'CLOSED') {
+                btnActivate.style.display = 'inline-flex';
+                btnClose.style.display = 'none';
+            } else if (status === 'ACTIVE') {
+                btnActivate.style.display = 'none';
+                btnClose.style.display = 'inline-flex';
+            } else {
+                // COMPLETED
+                btnActivate.style.display = 'none';
+                btnClose.style.display = 'none';
+            }
+        }
+
+        async function activateRound() {
+            if (!confirm('이 회차를 활성화하시겠습니까? 사용자가 시험을 볼 수 있게 됩니다.')) return;
+            await updateRoundStatus('ACTIVE');
+        }
+
+        async function closeRound() {
+            if (!confirm('이 회차를 종료하시겠습니까? 더 이상 시험을 볼 수 없게 됩니다.')) return;
+            await updateRoundStatus('COMPLETED');
+        }
+
+        async function updateRoundStatus(newStatus) {
+            showLoading();
+            try {
+                const response = await fetch(`/api/rounds/${currentRoundId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (!response.ok) throw new Error('상태 변경 실패');
+
+                currentRoundData.status = newStatus;
+                updateRoundStatusUI(newStatus);
+                alert('상태가 변경되었습니다.');
+            } catch (error) {
+                console.error('Failed to update status:', error);
+                alert('상태 변경에 실패했습니다.');
             } finally {
                 hideLoading();
             }

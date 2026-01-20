@@ -35,4 +35,8 @@ public interface ExamMapper {
     void deleteByRoundId(@Param("roundId") Long roundId);
 
     List<Exam> getRankingByRound(@Param("roundId") Long roundId);
+
+    int countCompletedByRoundId(@Param("roundId") Long roundId);
+
+    List<Exam> findCompletedByRoundId(@Param("roundId") Long roundId);
 }

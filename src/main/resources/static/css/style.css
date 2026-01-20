@@ -999,6 +999,45 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+/* Participant Badge */
+.participant-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Round Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+.status-badge.closed {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-badge.active {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.status-badge.completed {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
 /* 2. CUSTOM FILE INPUT */
 .file-input-wrapper {
     display: flex;
@@ -1585,6 +1624,33 @@ body {
 .btn-icon-delete:hover {
     background: #ef4444;
     color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow-out);
+}
+
+.btn-success:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow-out);
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--clay-shadow-out-sm);
+}
+
+.btn-warning:hover {
+    background: #d97706;
     transform: translateY(-2px);
     box-shadow: var(--clay-shadow-out);
 }

@@ -108,4 +108,18 @@
         ORDER BY e.score DESC, e.submitted_at ASC
     </select>
 
+    <select id="countCompletedByRoundId" resultType="int">
+        SELECT COUNT(*) FROM exams
+        WHERE round_id = #{roundId} AND status = 'COMPLETED'
+    </select>
+
+    <select id="findCompletedByRoundId" resultMap="examResultMap">
+        SELECT e.*, u.name as user_name, r.title as round_title
+        FROM exams e
+        LEFT JOIN users u ON e.user_id = u.id
+        LEFT JOIN rounds r ON e.round_id = r.id
+        WHERE e.round_id = #{roundId} AND e.status = 'COMPLETED'
+        ORDER BY e.submitted_at ASC
+    </select>
+
 </mapper>

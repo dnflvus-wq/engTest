@@ -34,7 +34,7 @@ public class RoundService {
     @Transactional
     public Round createRound(Round round) {
         if (round.getStatus() == null) {
-            round.setStatus("ACTIVE");
+            round.setStatus("CLOSED");
         }
         if (round.getDifficulty() == null) {
             round.setDifficulty("MEDIUM");

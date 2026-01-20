@@ -4,6 +4,7 @@ import com.example.engTest.dto.*;
 import com.example.engTest.mapper.ExamAnswerMapper;
 import com.example.engTest.mapper.ExamMapper;
 import com.example.engTest.mapper.QuestionMapper;
+import com.example.engTest.mapper.RoundMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class ExamService {
     private final ExamMapper examMapper;
     private final ExamAnswerMapper examAnswerMapper;
     private final QuestionMapper questionMapper;
+    private final RoundMapper roundMapper;
 
     public List<Exam> getAllExams() {
         return examMapper.findAll();
@@ -136,7 +138,17 @@ public class ExamService {
 
         examMapper.update(exam);
 
+        // Auto-complete round if 4 users have completed
+        int completedCount = examMapper.countCompletedByRoundId(exam.getRoundId());
+        if (completedCount >= 4) {
+            roundMapper.updateStatus(exam.getRoundId(), "COMPLETED");
+        }
+
         return exam;
+    }
+
+    public List<Exam> getCompletedExamsByRoundId(Long roundId) {
+        return examMapper.findCompletedByRoundId(roundId);
     }
 
     public List<ExamAnswer> getExamAnswers(Long examId) {

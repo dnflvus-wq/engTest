@@ -128,6 +128,19 @@ public class RoundController {
         return ResponseEntity.ok(stats);
     }
 
+    @GetMapping("/{id}/participants")
+    public ResponseEntity<?> getRoundParticipants(@PathVariable Long id) {
+        var completedExams = examService.getCompletedExamsByRoundId(id);
+        var participants = completedExams.stream()
+                .map(e -> Map.of(
+                        "userId", e.getUserId(),
+                        "userName", e.getUserName() != null ? e.getUserName() : "User #" + e.getUserId(),
+                        "score", e.getScore(),
+                        "submittedAt", e.getSubmittedAt()))
+                .toList();
+        return ResponseEntity.ok(Map.of("participants", participants, "count", participants.size()));
+    }
+
     /**
      * 이미지들에서 단어 추출
      */

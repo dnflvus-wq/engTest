@@ -392,17 +392,35 @@ async function loadRounds() {
         if (rounds.length === 0) {
             list.innerHTML = '<p class="text-muted" style="text-align:center; padding:40px;">No active exams found.</p>';
         } else {
-            list.innerHTML = rounds.map(r => `
-                <div class="clay-card round-item-card" onclick="selectRound(${r.id}, '${r.title.replace(/'/g, "\\'")}', ${r.questionCount})">
+            // Fetch participants for each round
+            const roundsWithParticipants = await Promise.all(rounds.map(async r => {
+                try {
+                    const data = await api(`/api/rounds/${r.id}/participants`);
+                    return { ...r, participants: data.participants || [] };
+                } catch (e) {
+                    return { ...r, participants: [] };
+                }
+            }));
+
+            list.innerHTML = roundsWithParticipants.map(r => {
+                const participantHtml = r.participants.length > 0
+                    ? r.participants.map(p => `<span class="participant-badge">${p.userName} ✓</span>`).join('')
+                    : '<span class="text-muted" style="font-size:0.8rem;">No participants yet</span>';
+
+                return `
+                <div class="clay-card round-item-card" onclick="selectRound(${r.id}, '${r.title.replace(/'/g, "\\'")}', ${r.questionCount}, '${r.status}')">
                     <h3 style="color:var(--primary)">${r.title}</h3>
                     <p style="color:var(--text-muted); font-size:0.9rem;">${r.description || 'No description'}</p>
+                    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;">
+                        ${participantHtml}
+                    </div>
                     <div style="margin-top:15px; font-weight:700;">
                         <span class="q-badge" style="font-size:0.8rem;">
                             ${r.questionCount} Questions
                         </span>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     } catch (e) {
         showAlert('Failed to load rounds: ' + e.message);
@@ -411,7 +429,15 @@ async function loadRounds() {
     }
 }
 
-function selectRound(id, title, count) {
+function selectRound(id, title, count, status) {
+    if (status === 'COMPLETED') {
+        showAlert('This exam round has been completed.');
+        return;
+    }
+    if (status === 'CLOSED') {
+        showAlert('This exam round is not active yet.');
+        return;
+    }
     currentRound = { id, title, questionCount: count };
     showSection('modeSection');
 }
