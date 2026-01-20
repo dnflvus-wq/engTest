@@ -193,6 +193,69 @@ public class GeminiService {
 
     // ========== Private Methods ==========
 
+    /**
+     * 단어 목록에 대한 발음기호 생성
+     */
+    public Map<String, String> generatePhonetics(List<String> words) {
+        if (words == null || words.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        String prompt = """
+                당신은 영어 발음 전문가입니다.
+                다음 단어들의 **발음기호(IPA)**를 알려주세요.
+
+                단어 목록:
+                %s
+
+                응답 형식 (JSON):
+                {
+                    "word1": "/ipa/",
+                    "word2": "/ipa/"
+                }
+
+                규칙:
+                1. 오직 JSON만 응답하세요.
+                2. 표준 미국식 발음 기준입니다.
+                3. 모르는 단어는 빈 문자열로 두세요.
+                """.formatted(String.join("\n", words));
+
+        try {
+            String response = callGemini(prompt);
+            return parsePhonetics(response);
+        } catch (Exception e) {
+            log.error("Failed to generate phonetics", e);
+            throw new RuntimeException("발음기호 생성 실패: " + e.getMessage());
+        }
+    }
+
+    private Map<String, String> parsePhonetics(String response) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String jsonContent = content.asText();
+
+        if (jsonContent.contains("```")) {
+            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+
+        JsonNode jsonNode = objectMapper.readTree(jsonContent);
+        Map<String, String> result = new HashMap<>();
+
+        Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            result.put(field.getKey(), field.getValue().asText());
+        }
+
+        return result;
+    }
+
     private List<String> parseExtractedWords(String response) throws Exception {
         JsonNode root = objectMapper.readTree(response);
         JsonNode candidates = root.path("candidates");
@@ -201,11 +264,26 @@ public class GeminiService {
             return new ArrayList<>();
         }
 
-        String text = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String textContent = content.asText();
+
+        // 마크다운 코드 블록 제거 (혹시 모델이 넣었을 경우)
+        if (textContent.contains("```")) {
+            textContent = textContent.replaceAll("```(\\w+)?", "").replaceAll("```", "");
+        }
 
         List<String> words = new ArrayList<>();
-        for (String line : text.split("\n")) {
+        String[] lines = textContent.split("\\r?\\n");
+
+        for (String line : lines) {
             line = line.trim();
+            if (line.isEmpty())
+                continue;
+
+            // "영어:한글" 형식 파싱 (콜론이 없는 경우도 일단 추가할지, 아니면 엄격하게 할지 고민)
+            // 일단 단순하게 라인 자체를 추가하되, 불필요한 기호(글머리 기호 등)가 있다면 제거
+            line = line.replaceAll("^[-*•\\d.]+\\s*", ""); // 글머리 기호 제거
+
             if (!line.isEmpty()) {
                 words.add(line);
             }

@@ -154,16 +154,21 @@
                                 style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid var(--primary);">
                                 <h3>🚀 문제 생성</h3>
                                 <p class="hint">위에서 입력/추출한 단어들을 기반으로 시험 문제를 자동 생성합니다.</p>
-                                <div class="form-group" style="margin-bottom: 15px;">
-                                    <label>난이도 선택</label>
-                                    <select id="difficulty" class="clay-input">
-                                        <option value="EASY">쉬움 (객관식 100%)</option>
-                                        <option value="MEDIUM" selected>보통 (객관식 30% + 주관식 70%)</option>
-                                        <option value="HARD">어려움 (문장 응용 - 주관식)</option>
+                                <div class="form-group" style="flex:1;">
+                                    <label>난이도</label>
+                                    <select id="difficulty" class="input-field">
+                                        <option value="EASY">초급 (객관식)</option>
+                                        <option value="MEDIUM" selected>중급 (객관식+주관식)</option>
+                                        <option value="HARD">고급 (문장 응용)</option>
                                     </select>
                                 </div>
-                                <button onclick="generateQuestionsFromVocabulary()" class="btn-success btn-large"
-                                    style="width:100%;">문제 생성하기</button>
+                                <div class="button-group">
+                                    <button onclick="generateQuestionsFromVocabulary()" class="btn-primary"
+                                        style="flex:2;">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        단어 기반 문제 생성
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -248,6 +253,7 @@
         // ===== 관리자 페이지 전용 스크립트 =====
         let currentRoundId = null;
         let currentRoundData = null;
+        let vocabData = [];
 
         document.addEventListener('DOMContentLoaded', loadAdminRounds);
 
@@ -361,6 +367,7 @@
         }
 
         function renderVocabularyList(vocabulary) {
+            vocabData = vocabulary || [];
             const listEl = document.getElementById('vocabularyList');
             if (!vocabulary || vocabulary.length === 0) {
                 listEl.innerHTML = '<p class="empty-message">등록된 단어가 없습니다.</p>';
@@ -368,18 +375,30 @@
             }
 
             listEl.innerHTML = `
-                <div class="vocab-table">
-                    <div class="vocab-header">
-                        <span>영어</span>
-                        <span>한글</span>
-                    </div>
-                    ${vocabulary.map(v => `
-                        <div class="vocab-row">
-                            <span class="vocab-english">${v.english}</span>
-                            <span class="vocab-korean">${v.korean || ''}</span>
-                        </div>
-                    `).join('')}
-                </div>
+                <table class="vocab-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>English</th>
+                            <th>Korean</th>
+                            <th>Phonetic</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vocabularyListBody">
+                        ${vocabulary.map((v, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${v.english}</td>
+                                <td>${v.korean || ''}</td>
+                                <td style="font-family: monospace; color: #666;">${v.phonetic || '-'}</td>
+                                <td>
+                                    <button onclick="deleteWord(${v.id})" class="btn-text delete">삭제</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
                 <p class="hint" style="margin-top:10px;">총 ${vocabulary.length}개 단어</p>
             `;
         }
@@ -446,6 +465,8 @@
             }
         }
 
+
+
         async function extractWordsFromImages() {
             const fileInput = document.getElementById('wordImages');
 
@@ -466,7 +487,6 @@
 
 이미지에서 다음 규칙에 따라 영어 표현을 추출해주세요:
 
-## 추출 규칙
 1. **핵심 표현만 추출**:
    - 박스, 테이블, 리스트 안의 핵심 표현만 추출
    - "영어표현:한글뜻" 또는 "영어문장:한글번역" 형태로 추출
@@ -479,16 +499,9 @@
    - 예시를 설명하는 긴 문장
 
 3. **출력 형식**:
-   - 한 줄에 하나씩
-   - "영어:한글" 형태
-   - 다른 설명 없이 추출된 내용만
-   - 영어:한글 형태가 안되는 경우 추출 제외
-
-예시 출력:
-get a message:메시지를 받다
-get a text:문자를 받다
-live in:~에 살다
-work in:~에서 일하다`;
+   - 각 줄에 "영어:한글" 형식으로 출력
+   - 번호 매기기 없음
+   - 추가 설명 없이 목록만 출력`;
 
                 formData.append('prompt', customPrompt);
 

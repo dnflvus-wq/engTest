@@ -210,4 +210,8 @@ public class RoundController {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
+
+    /**
+     * 발음기호 업데이트 (AI 생성)
+     */
 }

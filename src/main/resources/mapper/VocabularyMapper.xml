@@ -33,4 +33,13 @@
         DELETE FROM round_vocabulary WHERE round_id = #{roundId}
     </delete>
 
+    <update id="update">
+        UPDATE round_vocabulary
+        SET english = #{english},
+            korean = #{korean},
+            phonetic = #{phonetic},
+            seq_no = #{seqNo}
+        WHERE id = #{id}
+    </update>
+
 </mapper>

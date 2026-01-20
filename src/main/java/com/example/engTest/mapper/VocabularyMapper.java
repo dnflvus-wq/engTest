@@ -16,4 +16,6 @@ public interface VocabularyMapper {
     void insertBatch(@Param("list") List<VocabularyWord> words);
 
     void deleteByRoundId(@Param("roundId") Long roundId);
+
+    void update(VocabularyWord word);
 }
