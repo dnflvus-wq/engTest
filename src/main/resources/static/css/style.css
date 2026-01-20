@@ -2588,4 +2588,82 @@ body {
     .vocab-card {
         padding: 15px !important;
     }
+
+    /* --- FIX: Main Content Layout --- */
+    .main-content {
+        padding: 15px !important;
+        /* Reduce padding from 40px to 15px */
+    }
+
+    /* --- FIX: Mode Selection (Online/Offline) --- */
+    .mode-cards {
+        flex-direction: column;
+        /* Stack vertically for better touch targets and size */
+        gap: 15px;
+        width: 100%;
+        align-items: stretch;
+        /* Stretch to full width */
+    }
+
+    .mode-card {
+        width: 100%;
+        /* Full width */
+        flex: auto;
+        padding: 20px;
+        /* Restore comfortable padding */
+        min-height: auto;
+        /* Remove fixed height constraint */
+        display: flex;
+        flex-direction: row;
+        /* Icon and text side-by-side in stacked card? Or keep column? Let's keep column content but full width card */
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    /* Option: Make the inner content of mode-card landscape if stacked? 
+       No, let's keep centered column for simplicity as it matches the original design, just full width. */
+    .mode-card {
+        flex-direction: column;
+    }
+
+    .mode-icon {
+        font-size: 2rem;
+        margin-bottom: 5px;
+        /* Reduce margin */
+    }
+
+    .mode-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
+
+    .mode-card p {
+        font-size: 0.9rem;
+    }
+
+    /* --- FIX: Exam List (Round Cards) --- */
+    .card-grid {
+        grid-template-columns: 1fr !important;
+        /* 1 column for proper size */
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .round-item-card {
+        padding: 20px;
+        /* Restore padding */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .round-item-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    .round-item-card p {
+        font-size: 0.9rem;
+    }
 }
