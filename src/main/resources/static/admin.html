@@ -181,7 +181,7 @@
                                             <span id="difficultyText">중급 (주관식)</span>
                                             <i class="fa-solid fa-chevron-down arrow"></i>
                                         </div>
-                                        <div class="custom-options">
+                                        <div class="custom-options hidden" id="difficultyOptions">
                                             <div class="custom-option" data-value="EASY"
                                                 onclick="selectVocabularyDifficulty('EASY', '초급 (객관식)')">
                                                 <span>초급 (객관식)</span>
@@ -206,8 +206,8 @@
 
                             <script>
                                 function toggleVocabularyDifficulty() {
-                                    const wrapper = document.getElementById('difficultySelectWrapper');
-                                    wrapper.classList.toggle('open');
+                                    const options = document.getElementById('difficultyOptions');
+                                    options.classList.toggle('hidden');
                                 }
 
                                 function selectVocabularyDifficulty(value, text) {
@@ -216,20 +216,20 @@
 
                                     // Visual selection update
                                     const wrapper = document.getElementById('difficultySelectWrapper');
-                                    const options = wrapper.querySelectorAll('.custom-option');
-                                    options.forEach(opt => opt.classList.remove('selected'));
+                                    const allOptions = wrapper.querySelectorAll('.custom-option');
+                                    allOptions.forEach(opt => opt.classList.remove('selected'));
 
                                     const selectedOption = wrapper.querySelector(`.custom-option[data-value="${value}"]`);
                                     if (selectedOption) selectedOption.classList.add('selected');
 
-                                    wrapper.classList.remove('open');
+                                    document.getElementById('difficultyOptions').classList.add('hidden');
                                 }
 
                                 // Close dropdown when clicking outside
                                 document.addEventListener('click', function (e) {
                                     const wrapper = document.getElementById('difficultySelectWrapper');
                                     if (wrapper && !wrapper.contains(e.target)) {
-                                        wrapper.classList.remove('open');
+                                        document.getElementById('difficultyOptions').classList.add('hidden');
                                     }
                                 });
                             </script>
