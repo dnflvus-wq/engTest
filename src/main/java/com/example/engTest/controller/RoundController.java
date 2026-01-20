@@ -130,13 +130,14 @@ public class RoundController {
 
     @GetMapping("/{id}/participants")
     public ResponseEntity<?> getRoundParticipants(@PathVariable Long id) {
-        var completedExams = examService.getCompletedExamsByRoundId(id);
-        var participants = completedExams.stream()
+        var allExams = examService.getExamsByRoundId(id);
+        var participants = allExams.stream()
                 .map(e -> Map.of(
                         "userId", e.getUserId(),
                         "userName", e.getUserName() != null ? e.getUserName() : "User #" + e.getUserId(),
-                        "score", e.getScore(),
-                        "submittedAt", e.getSubmittedAt()))
+                        "status", e.getStatus(),
+                        "score", e.getScore() != null ? e.getScore() : 0,
+                        "submittedAt", e.getSubmittedAt() != null ? e.getSubmittedAt().toString() : ""))
                 .toList();
         return ResponseEntity.ok(Map.of("participants", participants, "count", participants.size()));
     }

@@ -404,7 +404,11 @@ async function loadRounds() {
 
             list.innerHTML = roundsWithParticipants.map(r => {
                 const participantHtml = r.participants.length > 0
-                    ? r.participants.map(p => `<span class="participant-badge">${p.userName} ✓</span>`).join('')
+                    ? r.participants.map(p => {
+                        const statusText = p.status === 'COMPLETED' ? 'Completed' : 'In Progress';
+                        const statusClass = p.status === 'COMPLETED' ? 'status-completed' : 'status-in-progress';
+                        return `<span class="participant-badge ${statusClass}">${p.userName} - ${statusText}</span>`;
+                    }).join('')
                     : '<span class="text-muted" style="font-size:0.8rem;">No participants yet</span>';
 
                 return `
