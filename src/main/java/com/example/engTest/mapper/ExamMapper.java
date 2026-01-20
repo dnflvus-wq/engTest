@@ -13,6 +13,8 @@ public interface ExamMapper {
 
     List<Exam> findByUserId(@Param("userId") Long userId);
 
+    List<Exam> findInProgressByUserId(@Param("userId") Long userId);
+
     List<Exam> findByRoundId(@Param("roundId") Long roundId);
 
     Exam findById(@Param("id") Long id);

@@ -114,7 +114,7 @@
                         <div id="vocabularyTab" class="tab-content active">
                             <!-- 단어 목록 -->
                             <div class="material-add-section">
-                                <h3>📋 등록된 단어 목록</h3>
+                                <h3 style="padding-left: 10px;">📋 등록된 단어 목록</h3>
                                 <div id="vocabularyList" class="vocabulary-list">
                                     <p class="empty-message">등록된 단어가 없습니다.</p>
                                 </div>
@@ -125,11 +125,22 @@
                                 <!-- 수동 단어 입력 -->
                                 <div class="material-add-section">
                                     <h3>✏️ 수동 단어 입력</h3>
-                                    <p class="hint">각 줄에 하나씩, "영어:한글" 형식으로 입력하세요.</p>
+                                    <div class="manual-input-header"
+                                        style="display:flex; gap:10px; margin-bottom:5px; padding:0 12px;">
+                                        <span
+                                            style="flex:1; font-size:0.8rem; font-weight:700; color:var(--text-muted);">ENGLISH</span>
+                                        <span
+                                            style="flex:1; font-size:0.8rem; font-weight:700; color:var(--text-muted);">KOREAN</span>
+                                        <span style="width:30px;"></span>
+                                    </div>
                                     <div class="form-group">
-                                        <textarea id="manualWords" rows="8"
-                                            placeholder="apple:사과&#10;banana:바나나&#10;get a message:메시지를 받다"
-                                            class="clay-input"></textarea>
+                                        <div id="manualInputList" class="manual-input-list">
+                                            <!-- Dynamic Input Rows will be added here -->
+                                        </div>
+                                        <button onclick="addInputRow()" class="btn-secondary btn-small"
+                                            style="width:100%; margin-top:10px; border: 1px dashed var(--primary); background: transparent; color: var(--primary);">
+                                            <i class="fa-solid fa-plus"></i> 단어 추가
+                                        </button>
                                     </div>
                                     <button onclick="saveManualWords()" class="btn-primary" style="width:100%;">단어
                                         저장</button>
@@ -162,21 +173,66 @@
                                 <h3>🚀 문제 생성</h3>
                                 <p class="hint">위에서 입력/추출한 단어들을 기반으로 시험 문제를 자동 생성합니다.</p>
                                 <div class="form-group" style="flex:1;">
-                                    <label>난이도</label>
-                                    <select id="difficulty" class="input-field">
-                                        <option value="EASY">초급 (객관식)</option>
-                                        <option value="MEDIUM" selected>중급 (객관식+주관식)</option>
-                                        <option value="HARD">고급 (문장 응용)</option>
-                                    </select>
+                                    <label for="difficulty">난이도</label>
+
+                                    <!-- Custom Clay Select -->
+                                    <div class="custom-select-wrapper" id="difficultySelectWrapper">
+                                        <div class="custom-select-trigger" onclick="toggleVocabularyDifficulty()">
+                                            <span id="difficultyText">중급 (주관식)</span>
+                                            <i class="fa-solid fa-chevron-down arrow"></i>
+                                        </div>
+                                        <div class="custom-options">
+                                            <div class="custom-option" data-value="EASY"
+                                                onclick="selectVocabularyDifficulty('EASY', '초급 (객관식)')">
+                                                <span>초급 (객관식)</span>
+                                            </div>
+                                            <div class="custom-option selected" data-value="MEDIUM"
+                                                onclick="selectVocabularyDifficulty('MEDIUM', '중급 (주관식)')">
+                                                <span>중급 (주관식)</span>
+                                            </div>
+                                            <div class="custom-option" data-value="HARD"
+                                                onclick="selectVocabularyDifficulty('HARD', '고급 (문장 응용)')">
+                                                <span>고급 (문장 응용)</span>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="difficultyValue" value="MEDIUM">
+                                    </div>
                                 </div>
-                                <div class="button-group">
-                                    <button onclick="generateQuestionsFromVocabulary()" class="btn-primary"
-                                        style="flex:2;">
-                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                        단어 기반 문제 생성
-                                    </button>
-                                </div>
+                                <button onclick="generateQuestionsFromVocabulary()" class="btn-success"
+                                    style="height:fit-content; margin-top:30px;">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> 생성
+                                </button>
                             </div>
+
+                            <script>
+                                function toggleVocabularyDifficulty() {
+                                    const wrapper = document.getElementById('difficultySelectWrapper');
+                                    wrapper.classList.toggle('open');
+                                }
+
+                                function selectVocabularyDifficulty(value, text) {
+                                    document.getElementById('difficultyValue').value = value;
+                                    document.getElementById('difficultyText').textContent = text;
+
+                                    // Visual selection update
+                                    const wrapper = document.getElementById('difficultySelectWrapper');
+                                    const options = wrapper.querySelectorAll('.custom-option');
+                                    options.forEach(opt => opt.classList.remove('selected'));
+
+                                    const selectedOption = wrapper.querySelector(`.custom-option[data-value="${value}"]`);
+                                    if (selectedOption) selectedOption.classList.add('selected');
+
+                                    wrapper.classList.remove('open');
+                                }
+
+                                // Close dropdown when clicking outside
+                                document.addEventListener('click', function (e) {
+                                    const wrapper = document.getElementById('difficultySelectWrapper');
+                                    if (wrapper && !wrapper.contains(e.target)) {
+                                        wrapper.classList.remove('open');
+                                    }
+                                });
+                            </script>
                         </div>
 
                         <!-- 교육자료 탭 -->
@@ -382,49 +438,79 @@
             }
 
             listEl.innerHTML = `
-                <table class="vocab-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>English</th>
-                            <th>Korean</th>
-                            <th>Phonetic</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="vocabularyListBody">
-                        ${vocabulary.map((v, index) => `
+                <div class="vocab-table-container">
+                    <table class="vocab-table">
+                        <thead>
                             <tr>
-                                <td>${index + 1}</td>
-                                <td>${v.english}</td>
-                                <td>${v.korean || ''}</td>
-                                <td style="font-family: monospace; color: #666;">${v.phonetic || '-'}</td>
-                                <td>
-                                    <button onclick="deleteWord(${v.id})" class="btn-text delete">삭제</button>
-                                </td>
+                                <th style="width: 50px;">#</th>
+                                <th>English</th>
+                                <th>Korean</th>
+                                <th>Phonetic</th>
+                                <th style="width: 80px; text-align: center;">Actions</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <p class="hint" style="margin-top:10px;">총 ${vocabulary.length}개 단어</p>
+                        </thead>
+                        <tbody id="vocabularyListBody">
+                            ${vocabulary.map((v, index) => `
+                                <tr>
+                                    <td><span style="color:var(--text-muted); font-weight:bold;">${index + 1}</span></td>
+                                    <td><span style="font-weight:600; color:var(--text-primary);">${v.english}</span></td>
+                                    <td>${v.korean || ''}</td>
+                                    <td><span class="phonetic-text">${v.phonetic || '-'}</span></td>
+                                    <td style="text-align: center;">
+                                        <button onclick="deleteWord(${v.id})" class="btn-icon-delete" title="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                    <span class="clay-card" style="padding:5px 15px; font-size:0.85rem; color:var(--text-muted); background:#fff;">
+                        Total Words: <strong style="color:var(--primary);">${vocabulary.length}</strong>
             `;
+        }
+
+        // ===== 수동 단어 입력 UI 관리 =====
+        function addInputRow() {
+            const list = document.getElementById('manualInputList');
+            const div = document.createElement('div');
+            div.className = 'manual-input-row';
+            div.innerHTML = `
+        <input type="text" class="input-english" placeholder="English (e.g. apple)">
+        <input type="text" class="input-korean" placeholder="Korean (e.g. 사과)">
+        <button onclick="removeInputRow(this)" class="btn-icon-delete-small" tabindex="-1"><i class="fa-solid fa-xmark"></i></button>
+    `;
+            list.appendChild(div);
+            // Focus on the first input of the new row
+            div.querySelector('.input-english').focus();
+        }
+
+        function removeInputRow(btn) {
+            const row = btn.closest('.manual-input-row');
+            row.remove();
         }
 
         // ===== 수동 단어 저장 =====
         async function saveManualWords() {
-            const wordsText = document.getElementById('manualWords').value.trim();
-            if (!wordsText) {
-                alert('단어를 입력하세요.');
+            const rows = document.querySelectorAll('.manual-input-row');
+            if (rows.length === 0) {
+                alert('입력된 단어가 없습니다. 단어를 추가해주세요.');
                 return;
             }
 
-            // "영어:한글" 형식의 문자열 배열로 변환 (백엔드 List<String> 형식에 맞춤)
-            const words = wordsText.split('\n')
-                .map(line => line.trim())
-                .filter(line => line && line.includes(':'));
+            const words = [];
+            rows.forEach(row => {
+                const eng = row.querySelector('.input-english').value.trim();
+                const kor = row.querySelector('.input-korean').value.trim();
+                if (eng && kor) {
+                    words.push(`${eng}:${kor}`);
+                }
+            });
 
             if (words.length === 0) {
-                alert('올바른 형식의 단어가 없습니다. "영어:한글" 형식으로 입력하세요.');
+                alert('영어와 한글 뜻을 모두 입력해주세요.');
                 return;
             }
 
@@ -438,7 +524,8 @@
 
                 if (!response.ok) throw new Error('저장 실패');
 
-                document.getElementById('manualWords').value = '';
+                document.getElementById('manualInputList').innerHTML = ''; // Clear inputs
+                addInputRow(); // Add one empty row back
                 alert(`${words.length}개 단어가 저장되었습니다.`);
 
                 // 단어 목록 새로고침
@@ -498,6 +585,7 @@
    - 박스, 테이블, 리스트 안의 핵심 표현만 추출
    - "영어표현:한글뜻" 또는 "영어문장:한글번역" 형태로 추출
    - 짧은 단어/구/문장만 추출 (긴 문단 제외)
+   - 뜻이 없는 경우 영어만 추출 가능
 
 2. **제외 항목**:
    - 페이지 제목, 섹션 헤더 (Day 01, Unit 01 등)
@@ -527,18 +615,62 @@
                     return;
                 }
 
-                // 추출된 단어를 수동 입력창에 추가
-                const currentText = document.getElementById('manualWords').value.trim();
-                const newText = extractedWords.join('\n');
-                document.getElementById('manualWords').value = currentText
-                    ? currentText + '\n' + newText
-                    : newText;
+                // 추출된 단어를 수동 입력창에 추가 (Dynamic Input Rows)
+                const list = document.getElementById('manualInputList');
+
+                // 만약 첫 번째 행이 비어있다면 거기부터 채움
+                const existingRows = list.querySelectorAll('.manual-input-row');
+                let startNewRow = true;
+
+                if (existingRows.length === 1) {
+                    const firstRowInputs = existingRows[0].querySelectorAll('input');
+                    if (!firstRowInputs[0].value.trim() && !firstRowInputs[1].value.trim()) {
+                        startNewRow = false; // Reuse the first empty row
+                        // We will remove it later or just populate it? 
+                        // Easier: remove empty rows before adding? 
+                        // Logic: Loop through extracted words, addInputRow(), populate.
+                    }
+                }
+
+                extractedWords.forEach(wordLine => {
+                    // addInputRow creates an empty row at the end
+                    addInputRow();
+
+                    // Get the last added row
+                    const rows = list.querySelectorAll('.manual-input-row');
+                    const lastRow = rows[rows.length - 1];
+                    const inputs = lastRow.querySelectorAll('input');
+                    const englishInput = inputs[0];
+                    const koreanInput = inputs[1];
+
+                    // Parse "English:Korean"
+                    if (wordLine.includes(':')) {
+                        const parts = wordLine.split(':');
+                        englishInput.value = parts[0].trim();
+                        // Join the rest back in case the meaning has colons
+                        koreanInput.value = parts.slice(1).join(':').trim();
+                    } else {
+                        englishInput.value = wordLine.trim();
+                    }
+                });
+
+                // Remove the initial empty row if it existed and was empty?
+                // Actually, let's keep it simple. Just append. Users can delete empty rows if needed.
+                // Or better: clear the list ONLY if it has one empty row at start?
+                // Let's refine the logic:
+                // If only 1 row exists and is empty, remove it before adding new ones.
+                if (existingRows.length === 1) {
+                    const firstInputs = existingRows[0].querySelectorAll('input');
+                    if (!firstInputs[0].value.trim() && !firstInputs[1].value.trim()) {
+                        existingRows[0].remove();
+                    }
+                }
 
                 // 이미지 초기화
                 fileInput.value = '';
                 document.getElementById('imagePreviewArea').innerHTML = '';
 
-                alert(`${extractedWords.length}개 단어가 추출되었습니다. 확인 후 "단어 저장" 버튼을 눌러주세요.`);
+                alert(`${extractedWords.length}개 단어가 리스트에 추가되었습니다. 확인 후 "단어 저장" 버튼을 눌러주세요.`);
             } catch (error) {
                 console.error('Failed to extract words:', error);
                 alert('단어 추출에 실패했습니다: ' + error.message);
@@ -562,9 +694,15 @@
                     return;
                 }
 
-                const words = vocabulary.map(v => `${v.english}:${v.korean || ''}`);
+                // --- NEW LOGIC: Randomly select up to 30 words ---
+                // 1. Shuffle
+                const shuffled = [...vocabulary].sort(() => 0.5 - Math.random());
+                // 2. Slice top 30
+                const selectedVocab = shuffled.slice(0, 30);
+
+                const words = selectedVocab.map(v => `${v.english}:${v.korean || ''}`);
                 const wordListStr = words.join('\n');
-                const difficulty = document.getElementById('difficulty').value;
+                const difficulty = document.getElementById('difficultyValue').value;
 
                 const prompts = {
                     'EASY': `당신은 영어 시험 문제 출제 전문가입니다.
@@ -589,7 +727,7 @@ ${wordListStr}
 3. JSON 형식만 응답하세요.`,
 
                     'MEDIUM': `당신은 영어 시험 문제 출제 전문가입니다.
-다음 단어들을 사용하여 **객관식 30%, 주관식 70%** 비율로 문제를 만들어주세요.
+다음 단어들을 사용하여 **주관식 문제만** 만들어주세요.
 
 단어 목록:
 ${wordListStr}
@@ -597,17 +735,19 @@ ${wordListStr}
 응답 형식 (JSON 배열):
 [
   {
-    "questionText": "한글 뜻 또는 문장",
-    "answer": "정답 영어",
-    "answerType": "CHOICE" 또는 "TEXT",
-    "options": ["오답1", "오답2", "오답3"] (객관식일 때만)
+    "questionText": "한글 뜻",
+    "answer": "정답 영어 단어",
+    "answerType": "TEXT",
+    "options": []
   }
 ]
 
 규칙:
-1. 객관식(CHOICE)과 주관식(TEXT)를 섞어주세요.
-2. 주관식은 options를 빈 배열로 두세요.
-3. JSON 형식만 응답하세요.`,
+1. **모든 문제는 주관식(TEXT)입니다.**
+2. **질문(questionText)은 반드시 '한글 뜻'**으로 주세요.
+3. **정답(answer)은 반드시 '영어 단어'**로 주세요.
+4. options는 빈 배열([])로 두세요.
+5. JSON 형식만 응답하세요.`,
 
                     'HARD': `당신은 영어 시험 문제 출제 전문가입니다.
 다음 단어들을 **응용한 간단한 영어 문장 문제**를 만들어주세요.
@@ -819,6 +959,26 @@ ${wordListStr}
             } catch (error) {
                 console.error('Failed to delete material:', error);
                 alert('삭제에 실패했습니다.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteWord(id) {
+            if (!confirm('이 단어를 삭제하시겠습니까?')) return;
+
+            showLoading();
+            try {
+                const response = await fetch(`/api/vocabulary/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('삭제 실패');
+
+                // Refresh list
+                const vocabRes = await fetch(`/api/rounds/${currentRoundId}/vocabulary`);
+                const vocabulary = await vocabRes.json();
+                renderVocabularyList(vocabulary);
+            } catch (error) {
+                console.error('Failed to delete word:', error);
+                alert('단어 삭제에 실패했습니다.');
             } finally {
                 hideLoading();
             }

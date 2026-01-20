@@ -312,12 +312,24 @@
                     <div class="result-btn-group">
                         <button onclick="toggleRanking()" class="clay-btn btn-secondary"><i
                                 class="fa-solid fa-trophy"></i> View Ranking</button>
-                        <button onclick="toggleWrongAnswers()" class="clay-btn btn-secondary">Review Answers</button>
+                        <button onclick="toggleReviewAnswers()" class="clay-btn btn-secondary">Review Result</button>
                         <button onclick="backToDashboard()" class="clay-btn btn-primary">Back Home</button>
                     </div>
 
                     <div id="roundRankingList" class="round-ranking-list hidden"></div>
-                    <div id="wrongAnswersList" class="wrong-answers-box hidden"></div>
+
+                    <!-- Review Section (Filters + List) -->
+                    <div id="reviewSection" class="hidden" style="margin-top: 20px;">
+                        <div class="filter-buttons mb-medium">
+                            <button onclick="filterAnswers('ALL')" class="filter-btn active"
+                                id="btnFilterAll">All</button>
+                            <button onclick="filterAnswers('CORRECT')" class="filter-btn"
+                                id="btnFilterCorrect">Correct</button>
+                            <button onclick="filterAnswers('WRONG')" class="filter-btn"
+                                id="btnFilterWrong">Incorrect</button>
+                        </div>
+                        <div id="reviewAnswersList" class="wrong-answers-box"></div>
+                    </div>
                 </div>
             </section>
 

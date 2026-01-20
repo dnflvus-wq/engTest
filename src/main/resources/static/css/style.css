@@ -1139,6 +1139,67 @@ body {
     font-weight: 600;
 }
 
+/* Manual Input List Styles */
+.manual-input-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 2px;
+    /* slight padding for focus rings */
+}
+
+.manual-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+/* Specific override to beat .form-group input[type="text"] selector specificity (0,2,1) */
+.form-group .manual-input-row input[type="text"] {
+    width: auto;
+    flex: 1;
+    /* evenly distribute space */
+    box-shadow: none;
+    /* remove deep well shadow */
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 0;
+    /* remove global bottom margin if any */
+}
+
+/* Focus state for cleaner inputs */
+.form-group .manual-input-row input[type="text"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.btn-icon-delete-small {
+    background: #f1f5f9;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    /* Prevent button from squishing */
+}
+
+.btn-icon-delete-small:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
 /* Ranking List */
 .ranking-list {
     display: flex;
@@ -1389,6 +1450,46 @@ body {
     justify-content: center;
 }
 
+.wrong-answers-box {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    /* Scrollbar cleanup */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--clay-surface);
+}
+
+/* Filter Buttons */
+.filter-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background: var(--clay-surface);
+    color: var(--text-muted);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--clay-shadow-out-sm);
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--clay-shadow-in);
+}
+
 /* ========================================
    ADMIN PAGE STYLES (admin.html)
    ======================================== */
@@ -1400,6 +1501,92 @@ body {
     padding: 40px 20px;
     min-height: 100vh;
     background: var(--clay-bg);
+}
+
+/* Flat Card Override */
+.flat-card {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Vocab Table Styles */
+.vocab-table-container {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    overflow-x: auto;
+    margin-top: 10px;
+    border: none;
+}
+
+.vocab-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+}
+
+.vocab-table th {
+    padding: 15px 20px;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.vocab-table td {
+    padding: 15px 20px;
+    color: var(--text-primary);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    vertical-align: middle;
+    transition: all 0.2s;
+}
+
+.vocab-table tr:last-child td {
+    border-bottom: none;
+}
+
+.vocab-table tr:hover td {
+    background: rgba(var(--primary-rgb), 0.02);
+    transform: scale(1.005);
+    color: var(--primary);
+}
+
+.vocab-table .phonetic-text {
+    font-family: 'Consolas', monospace;
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.03);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.btn-icon-delete {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #fee2e2;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--clay-shadow-out-sm);
+}
+
+.btn-icon-delete:hover {
+    background: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow-out);
 }
 
 .container>header {
@@ -2666,4 +2853,98 @@ body {
     .round-item-card p {
         font-size: 0.9rem;
     }
+}
+
+/* Custom Clay Select Box */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+    width: 100%;
+    font-family: inherit;
+}
+
+.custom-select-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    padding: 15px 20px;
+    box-shadow: var(--clay-shadow-out-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+.custom-select-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow-out);
+    color: var(--primary);
+}
+
+.custom-select-trigger .arrow {
+    transition: transform 0.3s;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.custom-select-wrapper.open .custom-select-trigger .arrow {
+    transform: rotate(180deg);
+    color: var(--primary);
+}
+
+.custom-options {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--clay-shadow-out);
+    overflow: hidden;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.custom-select-wrapper.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-option {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 1px solid rgba(163, 177, 198, 0.1);
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.custom-option:last-child {
+    border-bottom: none;
+}
+
+.custom-option:hover {
+    background: rgba(163, 177, 198, 0.1);
+    color: var(--primary);
+    padding-left: 25px;
+    /* Slide effect */
+}
+
+.custom-option.selected {
+    background: var(--clay-bg);
+    color: var(--primary);
+    font-weight: 700;
+    box-shadow: var(--clay-shadow-in);
 }

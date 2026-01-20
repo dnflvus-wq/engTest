@@ -92,4 +92,10 @@ public class MaterialController {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/vocabulary/{id}")
+    public ResponseEntity<Void> deleteVocabularyWord(@PathVariable Long id) {
+        vocabularyService.deleteWord(id);
+        return ResponseEntity.ok().build();
+    }
 }

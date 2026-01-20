@@ -17,5 +17,7 @@ public interface VocabularyMapper {
 
     void deleteByRoundId(@Param("roundId") Long roundId);
 
+    void delete(@Param("id") Long id);
+
     void update(VocabularyWord word);
 }

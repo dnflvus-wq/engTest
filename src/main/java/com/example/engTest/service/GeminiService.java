@@ -72,29 +72,51 @@ public class GeminiService {
     /**
      * 텍스트 기반 채점 (유사도 비교)
      */
+    /**
+     * 텍스트 기반 채점 (AI 사용 - 철자 엄격, 대소문자/띄어쓰기 무시)
+     */
     public GradeResult gradeTextAnswer(String userAnswer, String correctAnswer) {
-        if (userAnswer == null || correctAnswer == null) {
-            return new GradeResult(userAnswer, false, "답안 또는 정답이 없습니다.", null);
+        if (userAnswer == null || userAnswer.trim().isEmpty()) {
+            return new GradeResult(userAnswer, false, "답을 입력하지 않았습니다.", null);
         }
 
-        // 정규화: 소문자로 변환, 불필요한 공백 제거, 특수문자 제거
-        String normalized1 = normalizeText(userAnswer);
-        String normalized2 = normalizeText(correctAnswer);
+        // 프롬프트 생성
+        String prompt = String.format("""
+                당신은 영어 시험 채점관입니다.
+                다음 사용자의 답안을 정답과 비교하여 채점해주세요.
 
-        // 완전 일치 확인
-        if (normalized1.equals(normalized2)) {
-            return new GradeResult(userAnswer, true, "정답입니다!", null);
+                정답: "%s"
+                사용자 답안: "%s"
+
+                채점 기준:
+                1. **철자(Spelling)**: 매우 엄격하게 확인하세요. 틀린 철자가 하나라도 있으면 오답입니다.
+                2. **대소문자/띄어쓰기**: 무시하세요. (예: "apple" == "Apple", "bus stop" == "busstop" 은 정답)
+                3. **문장부호**: 무시하세요.
+
+                응답 형식 (JSON):
+                {
+                    "isCorrect": true 또는 false,
+                    "feedback": "한글 피드백"
+                }
+
+                피드백 가이드:
+                - 정답이면: "정답입니다!" (칭찬 문구 추가 가능)
+                - 오답이면: 틀린 이유를 구체적으로 한국어로 설명 (예: "철자가 틀렸습니다. 'a'가 빠졌습니다.", "전혀 다른 단어입니다.")
+                - 오직 JSON만 응답하세요.
+                """, correctAnswer, userAnswer);
+
+        try {
+            String response = callGemini(prompt);
+            return parseGradeResult(response, correctAnswer, null);
+        } catch (Exception e) {
+            log.error("AI grading failed, falling back to simple check", e);
+            // Fallback: Simple string matching
+            String n1 = normalizeText(userAnswer);
+            String n2 = normalizeText(correctAnswer);
+            boolean simpleCorrect = n1.equals(n2);
+            return new GradeResult(userAnswer, simpleCorrect,
+                    simpleCorrect ? "정답입니다. (AI 연결 실패로 단순 채점됨)" : "오답입니다. (AI 연결 실패로 단순 채점됨)", null);
         }
-
-        // 유사도 검사 (Levenshtein distance 기반)
-        double similarity = calculateSimilarity(normalized1, normalized2);
-        boolean isCorrect = similarity >= 0.8; // 80% 이상 유사하면 정답 처리
-
-        String feedback = isCorrect
-                ? "정답입니다! (유사도: " + Math.round(similarity * 100) + "%)"
-                : "오답입니다. 정답은 '" + correctAnswer + "'입니다.";
-
-        return new GradeResult(userAnswer, isCorrect, feedback, null);
     }
 
     /**

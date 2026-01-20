@@ -40,6 +40,28 @@ public class ExamService {
 
     @Transactional
     public Exam startExam(Long userId, Long roundId, String mode) {
+        // [Resume & Cleanup] Check for existing IN_PROGRESS exams
+        List<Exam> inProgressExams = examMapper.findInProgressByUserId(userId);
+
+        // Check if there is an existing exam for THIS round
+        for (Exam oldExam : inProgressExams) {
+            if (oldExam.getRoundId().equals(roundId)) {
+                // RESUME: Found incomplete exam for this round -> Return it!
+                // (Other in-progress exams for DIFFERENT rounds will remain until they are
+                // started and cleaned up,
+                // OR we can clean them up now. Let's clean up others to keep DB clean.)
+                cleanUpOtherExams(userId, oldExam.getId());
+                return oldExam;
+            }
+        }
+
+        // If we reached here, no exam for this round exists.
+        // Cleanup ALL in-progress exams (since we are starting a NEW one)
+        for (Exam oldExam : inProgressExams) {
+            deleteExam(oldExam.getId());
+        }
+
+        // --- Create NEW Exam ---
         // 해당 회차의 문제 수 조회
         int questionCount = questionMapper.countByRoundId(roundId);
 
@@ -70,6 +92,15 @@ public class ExamService {
         }
 
         return exam;
+    }
+
+    private void cleanUpOtherExams(Long userId, Long currentExamId) {
+        List<Exam> inProgressExams = examMapper.findInProgressByUserId(userId);
+        for (Exam ex : inProgressExams) {
+            if (!ex.getId().equals(currentExamId)) {
+                deleteExam(ex.getId());
+            }
+        }
     }
 
     @Transactional

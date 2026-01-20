@@ -89,4 +89,9 @@ public class VocabularyService {
     public void deleteByRoundId(Long roundId) {
         vocabularyMapper.deleteByRoundId(roundId);
     }
+
+    @Transactional
+    public void deleteWord(Long id) {
+        vocabularyMapper.delete(id);
+    }
 }

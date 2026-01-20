@@ -438,6 +438,22 @@ async function startExam(mode) {
         currentQuestionIndex = 0;
         userAnswers = {};
 
+        // [Resume] Restore existing answers if any
+        try {
+            const savedAnswers = await api(`/api/exams/${currentExam.id}/answers`);
+            if (savedAnswers && savedAnswers.length > 0) {
+                savedAnswers.forEach(a => {
+                    // Only restore text answers (assuming online text exam for now)
+                    if (a.userAnswer) {
+                        userAnswers[a.questionId] = a.userAnswer;
+                    }
+                });
+                console.log('Resumed exam with answers:', userAnswers);
+            }
+        } catch (e) {
+            console.warn('Failed to restore answers:', e);
+        }
+
         if (mode === 'ONLINE') {
             showSection('examSection');
             renderQuestion();
@@ -596,7 +612,8 @@ async function submitOfflineExam() {
         // 오프라인 채점 프롬프트 템플릿 (%s는 백엔드에서 문제 정보로 치환됨)
         const offlinePrompt = `이 답안지 이미지를 분석해주세요.
 
-문제 정보:
+문제 정보:용자가 작성한 답",
+    "isCorrect": tru
 %s
 
 규칙:
@@ -609,8 +626,7 @@ async function submitOfflineExam() {
 [
   {
     "questionNumber": 1,
-    "userAnswer": "사용자가 작성한 답",
-    "isCorrect": true 또는 false,
+    "userAnswer": "사e 또는 false,
     "feedback": "피드백 메시지"
   }
 ]
@@ -702,31 +718,107 @@ async function toggleRanking() {
     }
 }
 
-async function toggleWrongAnswers() {
-    const box = document.getElementById('wrongAnswersList');
-    if (!box.classList.contains('hidden')) {
-        box.classList.add('hidden');
+// --- REVIEW & FILTER LOGIC ---
+let currentExamAnswers = [];
+
+async function toggleReviewAnswers() {
+    const section = document.getElementById('reviewSection');
+    const isHidden = section.classList.contains('hidden');
+
+    if (isHidden) {
+        // Show
+        section.classList.remove('hidden');
+        document.getElementById('roundRankingList')?.classList.add('hidden'); // Hide ranking if open
+
+        try {
+            showLoading();
+            // Fetch ALL answers now
+            const answers = await api(`/api/exams/${currentExam.id}/answers`);
+            // Assign question numbers (1-based index)
+            currentExamAnswers = answers.map((a, i) => ({ ...a, number: i + 1 }));
+
+            // Set default filter to ALL
+            filterAnswers('ALL');
+
+            // Scroll to review section if needed
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) {
+            console.error(e);
+            showAlert('답안 목록을 불러오지 못했습니다: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    } else {
+        // Hide
+        section.classList.add('hidden');
+    }
+}
+
+function filterAnswers(type) {
+    // Update button states
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    if (type === 'ALL') document.getElementById('btnFilterAll').classList.add('active');
+    else if (type === 'CORRECT') document.getElementById('btnFilterCorrect').classList.add('active');
+    else if (type === 'WRONG') document.getElementById('btnFilterWrong').classList.add('active');
+
+    // Filter logic
+    let filtered = [];
+    if (type === 'ALL') {
+        filtered = currentExamAnswers;
+    } else if (type === 'CORRECT') {
+        filtered = currentExamAnswers.filter(a => a.isCorrect);
+    } else if (type === 'WRONG') {
+        filtered = currentExamAnswers.filter(a => !a.isCorrect);
+    }
+
+    renderReviewAnswers(filtered);
+}
+
+function renderReviewAnswers(answers) {
+    const list = document.getElementById('reviewAnswersList');
+    list.innerHTML = '';
+
+    if (!answers || answers.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>해당하는 항목이 없습니다.</p></div>';
         return;
     }
 
-    try {
-        showLoading();
-        const answers = await api(`/api/exams/${currentExam.id}/wrong-answers`);
-        box.innerHTML = answers.length === 0 ? '<p class="text-success">Perfect Score!</p>' :
-            answers.map(a => `
-                <div class="clay-card round-item-card mb-medium" style="background:#fff0f0; border-color:#ffcccc;">
-                    <p><strong>Q: ${a.questionText}</strong></p>
-                    <p style="color:var(--danger)">Your Answer: ${a.userAnswer || 'Empty'}</p>
-                    <p style="color:var(--success)">Correct: ${a.correctAnswer}</p>
-                </div>
-            `).join('');
+    answers.forEach(item => {
+        const isCorrect = item.isCorrect;
+        // Styles: Green for correct, Red for wrong
+        const bgStyle = isCorrect ? 'background: #f0fdf4; border-color: #bbf7d0;' : 'background: #fff0f0; border-color: #ffcccc;';
+        const answerColor = isCorrect ? 'color: #16a34a;' : 'color: #dc2626;';
+        const icon = isCorrect ? '<i class="fa-solid fa-check text-success"></i>' : '<i class="fa-solid fa-xmark text-danger"></i>';
 
-        box.classList.remove('hidden');
-    } catch (e) {
-        showAlert(e.message);
-    } finally {
-        hideLoading();
-    }
+        const card = document.createElement('div');
+        card.className = 'clay-card round-item-card mb-medium';
+        card.style.cssText = `margin-bottom: 15px; padding: 15px; border: 1px solid; ${bgStyle}`;
+
+        // Construct feedback if available
+        let feedbackHtml = '';
+        if (item.feedback) {
+            feedbackHtml = `<div style="font-size:0.85rem; color:#6b7280; margin-top:5px;"><i class="fa-solid fa-comment-dots"></i> ${item.feedback}</div>`;
+        }
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:5px;">
+                <h4 style="margin:0; font-size:1rem; color:#374151;">Q${item.number}. ${item.questionText}</h4>
+                <span>${icon}</span>
+            </div>
+            <div style="font-size:0.95rem;">
+                <p style="margin: 5px 0;">
+                    <span style="color:#6b7280; font-weight:600;">Your Answer:</span> 
+                    <span style="${answerColor} font-weight:700;">${item.userAnswer || '(Empty)'}</span>
+                </p>
+                <p style="margin: 5px 0;">
+                    <span style="color:#6b7280; font-weight:600;">Correct:</span> 
+                    <span style="color:#16a34a; font-weight:700;">${item.correctAnswer}</span>
+                </p>
+                ${feedbackHtml}
+            </div>
+        `;
+        list.appendChild(card);
+    });
 }
 
 // ===== STUDY MATERIALS =====
