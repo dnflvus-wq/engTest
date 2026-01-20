@@ -2095,16 +2095,16 @@ body {
 }
 
 .youtube-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 30px;
 }
 
-@media (min-width: 1100px) {
-    .youtube-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
+/* 
+   Media query removed to prevent jumping behavior.
+   Flexbox handle this naturally.
+*/
 
 .youtube-card {
     background: var(--clay-surface);
@@ -2113,6 +2113,10 @@ body {
     box-shadow: var(--clay-shadow-out-sm);
     cursor: pointer;
     transition: transform 0.2s;
+    /* Responsive Sizing */
+    width: 100%;
+    max-width: 700px; /* Limit maximum size */
+    flex: 1 1 400px; /* Base width */
 }
 
 .youtube-card:hover {
