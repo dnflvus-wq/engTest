@@ -852,9 +852,15 @@ async function loadStudyMaterials(roundId) {
                 const isPdf = m.fileName && m.fileName.toLowerCase().endsWith('.pdf');
                 const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-powerpoint';
                 const previewHtml = isPdf
-                    ? `<div class="pdf-preview">
-                         <iframe src="https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(m.url)}"></iframe>
-                       </div>`
+                    ? (window.innerWidth <= 768
+                        ? `<div style="margin-top:15px; text-align:center;">
+                             <a href="${m.url}" target="_blank" class="clay-btn btn-primary" style="width:100%; justify-content:center;">
+                               <i class="fa-solid fa-file-pdf"></i> PDF 보기 (View PDF)
+                             </a>
+                           </div>`
+                        : `<div class="pdf-preview">
+                             <iframe src="${m.url}#view=FitH"></iframe>
+                           </div>`)
                     : '';
 
                 return `
