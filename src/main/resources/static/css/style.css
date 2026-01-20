@@ -2448,3 +2448,23 @@ body {
     text-align: center;
     /* Center Korean text to match header */
 }
+/* PDF Preview Sizing */
+.pdf-preview {
+    margin-top: 20px;
+    width: 100%;
+    height: 80vh;
+    min-height: 500px;
+    max-height: 900px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--clay-shadow-in);
+    background: var(--clay-bg);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.pdf-preview iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
