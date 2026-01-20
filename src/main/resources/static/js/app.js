@@ -866,23 +866,22 @@ async function loadStudyMaterials(roundId) {
                 return `
                 <div class="ppt-item" style="flex-direction: column; align-items: flex-start;">
                     <div style="display:flex; width:100%; align-items:center; justify-content:space-between;">
-                        <div style="display:flex; align-items:center; gap:15px;">
+                        <div style="display:flex; align-items:center; gap:15px; overflow:hidden; flex:1;">
                             <span class="ppt-icon"><i class="fa-solid ${iconClass}"></i></span>
-                            <div class="ppt-info">
+                            <div class="ppt-info" style="overflow:hidden;">
                                 <div class="ppt-title">${m.title || m.fileName || 'Document'}</div>
                             </div>
                         </div>
+                        ${window.innerWidth > 768 ? `
                         <a class="ppt-link" href="${m.url}" target="_blank" download>
                             <i class="fa-solid fa-download"></i> Download
-                        </a>
+                        </a>` : ''}
                     </div>
                     ${previewHtml}
                 </div>
                 `;
             }).join('');
         }
-    } catch (e) {
-        showAlert('Failed to load materials: ' + e.message);
     } finally {
         hideLoading();
     }
@@ -915,17 +914,25 @@ function openYoutube(url) {
 }
 
 function playYoutubeEmbed(videoId) {
-    const wrapper = document.getElementById(`player-${videoId}`);
+    const wrapper = document.getElementById(`player-${videoId} `);
     if (wrapper) {
         wrapper.innerHTML = `
-            <iframe 
+                    < iframe
                 class="youtube-iframe"
-                src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        `;
+                src = "https://www.youtube.com/embed/${videoId}?autoplay=1"
+                frameborder = "0"
+                allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen >
+            </iframe >
+                    `;
     }
 }
 
+
+// Toggle Study Accordion
+function toggleStudyAccordion(id) {
+    const item = document.getElementById(id);
+    if (item) {
+        item.classList.toggle('active');
+    }
+}

@@ -406,26 +406,42 @@
                     </div>
 
                     <!-- 단어장 영역 -->
-                    <div id="vocabularyArea">
-                        <h3 class="section-heading"><i class="fa-solid fa-spell-check"></i> Vocabulary</h3>
-                        <div id="vocabularyGrid" class="vocabulary-grid">
-                            <!-- Vocabulary cards injected here -->
+                    <!-- 단어장 영역 (Accordion) -->
+                    <div class="study-accordion-item" id="vocabAccordion">
+                        <div class="study-accordion-header" onclick="toggleStudyAccordion('vocabAccordion')">
+                            <span><i class="fa-solid fa-spell-check"></i> Vocabulary</span>
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </div>
+                        <div class="study-accordion-content">
+                            <div id="vocabularyGrid" class="vocabulary-grid">
+                                <!-- Vocabulary cards injected here -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 유튜브 영상 영역 -->
-                    <div id="youtubeArea" class="youtube-section">
-                        <h3><i class="fa-brands fa-youtube" style="color: #ff0000;"></i> Video Lessons</h3>
-                        <div id="youtubeGrid" class="youtube-grid">
-                            <!-- Youtube cards injected here -->
+                    <!-- 유튜브 영상 영역 (Accordion) -->
+                    <div class="study-accordion-item" id="youtubeAccordion">
+                        <div class="study-accordion-header" onclick="toggleStudyAccordion('youtubeAccordion')">
+                            <span><i class="fa-brands fa-youtube" style="color: #ff0000;"></i> Video Lessons</span>
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </div>
+                        <div class="study-accordion-content">
+                            <div id="youtubeGrid" class="youtube-grid">
+                                <!-- Youtube cards injected here -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- PPT 자료 영역 -->
-                    <div id="pptArea" class="ppt-section">
-                        <h3><i class="fa-solid fa-file-powerpoint" style="color: #d24726;"></i> Documents</h3>
-                        <div id="pptList" class="ppt-list">
-                            <!-- PPT items injected here -->
+                    <!-- PPT 자료 영역 (Accordion) -->
+                    <div class="study-accordion-item" id="pptAccordion">
+                        <div class="study-accordion-header" onclick="toggleStudyAccordion('pptAccordion')">
+                            <span><i class="fa-solid fa-file-powerpoint" style="color: #d24726;"></i> Documents</span>
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </div>
+                        <div class="study-accordion-content">
+                            <div id="pptList" class="ppt-list">
+                                <!-- PPT items injected here -->
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -2115,8 +2115,10 @@ body {
     transition: transform 0.2s;
     /* Responsive Sizing */
     width: 100%;
-    max-width: 700px; /* Limit maximum size */
-    flex: 1 1 400px; /* Base width */
+    max-width: 700px;
+    /* Limit maximum size */
+    flex: 1 1 400px;
+    /* Base width */
 }
 
 .youtube-card:hover {
@@ -2167,6 +2169,11 @@ body {
 .ppt-title {
     font-weight: 700;
     color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    /* Adjust as needed */
 }
 
 .ppt-link {
@@ -2448,6 +2455,7 @@ body {
     text-align: center;
     /* Center Korean text to match header */
 }
+
 /* PDF Preview Sizing */
 .pdf-preview {
     margin-top: 20px;
@@ -2459,7 +2467,7 @@ body {
     overflow: hidden;
     box-shadow: var(--clay-shadow-in);
     background: var(--clay-bg);
-    border: 1px solid rgba(255,255,255,0.5);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .pdf-preview iframe {
@@ -2467,4 +2475,62 @@ body {
     height: 100%;
     border: none;
     display: block;
+}
+
+/* Accordion Styles for Study Section */
+.study-accordion-item {
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+    box-shadow: var(--clay-shadow-out-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.study-accordion-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.study-accordion-header:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--primary);
+}
+
+.study-accordion-header .arrow-icon {
+    transition: transform 0.3s ease;
+}
+
+.study-accordion-item.active .arrow-icon {
+    transform: rotate(180deg);
+}
+
+.study-accordion-content {
+    display: none;
+    padding: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.study-accordion-item.active .study-accordion-content {
+    display: block;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
