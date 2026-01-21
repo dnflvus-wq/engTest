@@ -3,9 +3,11 @@ package com.example.engTest.controller;
 import com.example.engTest.dto.Question;
 import com.example.engTest.dto.Round;
 import com.example.engTest.dto.RoundStats;
+import com.example.engTest.dto.VocabularyWord;
 import com.example.engTest.service.GeminiService;
 import com.example.engTest.service.QuestionService;
 import com.example.engTest.service.RoundService;
+import com.example.engTest.service.VocabularyService;
 
 import com.example.engTest.service.ExamService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +32,7 @@ public class RoundController {
     private final GeminiService geminiService;
 
     private final ExamService examService;
+    private final VocabularyService vocabularyService;
 
     @GetMapping
     public ResponseEntity<List<Round>> getAllRounds() {
@@ -209,17 +214,53 @@ public class RoundController {
             String prompt = (String) request.get("prompt");
             Integer passScore = request.get("passScore") != null ? ((Number) request.get("passScore")).intValue()
                     : null;
-
-            if (prompt == null || prompt.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "프롬프트가 누락되었습니다."));
-            }
+            int questionCount = request.get("questionCount") != null
+                    ? ((Number) request.get("questionCount")).intValue()
+                    : 30;
 
             // 기존 시험 기록 및 문제 삭제 (FK 에러 방지)
             examService.deleteByRoundId(id);
             questionService.deleteQuestionsByRoundId(id);
 
-            // 단어 기반 문제 생성
-            List<Question> questions = geminiService.generateQuestionsFromWords(prompt, id, difficulty);
+            List<Question> questions;
+
+            // MEDIUM(중급/주관식): LLM 호출 없이 DB에서 직접 문제 생성
+            if ("MEDIUM".equalsIgnoreCase(difficulty)) {
+                List<VocabularyWord> vocabulary = vocabularyService.getVocabularyByRoundId(id);
+                if (vocabulary == null || vocabulary.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "단어가 없습니다. 먼저 단어를 입력하세요."));
+                }
+
+                // 무작위 섞기
+                Collections.shuffle(vocabulary);
+
+                // 지정된 개수만큼 추출 (단어 수가 부족하면 전체 사용)
+                int count = Math.min(questionCount, vocabulary.size());
+                List<VocabularyWord> selectedWords = vocabulary.subList(0, count);
+
+                // Question 객체 직접 생성
+                questions = new ArrayList<>();
+                int seqNo = 1;
+                for (VocabularyWord word : selectedWords) {
+                    questions.add(Question.builder()
+                            .roundId(id)
+                            .questionType("WORD")
+                            .answerType("TEXT")
+                            .questionText(word.getKorean()) // 한글 뜻이 문제
+                            .answer(word.getEnglish()) // 영어 단어가 정답
+                            .seqNo(seqNo++)
+                            .build());
+                }
+
+                log.info("Generated {} MEDIUM questions directly from DB for round {}", questions.size(), id);
+            } else {
+                // EASY, HARD: 기존 LLM 호출 로직
+                if (prompt == null || prompt.trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "프롬프트가 누락되었습니다."));
+                }
+                questions = geminiService.generateQuestionsFromWords(prompt, id, difficulty);
+            }
+
             questionService.createQuestions(questions);
 
             // 회차 정보 업데이트
