@@ -219,13 +219,13 @@
                                     </div>
                                     <div class="form-group" style="min-width: 100px;">
                                         <label for="questionCount">문제 수</label>
-                                        <input type="number" id="questionCount" value="30" min="1" max="100"
-                                            class="clay-input" style="width: 80px; text-align: center;">
+                                        <input type="number" id="questionCount" value="30" min="1" class="clay-input"
+                                            style="width: 80px; text-align: center;" oninput="onQuestionCountChange()">
                                     </div>
                                     <div class="form-group" style="min-width: 100px;">
                                         <label for="passScore">합격 점수</label>
-                                        <input type="number" id="passScore" value="24" min="1" max="100"
-                                            class="clay-input" style="width: 80px; text-align: center;">
+                                        <input type="number" id="passScore" value="24" min="1" class="clay-input"
+                                            style="width: 80px; text-align: center;">
                                     </div>
                                     <button onclick="generateQuestionsFromVocabulary()" class="btn-success"
                                         style="height:fit-content;">
@@ -562,6 +562,37 @@
                     <span class="clay-card" style="padding:5px 15px; font-size:0.85rem; color:var(--text-muted); background:#fff;">
                         Total Words: <strong style="color:var(--primary);">${vocabulary.length}</strong>
             `;
+
+            // 단어 목록 개수에 맞춰 문제 수와 합격 점수 기본값 갱신
+            updateQuestionDefaults(vocabulary.length);
+        }
+
+        // ===== 문제 수 / 합격 점수 기본값 동적 갱신 =====
+        function updateQuestionDefaults(wordCount) {
+            const questionCountInput = document.getElementById('questionCount');
+            const passScoreInput = document.getElementById('passScore');
+
+            if (!questionCountInput || !passScoreInput) return;
+
+            // 문제 수: 단어 개수 (최대 30개로 초기값 설정, 사용자가 수동으로 더 높일 수 있음)
+            const questionCount = Math.min(wordCount, 30);
+            questionCountInput.value = questionCount;
+
+            // 합격 점수: 문제 수의 80%
+            const passScore = Math.ceil(questionCount * 0.8);
+            passScoreInput.value = passScore;
+        }
+
+        // ===== 문제 수 변경 시 합격 점수 자동 계산 =====
+        function onQuestionCountChange() {
+            const questionCountInput = document.getElementById('questionCount');
+            const passScoreInput = document.getElementById('passScore');
+
+            if (!questionCountInput || !passScoreInput) return;
+
+            const questionCount = parseInt(questionCountInput.value) || 0;
+            const passScore = Math.ceil(questionCount * 0.8);
+            passScoreInput.value = passScore;
         }
 
         // ===== 수동 단어 입력 UI 관리 =====
