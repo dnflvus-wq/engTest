@@ -143,34 +143,36 @@ public class GeminiService {
 
     /**
      * 이미지들에서 영어 단어/문장 추출
+     * 모든 이미지를 한 번에 Gemini에 전송하여 번호 매칭이 가능하도록 함
      */
     public List<String> extractWordsFromImages(List<MultipartFile> images, String customPrompt) throws IOException {
-        List<String> allWords = new ArrayList<>();
-        List<String> errors = new ArrayList<>();
+        if (images == null || images.isEmpty()) {
+            return new ArrayList<>();
+        }
 
+        // 모든 이미지를 Base64로 변환
+        List<Map<String, Object>> imageParts = new ArrayList<>();
         for (MultipartFile image : images) {
             String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
             String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
 
-            // 프론트엔드에서 전달받은 프롬프트 사용
-            String prompt = customPrompt;
+            Map<String, Object> inlineData = new HashMap<>();
+            inlineData.put("mimeType", mimeType);
+            inlineData.put("data", base64Image);
 
-            try {
-                String response = callGeminiWithImage(prompt, base64Image, mimeType);
-                List<String> words = parseExtractedWords(response);
-                allWords.addAll(words);
-            } catch (Exception e) {
-                log.error("Failed to extract words from image: {}", image.getOriginalFilename(), e);
-                errors.add(image.getOriginalFilename() + ": " + e.getMessage());
-            }
+            Map<String, Object> imagePart = new HashMap<>();
+            imagePart.put("inlineData", inlineData);
+            imageParts.add(imagePart);
         }
 
-        // 모든 이미지가 실패하면 에러 던지기
-        if (allWords.isEmpty() && !errors.isEmpty()) {
-            throw new RuntimeException("이미지에서 단어를 추출할 수 없습니다: " + String.join(", ", errors));
+        try {
+            // 모든 이미지를 한 번에 전송
+            String response = callGeminiWithMultipleImages(customPrompt, imageParts);
+            return parseExtractedWords(response);
+        } catch (Exception e) {
+            log.error("Failed to extract words from images", e);
+            throw new RuntimeException("이미지에서 단어를 추출할 수 없습니다: " + e.getMessage());
         }
-
-        return allWords;
     }
 
     /**
@@ -481,6 +483,54 @@ public class GeminiService {
                 .block();
 
         log.debug("Gemini Vision response: {}", response);
+        return response;
+    }
+
+    /**
+     * 여러 이미지를 한 번에 Gemini에 전송 (번호 매칭을 위해)
+     */
+    private String callGeminiWithMultipleImages(String prompt, List<Map<String, Object>> imageParts) {
+        String apiKey = apiConfig.getGemini().getKey();
+        String model = apiConfig.getGemini().getModel();
+        String baseUrl = apiConfig.getGemini().getUrl();
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new RuntimeException("Gemini API 키가 설정되지 않았습니다.");
+        }
+
+        String url = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
+
+        // 텍스트 파트
+        Map<String, Object> textPart = new HashMap<>();
+        textPart.put("text", prompt);
+
+        // parts 리스트 구성: 텍스트 + 모든 이미지들
+        List<Map<String, Object>> parts = new ArrayList<>();
+        parts.add(textPart);
+        parts.addAll(imageParts);
+
+        Map<String, Object> content = new HashMap<>();
+        content.put("parts", parts);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(content));
+
+        WebClient webClient = webClientBuilder.build();
+
+        String response = webClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        clientResponse -> clientResponse.bodyToMono(String.class)
+                                .doOnNext(errorBody -> log.error("Gemini API error response: {}", errorBody))
+                                .flatMap(errorBody -> reactor.core.publisher.Mono.error(
+                                        new RuntimeException("Gemini API error: " + errorBody))))
+                .bodyToMono(String.class)
+                .block();
+
+        log.debug("Gemini Multi-Image response: {}", response);
         return response;
     }
 
