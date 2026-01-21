@@ -130,14 +130,28 @@ public class RoundController {
 
     @GetMapping("/{id}/participants")
     public ResponseEntity<?> getRoundParticipants(@PathVariable Long id) {
+        // 1. 라운드 정보 조회하여 현재 설정된 Pass Score 가져오기
+        Round round = roundService.getRoundById(id);
+        if (round == null) {
+            return ResponseEntity.notFound().build();
+        }
+        int passScore = round.getPassScore();
+
         var allExams = examService.getExamsByRoundId(id);
         var participants = allExams.stream()
-                .map(e -> Map.of(
-                        "userId", e.getUserId(),
-                        "userName", e.getUserName() != null ? e.getUserName() : "User #" + e.getUserId(),
-                        "status", e.getStatus(),
-                        "score", e.getScore() != null ? e.getScore() : 0,
-                        "submittedAt", e.getSubmittedAt() != null ? e.getSubmittedAt().toString() : ""))
+                .map(e -> {
+                    double score = e.getScore() != null ? e.getScore().doubleValue() : 0;
+                    // 2. 현재 라운드의 Pass Score와 비교하여 동적으로 Pass/Fail 판단
+                    boolean isPassed = score >= passScore;
+
+                    return Map.of(
+                            "userId", e.getUserId(),
+                            "userName", e.getUserName() != null ? e.getUserName() : "User #" + e.getUserId(),
+                            "status", e.getStatus(),
+                            "score", score,
+                            "isPassed", isPassed,
+                            "submittedAt", e.getSubmittedAt() != null ? e.getSubmittedAt().toString() : "");
+                })
                 .toList();
         return ResponseEntity.ok(Map.of("participants", participants, "count", participants.size()));
     }
