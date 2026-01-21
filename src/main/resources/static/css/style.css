@@ -3004,3 +3004,169 @@ body {
     color: #991b1b;
     border: 1px solid #ef4444;
 }
+
+/* ==========================================
+   MOBILE UI IMPROVEMENTS (2026-01-21)
+   ========================================== */
+@media (max-width: 768px) {
+
+    /* 1. Dashboard Cards - 높이 축소 */
+    .clay-card.widget {
+        padding: 15px !important;
+        min-height: auto !important;
+    }
+
+    .clay-card.widget h3 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+
+    .clay-card.widget p {
+        font-size: 0.85rem;
+        margin-bottom: 0;
+    }
+
+    .widget-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 1.1rem !important;
+    }
+
+    /* 2. Login Dropdown Options - 크기 축소 */
+    .custom-options {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .custom-option {
+        padding: 12px 15px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .custom-option .avatar-circle {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* 3. Study Accordion Icon 정렬 */
+    .study-accordion-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .study-accordion-header i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .study-accordion-header span {
+        line-height: 1.2;
+    }
+
+    /* 4. Admin Page 버튼 정렬 */
+    .btn-primary.btn-large,
+    .btn-success.btn-large {
+        width: 100% !important;
+        text-align: center !important;
+    }
+
+    /* Admin 폼 버튼 정렬 */
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    /* 5. Header 요소 간격 조정 */
+    .top-header {
+        gap: 8px !important;
+    }
+
+    .header-right {
+        gap: 5px !important;
+    }
+
+    #headerCloseBtn {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* 6. 회차 카드 세부 정보 세로 배치 */
+    .round-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .round-meta span {
+        display: block;
+        font-size: 0.8rem;
+    }
+
+    /* 7. 섹션 제목 크기 축소 */
+    .section-header h2 {
+        font-size: 1.1rem;
+    }
+
+    /* 8. 로그인 버튼 위치 보장 */
+    .login-container .clay-btn {
+        margin-top: 15px;
+        width: 100%;
+    }
+
+    /* 9. 아코디언 아이콘 줄바꿈 방지 */
+    .study-accordion-header {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        padding: 15px !important;
+    }
+
+    .study-accordion-header>span:first-child,
+    .study-accordion-header>div:first-child {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .study-accordion-header i:first-of-type {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+    }
+
+    /* 10. 결과 화면 (Exam Completed) 수정 */
+    #resultSection.center-container {
+        height: auto !important;
+        min-height: auto !important;
+        padding-top: 20px !important;
+        align-items: flex-start !important;
+    }
+
+    .result-card {
+        min-width: auto !important;
+        width: 100% !important;
+        padding: 20px !important;
+        margin-top: 0 !important;
+    }
+
+    .score-display-large {
+        font-size: 3.5rem !important;
+    }
+
+    .confetti-icon {
+        font-size: 2.5rem !important;
+    }
+
+    /* center-container 모바일 조정 */
+    .center-container {
+        height: auto !important;
+        min-height: 70vh;
+        padding-top: 10px !important;
+    }
+}
