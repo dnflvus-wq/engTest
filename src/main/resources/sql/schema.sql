@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS rounds (
     question_count INT DEFAULT 20,
     difficulty VARCHAR(20) DEFAULT 'MEDIUM',
     status VARCHAR(20) DEFAULT 'ACTIVE',
+    pass_score INT DEFAULT 24,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS exams (
     total_count INT NOT NULL,
     correct_count INT DEFAULT 0,
     score DECIMAL(5,2) DEFAULT 0,
+    is_passed BOOLEAN DEFAULT FALSE,
     status VARCHAR(20) DEFAULT 'IN_PROGRESS',
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     submitted_at TIMESTAMP NULL,

@@ -191,11 +191,21 @@
                         <h2><i class="fa-solid fa-file-pen"></i> Available Exams <span class="badge"
                                 id="examCount">0</span></h2>
                     </div>
+                    <!-- Filter Tabs -->
+                    <div class="filter-buttons mt-medium" id="examFilterButtons">
+                        <button onclick="loadRoundsWithFilter('ALL')" class="filter-btn active"
+                            id="btnFilterAllExams">All</button>
+                        <button onclick="loadRoundsWithFilter('PENDING')" class="filter-btn"
+                            id="btnFilterPending">Pending</button>
+                        <button onclick="loadRoundsWithFilter('COMPLETED')" class="filter-btn"
+                            id="btnFilterCompleted">Completed</button>
+                    </div>
                     <div id="roundList" class="card-grid mt-medium">
                         <!-- Round items injected here -->
                     </div>
                 </div>
             </section>
+
 
             <!-- 3. MODE SELECTION SECTION -->
             <section id="modeSection" class="hidden-section center-container">
@@ -301,6 +311,9 @@
                     <h2>Exam Completed!</h2>
                     <div class="score-display-large" id="scoreDisplay">0</div>
                     <p class="score-subtitle" id="scoreDetail">0 / 0 Correct</p>
+
+                    <!-- Pass/Fail Badge -->
+                    <div id="passFailBadge" class="pass-fail-badge hidden">PASS</div>
 
                     <!-- Ranking Display -->
                     <div id="myRankingBox" class="my-ranking-box hidden">

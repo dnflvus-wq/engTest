@@ -23,8 +23,8 @@ EXPOSE 8080
 ENV DB_HOST=db
 ENV DB_PORT=3306
 ENV DB_NAME=engtest
-ENV DB_USER=root
-ENV DB_PASSWORD=root
+ENV DB_USER=engtest
+ENV DB_PASSWORD=engtest123!
 
 # 실행
 ENTRYPOINT ["java", "-jar", "app.jar"]

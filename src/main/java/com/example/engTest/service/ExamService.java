@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,16 +122,17 @@ public class ExamService {
         // 정답 수 계산
         int correctCount = examAnswerMapper.countCorrectByExamId(examId);
 
-        // 점수 계산 (100점 만점)
-        BigDecimal score = BigDecimal.ZERO;
-        if (exam.getTotalCount() > 0) {
-            score = BigDecimal.valueOf(correctCount)
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(BigDecimal.valueOf(exam.getTotalCount()), 2, RoundingMode.HALF_UP);
-        }
+        // 점수 계산 (정답 수 = 점수, 즉 문항 수 기준 만점)
+        BigDecimal score = BigDecimal.valueOf(correctCount);
+
+        // Pass/Fail 판정: Round의 passScore와 비교
+        Round round = roundMapper.findById(exam.getRoundId());
+        int passScore = (round != null && round.getPassScore() != null) ? round.getPassScore() : 24;
+        boolean isPassed = correctCount >= passScore;
 
         exam.setCorrectCount(correctCount);
         exam.setScore(score);
+        exam.setIsPassed(isPassed);
         exam.setStatus("COMPLETED");
         exam.setSubmittedAt(LocalDateTime.now());
 

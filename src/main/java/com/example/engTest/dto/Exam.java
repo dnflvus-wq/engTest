@@ -20,6 +20,7 @@ public class Exam {
     private Integer totalCount;
     private Integer correctCount;
     private BigDecimal score;
+    private Boolean isPassed;
     private String status;
     private LocalDateTime startedAt;
     private LocalDateTime submittedAt;

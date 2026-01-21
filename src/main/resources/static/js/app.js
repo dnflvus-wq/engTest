@@ -344,7 +344,9 @@ async function showHistory() {
         } else {
             historyList.innerHTML = exams.map(exam => {
                 const date = exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString() : 'In Progress';
-                const statusClass = exam.status === 'COMPLETED' ? 'completed' : 'in-progress';
+                // Pass/Fail 표시: 완료된 시험은 PASS/FAIL, 진행 중은 In Progress
+                let statusText = exam.status === 'COMPLETED' ? (exam.isPassed ? 'PASS' : 'FAIL') : 'In Progress';
+                let statusClass = exam.status === 'COMPLETED' ? (exam.isPassed ? 'pass' : 'fail') : 'in-progress';
                 return `
                     <div class="history-item" onclick="viewExamResult(${exam.id})">
                         <div class="history-info">
@@ -352,10 +354,10 @@ async function showHistory() {
                             <div class="history-date">${date}</div>
                         </div>
                         <div class="history-score">
-                            <span class="history-score-value">${exam.score || 0}</span>
+                            <span class="history-score-value">${Math.floor(exam.score) || 0}</span>
                             <span class="history-score-detail">${exam.correctCount || 0} / ${exam.totalCount || 0}</span>
                         </div>
-                        <span class="history-status ${statusClass}">${exam.status}</span>
+                        <span class="history-status ${statusClass}">${statusText}</span>
                     </div>
                 `;
             }).join('');
@@ -380,20 +382,57 @@ async function viewExamResult(examId) {
 }
 
 // Dashboard: Load Rounds (이제 별도 섹션으로 전환)
+let currentExamFilter = 'ALL'; // Track current filter state
+
 async function loadRounds() {
     showSection('examListSection');
+    // Reset filter to ALL when entering from dashboard
+    currentExamFilter = 'ALL';
+    updateExamFilterButtons('ALL');
+    await loadRoundsWithFilter('ALL');
+}
+
+// Filter button state update
+function updateExamFilterButtons(filter) {
+    document.querySelectorAll('#examFilterButtons .filter-btn').forEach(btn => btn.classList.remove('active'));
+    if (filter === 'ALL') document.getElementById('btnFilterAllExams')?.classList.add('active');
+    else if (filter === 'PENDING') document.getElementById('btnFilterPending')?.classList.add('active');
+    else if (filter === 'COMPLETED') document.getElementById('btnFilterCompleted')?.classList.add('active');
+}
+
+async function loadRoundsWithFilter(filter) {
+    currentExamFilter = filter;
+    updateExamFilterButtons(filter);
     const list = document.getElementById('roundList');
 
     try {
         showLoading();
-        const rounds = await api('/api/rounds/active');
-        document.getElementById('examCount').textContent = rounds.length;
+        // Fetch ALL rounds instead of just active
+        const allRounds = await api('/api/rounds');
 
-        if (rounds.length === 0) {
-            list.innerHTML = '<p class="text-muted" style="text-align:center; padding:40px;">No active exams found.</p>';
+        // Filter based on selection
+        let filteredRounds = [];
+        if (filter === 'ALL') {
+            filteredRounds = allRounds;
+        } else if (filter === 'PENDING') {
+            // PENDING = ACTIVE or CLOSED (not completed)
+            filteredRounds = allRounds.filter(r => r.status === 'ACTIVE' || r.status === 'CLOSED');
+        } else if (filter === 'COMPLETED') {
+            filteredRounds = allRounds.filter(r => r.status === 'COMPLETED');
+        }
+
+        document.getElementById('examCount').textContent = filteredRounds.length;
+
+        if (filteredRounds.length === 0) {
+            const emptyMsg = filter === 'COMPLETED'
+                ? 'No completed exams found.'
+                : filter === 'PENDING'
+                    ? 'No pending exams found.'
+                    : 'No exams found.';
+            list.innerHTML = `<p class="text-muted" style="text-align:center; padding:40px;">${emptyMsg}</p>`;
         } else {
             // Fetch participants for each round
-            const roundsWithParticipants = await Promise.all(rounds.map(async r => {
+            const roundsWithParticipants = await Promise.all(filteredRounds.map(async r => {
                 try {
                     const data = await api(`/api/rounds/${r.id}/participants`);
                     return { ...r, participants: data.participants || [] };
@@ -411,9 +450,15 @@ async function loadRounds() {
                     }).join('')
                     : '<span class="text-muted" style="font-size:0.8rem;">No participants yet</span>';
 
+                // Status badge styling
+                const statusBadgeClass = r.status === 'COMPLETED' ? 'completed' : r.status === 'ACTIVE' ? 'active' : 'closed';
+
                 return `
                 <div class="clay-card round-item-card" onclick="selectRound(${r.id}, '${r.title.replace(/'/g, "\\'")}', ${r.questionCount}, '${r.status}')">
-                    <h3 style="color:var(--primary)">${r.title}</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="color:var(--primary); margin:0;">${r.title}</h3>
+                        <span class="status-badge ${statusBadgeClass}">${r.status}</span>
+                    </div>
                     <p style="color:var(--text-muted); font-size:0.9rem;">${r.description || 'No description'}</p>
                     <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;">
                         ${participantHtml}
@@ -432,6 +477,7 @@ async function loadRounds() {
         hideLoading();
     }
 }
+
 
 function selectRound(id, title, count, status) {
     if (status === 'COMPLETED') {
@@ -686,8 +732,23 @@ JSON만 응답하세요. 다른 설명은 하지 마세요.`;
 
 // Result
 async function showResult() {
-    document.getElementById('scoreDisplay').textContent = currentExam.score;
+    // 점수를 정수로 표시 (소수점 제거)
+    const scoreValue = Math.floor(currentExam.score) || 0;
+    document.getElementById('scoreDisplay').textContent = scoreValue;
     document.getElementById('scoreDetail').textContent = `${currentExam.correctCount} / ${currentExam.totalCount} Correct`;
+
+    // Pass/Fail 배지 표시
+    const passFailBadge = document.getElementById('passFailBadge');
+    if (passFailBadge) {
+        if (currentExam.isPassed) {
+            passFailBadge.textContent = 'PASS';
+            passFailBadge.className = 'pass-fail-badge pass';
+        } else {
+            passFailBadge.textContent = 'FAIL';
+            passFailBadge.className = 'pass-fail-badge fail';
+        }
+        passFailBadge.classList.remove('hidden');
+    }
 
     // Reset ranking display
     document.getElementById('myRankingBox').classList.add('hidden');

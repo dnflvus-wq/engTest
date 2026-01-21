@@ -18,5 +18,6 @@ public class Round {
     private Integer questionCount;
     private String difficulty;
     private String status;
+    private Integer passScore;
     private LocalDateTime createdAt;
 }

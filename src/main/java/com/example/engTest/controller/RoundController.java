@@ -193,6 +193,8 @@ public class RoundController {
 
             String difficulty = (String) request.getOrDefault("difficulty", "MEDIUM");
             String prompt = (String) request.get("prompt");
+            Integer passScore = request.get("passScore") != null ? ((Number) request.get("passScore")).intValue()
+                    : null;
 
             if (prompt == null || prompt.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "프롬프트가 누락되었습니다."));
@@ -209,6 +211,9 @@ public class RoundController {
             // 회차 정보 업데이트
             round.setQuestionCount(questions.size());
             round.setDifficulty(difficulty);
+            if (passScore != null) {
+                round.setPassScore(passScore);
+            }
             roundService.updateRound(round);
 
             return ResponseEntity.ok(Map.of(

@@ -9,6 +9,7 @@
         <result property="questionCount" column="question_count"/>
         <result property="difficulty" column="difficulty"/>
         <result property="status" column="status"/>
+        <result property="passScore" column="pass_score"/>
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
@@ -35,8 +36,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO rounds (title, description, question_count, difficulty, status)
-        VALUES (#{title}, #{description}, #{questionCount}, #{difficulty}, #{status})
+        INSERT INTO rounds (title, description, question_count, difficulty, status, pass_score)
+        VALUES (#{title}, #{description}, #{questionCount}, #{difficulty}, #{status}, #{passScore})
     </insert>
 
     <update id="update">
@@ -45,7 +46,8 @@
             description = #{description},
             question_count = #{questionCount},
             difficulty = #{difficulty},
-            status = #{status}
+            status = #{status},
+            pass_score = #{passScore}
         WHERE id = #{id}
     </update>
 
