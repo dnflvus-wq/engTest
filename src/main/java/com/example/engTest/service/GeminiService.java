@@ -215,6 +215,79 @@ public class GeminiService {
         }
     }
 
+    /**
+     * 오프라인 답안지 이미지에서 OCR로 답안만 추출 (채점 없음)
+     */
+    public List<OcrResult> extractAnswersFromImage(MultipartFile answerSheet, int questionCount) throws IOException {
+        String base64Image = Base64.getEncoder().encodeToString(answerSheet.getBytes());
+        String mimeType = answerSheet.getContentType() != null ? answerSheet.getContentType() : "image/jpeg";
+
+        String prompt = String.format("""
+                이 답안지 이미지에서 각 문제 번호에 해당하는 사용자의 답을 읽어주세요.
+
+                총 문제 수: %d문제
+
+                규칙:
+                1. 각 문제 번호(1, 2, 3...)에 해당하는 사용자가 적은 답을 그대로 읽어주세요.
+                2. 답을 읽을 수 없거나 비어있으면 빈 문자열("")로 표시하세요.
+                3. 채점하지 마세요. 단순히 적혀있는 텍스트만 추출하세요.
+
+                응답 형식 (JSON 배열):
+                [
+                  { "questionNumber": 1, "userAnswer": "읽은 답" },
+                  { "questionNumber": 2, "userAnswer": "읽은 답" }
+                ]
+
+                오직 JSON만 응답하세요. 다른 설명은 하지 마세요.
+                """, questionCount);
+
+        try {
+            String response = callGeminiWithImage(prompt, base64Image, mimeType);
+            return parseOcrResults(response);
+        } catch (Exception e) {
+            log.error("Failed to extract answers from image", e);
+            throw new RuntimeException("답안 추출에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * OCR 결과 파싱
+     */
+    private List<OcrResult> parseOcrResults(String response) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
+        }
+
+        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
+        String jsonContent = content.asText();
+
+        if (jsonContent.contains("```")) {
+            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+
+        JsonNode resultsArray = objectMapper.readTree(jsonContent);
+
+        List<OcrResult> results = new ArrayList<>();
+        for (JsonNode r : resultsArray) {
+            int questionNumber = r.path("questionNumber").asInt();
+            String userAnswer = r.path("userAnswer").asText("");
+            results.add(new OcrResult(questionNumber, userAnswer));
+        }
+
+        return results;
+    }
+
+    /**
+     * OCR 결과를 담는 레코드
+     */
+    public record OcrResult(
+            int questionNumber,
+            String userAnswer) {
+    }
+
     // ========== Private Methods ==========
 
     /**

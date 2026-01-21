@@ -143,12 +143,22 @@ function showSection(sectionId) {
         target.classList.add('active-section');
     }
 
-    // 헤더 상태 관리: Close 버튼
+    // 헤더 상태 관리: Back 버튼 (모든 서브 섹션에서 표시)
     const closeBtn = document.getElementById('headerCloseBtn');
-    const sectionsWithCloseBtn = ['statsSection', 'historySection', 'examListSection', 'studySection'];
+    const sectionsWithCloseBtn = ['statsSection', 'historySection', 'examListSection', 'studySection', 'modeSection', 'offlineExamSection'];
 
     if (sectionsWithCloseBtn.includes(sectionId)) {
         closeBtn.classList.remove('hidden');
+        // 각 섹션별로 Back 버튼의 동작 설정
+        const backTargets = {
+            'statsSection': 'menuSection',
+            'historySection': 'menuSection',
+            'examListSection': 'menuSection',
+            'studySection': 'menuSection',
+            'modeSection': 'menuSection',
+            'offlineExamSection': 'modeSection'
+        };
+        closeBtn.onclick = () => showSection(backTargets[sectionId] || 'menuSection');
     } else {
         closeBtn.classList.add('hidden');
     }
@@ -653,12 +663,20 @@ async function submitExam() {
     });
 }
 
-// Offline Rendering
+// Offline Rendering - with inline OCR answer editing
+// ocrAnswers: { questionId: string } 형태로 OCR 결과 저장
+let ocrAnswers = {};
+
 function renderOfflineQuestions() {
     const list = document.getElementById('allQuestionsArea');
-    list.innerHTML = currentQuestions.map((q, i) => `
-        <div class="clay-card round-item-card mb-medium">
-            <h4 style="margin-bottom:10px; color:var(--primary)">Q${i + 1}. ${q.questionText}</h4>
+    list.innerHTML = currentQuestions.map((q, i) => {
+        const qNum = i + 1;
+        const ocrAnswer = ocrAnswers[q.id] || '';
+        const hasAnswer = ocrAnswer !== '';
+
+        return `
+        <div class="clay-card round-item-card mb-medium offline-question-card" data-question-id="${q.id}" data-question-num="${qNum}">
+            <h4 style="margin-bottom:10px; color:var(--primary)">Q${qNum}. ${q.questionText}</h4>
             ${q.answerType === 'CHOICE' ? `
                 <div style="display:flex; gap:15px; flex-wrap:wrap; color:var(--text-muted);">
                     <span>1. ${q.option1}</span>
@@ -666,9 +684,47 @@ function renderOfflineQuestions() {
                     <span>3. ${q.option3}</span>
                     <span>4. ${q.option4}</span>
                 </div>
-            ` : '<p class="badge">Short Answer</p>'}
+            ` : `
+                <div class="ocr-answer-area" id="ocrArea_${q.id}">
+                    ${hasAnswer ? `
+                        <div class="ocr-answer-display" id="answerDisplay_${q.id}">
+                            <span class="ocr-answer-text">${ocrAnswer}</span>
+                            <button class="clay-btn btn-small btn-secondary" onclick="enableEdit(${q.id})">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </button>
+                        </div>
+                        <div class="ocr-answer-edit hidden" id="answerEdit_${q.id}">
+                            <input type="text" class="clay-input" id="answerInput_${q.id}" value="${ocrAnswer.replace(/"/g, '&quot;')}">
+                            <button class="clay-btn btn-small btn-primary" onclick="applyEdit(${q.id})">
+                                <i class="fa-solid fa-check"></i> Apply
+                            </button>
+                        </div>
+                    ` : `
+                        <p class="badge">Short Answer</p>
+                    `}
+                </div>
+            `}
         </div>
-    `).join('');
+    `}).join('');
+}
+
+// Enable edit mode for a specific question
+function enableEdit(questionId) {
+    document.getElementById(`answerDisplay_${questionId}`).classList.add('hidden');
+    document.getElementById(`answerEdit_${questionId}`).classList.remove('hidden');
+    document.getElementById(`answerInput_${questionId}`).focus();
+}
+
+// Apply edited answer
+function applyEdit(questionId) {
+    const input = document.getElementById(`answerInput_${questionId}`);
+    const newValue = input.value.trim();
+    ocrAnswers[questionId] = newValue;
+
+    // Update display
+    document.getElementById(`answerDisplay_${questionId}`).classList.remove('hidden');
+    document.getElementById(`answerEdit_${questionId}`).classList.add('hidden');
+    document.querySelector(`#answerDisplay_${questionId} .ocr-answer-text`).textContent = newValue;
 }
 
 function previewAnswerSheet(input) {
@@ -682,6 +738,113 @@ function previewAnswerSheet(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+// ========== NEW OCR FLOW (Inline Edit on Question Cards) ==========
+
+/**
+ * Run OCR on uploaded answer sheet image and fill into existing cards
+ */
+async function runOCR() {
+    const input = document.getElementById('answerSheetInput');
+    if (!input.files || input.files.length === 0) {
+        showAlert('Please upload an answer sheet image first.');
+        return;
+    }
+
+    try {
+        showLoading();
+        const formData = new FormData();
+        formData.append('answerSheet', input.files[0]);
+
+        const response = await fetch(`/api/exams/${currentExam.id}/ocr`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'OCR failed');
+        }
+
+        const data = await response.json();
+
+        // Fill OCR results into ocrAnswers map (keyed by question ID)
+        ocrAnswers = {};
+        data.ocrResults.forEach(r => {
+            // questionNumber is 1-based, convert to question ID
+            if (r.questionNumber > 0 && r.questionNumber <= currentQuestions.length) {
+                const questionId = currentQuestions[r.questionNumber - 1].id;
+                ocrAnswers[questionId] = r.userAnswer || '';
+            }
+        });
+
+        // Re-render question cards with OCR results
+        renderOfflineQuestions();
+
+        // Hide upload step, show submit button
+        document.getElementById('ocrUploadStep').classList.add('hidden');
+        document.getElementById('ocrSubmitStep').classList.remove('hidden');
+
+        showAlert('OCR completed! Please review and edit answers if needed, then submit.');
+    } catch (e) {
+        showAlert('OCR Error: ' + e.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+/**
+ * Reset OCR and go back to upload step
+ */
+function resetOCR() {
+    ocrAnswers = {};
+    renderOfflineQuestions();
+    document.getElementById('ocrUploadStep').classList.remove('hidden');
+    document.getElementById('ocrSubmitStep').classList.add('hidden');
+    document.getElementById('answerSheetInput').value = '';
+    document.getElementById('offlineFileDisplay').textContent = 'Select Answer Sheet Photo...';
+    document.getElementById('filePreviewArea').innerHTML = '';
+}
+
+/**
+ * Submit user-confirmed/edited answers for grading (inline version)
+ */
+async function submitOCRAnswers() {
+    // Collect answers from ocrAnswers map
+    const answers = [];
+    currentQuestions.forEach((q, i) => {
+        answers.push({
+            questionNumber: i + 1,
+            userAnswer: ocrAnswers[q.id] || ''
+        });
+    });
+
+    try {
+        showLoading();
+        const response = await fetch(`/api/exams/${currentExam.id}/submit-offline-graded`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(answers)
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Grading failed');
+        }
+
+        const data = await response.json();
+        currentExam = data.exam;
+
+        // Show result
+        showResult();
+    } catch (e) {
+        showAlert('Submit Error: ' + e.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+// ========== LEGACY OFFLINE FLOW (kept for compatibility) ==========
 
 async function submitOfflineExam() {
     const input = document.getElementById('answerSheetInput');

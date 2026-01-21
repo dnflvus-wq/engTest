@@ -178,4 +178,50 @@ public class ExamService {
         }
         examMapper.deleteByRoundId(roundId);
     }
+
+    /**
+     * 답안 정규화: 소문자 변환 + 영문자/숫자/하이픈/아포스트로피만 유지 + 공백 제거
+     */
+    public String normalizeAnswer(String answer) {
+        if (answer == null) {
+            return "";
+        }
+        // 1. 소문자로 변환
+        String normalized = answer.toLowerCase();
+        // 2. 영문자(a-z), 숫자(0-9), 하이픈(-), 아포스트로피(') 만 유지
+        normalized = normalized.replaceAll("[^a-z0-9\\-']", "");
+        return normalized;
+    }
+
+    /**
+     * 정규화 후 비교하여 채점
+     */
+    public boolean isCorrectWithNormalization(String userAnswer, String correctAnswer) {
+        String normalizedUser = normalizeAnswer(userAnswer);
+        String normalizedCorrect = normalizeAnswer(correctAnswer);
+        return normalizedUser.equals(normalizedCorrect);
+    }
+
+    /**
+     * 사용자 확인된 답안 배열로 채점 (OCR 후 확인/수정된 답안)
+     */
+    @Transactional
+    public Exam gradeOfflineAnswers(Long examId, List<OfflineAnswerInput> answers, List<Question> questions) {
+        for (OfflineAnswerInput answer : answers) {
+            if (answer.questionNumber() > 0 && answer.questionNumber() <= questions.size()) {
+                Question question = questions.get(answer.questionNumber() - 1);
+                boolean isCorrect = isCorrectWithNormalization(answer.userAnswer(), question.getAnswer());
+                submitAnswer(examId, question.getId(), answer.userAnswer(), null, isCorrect);
+            }
+        }
+        return submitExam(examId);
+    }
+
+    /**
+     * 오프라인 답안 입력 레코드
+     */
+    public record OfflineAnswerInput(
+            int questionNumber,
+            String userAnswer) {
+    }
 }

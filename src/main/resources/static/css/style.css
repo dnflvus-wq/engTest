@@ -3170,3 +3170,315 @@ body {
         padding-top: 10px !important;
     }
 }
+/* =========================================
+   LOGIN PAGE ENHANCEMENTS (Safe Additions)
+   ========================================= */
+
+/* 드롭다운 래퍼: 위치 잡기 */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* 드롭다운 트리거 (버튼 역할): 중앙 정렬 및 디자인 개선 */
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 텍스트 중앙 정렬 */
+    position: relative; /* 화살표 절대 위치 기준 */
+    width: 100%;
+    padding: 15px 20px;
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--clay-shadow-out-sm);
+    color: var(--text-main);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-select-trigger:hover {
+    transform: translateY(-2px);
+    color: var(--primary);
+}
+
+.custom-select-trigger:active {
+    box-shadow: var(--clay-shadow-in);
+    transform: translateY(0);
+}
+
+/* 화살표 아이콘: 오른쪽 고정 (텍스트 중앙 정렬 방해 안 함) */
+.custom-select-trigger .arrow {
+    position: absolute;
+    right: 20px;
+    font-size: 0.9rem;
+    transition: transform 0.3s;
+}
+
+/* 드롭다운 열렸을 때 화살표 회전 */
+.custom-select-wrapper.open .arrow {
+    transform: rotate(180deg);
+}
+
+/* 드롭다운 옵션 목록 컨테이너 */
+.custom-options {
+    position: absolute;
+    top: calc(100% + 15px);
+    left: 0;
+    right: 0;
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--clay-shadow-out);
+    padding: 10px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* 드롭다운 열림 상태 */
+.custom-options:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* 개별 옵션 스타일 */
+/* app.js 확인 후 'custom-option' 클래스가 사용된다면 */
+.custom-option {
+    padding: 12px 15px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-align: center; /* 옵션 텍스트도 중앙 정렬 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-option:hover {
+    background: rgba(0, 0, 0, 0.03);
+    color: var(--primary);
+    transform: scale(1.02);
+}
+
+.custom-option.selected {
+    color: var(--primary);
+    background: rgba(52, 211, 153, 0.1);
+    box-shadow: var(--clay-shadow-in);
+}
+
+/* =========================================
+   LOGIN PAGE REFINEMENTS (Feedback Applied)
+   ========================================= */
+
+/* 1. 간격 조정: 서브타이틀과 입력 폼 사이 */
+.login-card .subtitle {
+    margin-bottom: 35px !important; /* 기존 간격보다 넓게 강제 적용 */
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+/* 2. 타이틀 포인트: 그라데이션 텍스트 & 크기 조정 */
+.login-card h2 {
+    background: linear-gradient(135deg, var(--primary), #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+}
+
+/* 3. 로그인 카드: 약간의 깊이감과 등장 애니메이션 */
+.login-card {
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px); /* 유리 효과 느낌 추가 */
+    animation: floatUp 0.8s ease-out forwards;
+    padding-bottom: 50px; /* 하단 여백도 넉넉하게 */
+}
+
+@keyframes floatUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 4. 드롭다운 트리거: 조금 더 눈에 띄게 (심심함 해소) */
+.custom-select-trigger {
+    background: linear-gradient(to right, #ffffff, #f8fafc);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    height: 55px; /* 높이 약간 증가 */
+}
+
+/* 5. 로그인 버튼: 강조 */
+.login-card .btn-primary {
+    height: 55px;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    box-shadow: 0 10px 20px -5px rgba(52, 211, 153, 0.4); /* 부드러운 그림자 */
+    border: none;
+}
+
+.login-card .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px -5px rgba(52, 211, 153, 0.5);
+}
+
+/* =========================================
+   USER FEEDBACK FIX: Select Box Contrast
+   ========================================= */
+
+/* 셀렉트 박스(드롭다운)가 너무 하얗다는 피드백 반영 */
+.custom-select-trigger {
+    background: #f1f5f9 !important; /* Slate-100: 연한 회색 배경 */
+    border: 1px solid #cbd5e1 !important; /* Slate-300: 테두리 조금 더 진하게 */
+    color: #334155 !important; /* 텍스트 진한 회색 */
+}
+
+/* 마우스 호버 시: 흰색으로 밝아지며 활성화 느낌 */
+.custom-select-trigger:hover {
+    background: #ffffff !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important; /* 민트색 은은한 그림자 */
+    transform: translateY(-2px);
+}
+
+/* =========================================
+   OCR RESULTS UI STYLES
+   ========================================= */
+
+/* OCR 결과 리스트 컨테이너 */
+.ocr-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* 각 OCR 결과 아이템 */
+.ocr-result-item {
+    background: var(--clay-surface);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    box-shadow: var(--clay-shadow-out-sm);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* 문제 라벨 */
+.ocr-question-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.ocr-question-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80%;
+}
+
+/* OCR 답안 입력 필드 */
+.ocr-answer-input {
+    margin-bottom: 0 !important;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--primary);
+}
+
+.ocr-answer-input:focus {
+    box-shadow: var(--clay-shadow-in), 0 0 0 3px rgba(52, 211, 153, 0.3);
+}
+
+/* =========================================
+   INLINE OCR EDIT UI STYLES
+   ========================================= */
+
+/* OCR 답안 영역 */
+.ocr-answer-area {
+    margin-top: 10px;
+}
+
+/* 답안 표시 모드 */
+.ocr-answer-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 12px 15px;
+    background: rgba(52, 211, 153, 0.08);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.ocr-answer-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+    flex: 1;
+}
+
+/* 답안 편집 모드 */
+.ocr-answer-edit {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ocr-answer-edit input {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* 오프라인 문제 카드 */
+.offline-question-card {
+    transition: box-shadow 0.2s ease;
+}
+
+.offline-question-card:hover {
+    box-shadow: var(--clay-shadow-out), 0 4px 15px rgba(52, 211, 153, 0.15);
+}
+
+/* =========================================
+   READABILITY IMPROVEMENTS (Added)
+   ========================================= */
+
+/* 답안 표시 모드 - 더 진한 배경과 테두리 */
+.ocr-answer-display {
+    background: rgba(52, 211, 153, 0.15) !important;
+    border: 1px solid rgba(52, 211, 153, 0.4) !important;
+}
+
+/* 답안 텍스트 - 진한 회색으로 가독성 개선 */
+.ocr-answer-text {
+    color: var(--text-main) !important;
+    font-weight: 800 !important;
+}
+
+/* 문제 텍스트 - 조금 더 진하게 */
+.offline-question-card h4 {
+    color: var(--text-main) !important;
+    font-weight: 700;
+}

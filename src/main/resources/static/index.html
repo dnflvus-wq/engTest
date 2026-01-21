@@ -67,10 +67,9 @@
                         </div>
                     </div>
 
-                    <!-- Close 버튼 (섹션 진입 시 표시) -->
-                    <button class="clay-btn btn-secondary btn-small hidden" id="headerCloseBtn"
-                        onclick="showSection('menuSection')">
-                        <i class="fa-solid fa-arrow-left"></i> Close
+                    <!-- Back 버튼 (섹션 진입 시 표시) -->
+                    <button class="clay-btn btn-secondary btn-small hidden" id="headerCloseBtn">
+                        <i class="fa-solid fa-arrow-left"></i> Back
                     </button>
                 </div>
 
@@ -223,9 +222,6 @@
                             <p>Paper & Upload</p>
                         </div>
                     </div>
-                    <button class="clay-btn btn-text mt-medium" onclick="showSection('menuSection')">
-                        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
-                    </button>
                 </div>
             </section>
 
@@ -271,35 +267,51 @@
                 </div>
             </section>
 
-            <!-- 5. OFFLINE EXAM SECTION -->
+            <!-- 5. OFFLINE EXAM SECTION (OCR + Review + Submit) -->
             <section id="offlineExamSection" class="hidden-section">
                 <div class="clay-card" style="max-width: 800px; margin: 0 auto;">
-                    <div class="card-header">
-                        <h2>Offline Exam Sheet</h2>
-                        <button class="clay-btn btn-small btn-secondary"
-                            onclick="showSection('modeSection')">Close</button>
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-file-signature"></i> Offline Exam Sheet</h2>
                     </div>
                     <div id="allQuestionsArea" class="all-questions-list"></div>
 
-                    <div class="upload-zone mt-large">
-                        <h3><i class="fa-solid fa-upload"></i> Submit Answer Sheet</h3>
-                        <p>Please upload a clear photo of your answer sheet.</p>
-                        <label class="file-upload-box hidden">
-                            <!-- Original area hidden, replacing with Custom Input -->
-                        </label>
+                    <!-- Step 1: Upload & OCR -->
+                    <div id="ocrUploadStep" class="upload-zone mt-large">
+                        <h3><i class="fa-solid fa-camera"></i> Step 1: Upload Answer Sheet</h3>
+                        <p>Upload a clear photo of your handwritten answers.</p>
 
                         <div class="file-input-wrapper mb-medium">
-                            <input type="file" id="answerSheetInput" accept="image/*" multiple class="hidden-file-input"
+                            <input type="file" id="answerSheetInput" accept="image/*" class="hidden-file-input"
                                 onchange="updateFileName(this, 'offlineFileDisplay')">
                             <label for="answerSheetInput" class="clay-btn btn-secondary file-btn">
                                 <i class="fa-solid fa-cloud-arrow-up"></i> <span id="offlineFileDisplay">Select Answer
-                                    Sheet Photos...</span>
+                                    Sheet Photo...</span>
                             </label>
                         </div>
 
                         <div id="filePreviewArea" class="mt-medium"></div>
-                        <button onclick="submitOfflineExam()" class="clay-btn btn-primary btn-block mt-medium">Submit
-                            Answers</button>
+                        <button onclick="runOCR()" class="clay-btn btn-primary btn-block mt-medium">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Run OCR (Read Answers)
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Submit (after OCR, buttons only) -->
+                    <div id="ocrSubmitStep" class="hidden mt-large">
+                        <div class="upload-zone" style="padding: 20px;">
+                            <p class="text-muted mb-medium" style="text-align:center;">
+                                <i class="fa-solid fa-check-circle" style="color:var(--primary);"></i>
+                                OCR completed. Review and edit answers above using the <strong>Edit</strong> buttons,
+                                then submit.
+                            </p>
+                            <div style="display: flex; gap: 15px;">
+                                <button onclick="resetOCR()" class="clay-btn btn-secondary" style="flex: 1;">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i> Re-upload
+                                </button>
+                                <button onclick="submitOCRAnswers()" class="clay-btn btn-primary" style="flex: 2;">
+                                    <i class="fa-solid fa-paper-plane"></i> Submit Answers
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
