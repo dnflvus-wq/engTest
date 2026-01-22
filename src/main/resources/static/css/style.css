@@ -3482,3 +3482,31 @@ body {
     color: var(--text-main) !important;
     font-weight: 700;
 }
+
+
+/* =========================================
+   COMPACT USER RANKING STYLES
+   ========================================= */
+
+/* Compact Ranking List */
+.compact-ranking .ranking-item {
+    padding: 10px 15px !important;
+}
+
+.compact-ranking .ranking-position {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.8rem !important;
+}
+
+.compact-ranking .ranking-name {
+    font-size: 0.9rem !important;
+}
+
+.compact-ranking .ranking-detail {
+    font-size: 0.75rem !important;
+}
+
+.compact-ranking .ranking-score {
+    font-size: 1rem !important;
+}
