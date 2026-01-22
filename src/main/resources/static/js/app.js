@@ -301,10 +301,36 @@ async function showStats() {
             rankingList.innerHTML = '<div class="empty-state"><i class="fa-solid fa-trophy"></i><p>No ranking data yet</p></div>';
         }
 
-        // Render round stats
+        // Render round stats with ranking
         const roundStatsList = document.getElementById('roundStatsList');
         if (data.roundStats && data.roundStats.length > 0) {
-            roundStatsList.innerHTML = data.roundStats.map(round => `
+            // Fetch ranking for each round
+            const roundsWithRanking = await Promise.all(data.roundStats.map(async round => {
+                try {
+                    const ranking = await api(`/api/exams/ranking/${round.roundId}`);
+                    return { ...round, ranking: ranking || [] };
+                } catch (e) {
+                    return { ...round, ranking: [] };
+                }
+            }));
+
+            roundStatsList.innerHTML = roundsWithRanking.map(round => {
+                // Build mini ranking HTML
+                const rankingHtml = round.ranking.length > 0
+                    ? `<div class="round-ranking-mini">
+                        <div class="round-ranking-header"><i class="fa-solid fa-trophy"></i> Ranking</div>
+                        ${round.ranking.slice(0, 4).map((exam, i) => {
+                        const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                        return `<div class="round-ranking-row">
+                                <span class="round-rank-pos ${posClass}">${i + 1}</span>
+                                <span class="round-rank-name">${exam.userName || 'User'}</span>
+                                <span class="round-rank-score">${exam.score?.toFixed(0) || 0}</span>
+                            </div>`;
+                    }).join('')}
+                    </div>`
+                    : '';
+
+                return `
                 <div class="round-stat-card">
                     <h4>${round.title || 'Exam #' + round.roundId}</h4>
                     <div class="round-stat-row">
@@ -323,8 +349,9 @@ async function showStats() {
                         <span class="round-stat-label">Lowest</span>
                         <span class="round-stat-value">${round.minScore?.toFixed(1) || '0'}</span>
                     </div>
+                    ${rankingHtml}
                 </div>
-            `).join('');
+            `}).join('');
         } else {
             roundStatsList.innerHTML = '<div class="empty-state"><i class="fa-solid fa-chart-bar"></i><p>No exam data yet</p></div>';
         }

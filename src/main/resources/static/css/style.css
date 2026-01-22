@@ -3510,3 +3510,80 @@ body {
 .compact-ranking .ranking-score {
     font-size: 1rem !important;
 }
+
+
+/* =========================================
+   ROUND CARD MINI RANKING STYLES
+   ========================================= */
+
+.round-ranking-mini {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.round-ranking-header {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.round-ranking-header i {
+    color: #fbbf24;
+    font-size: 0.65rem;
+}
+
+.round-ranking-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.75rem;
+}
+
+.round-rank-pos {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.round-rank-pos.gold {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+}
+
+.round-rank-pos.silver {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    color: white;
+}
+
+.round-rank-pos.bronze {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: white;
+}
+
+.round-rank-name {
+    flex: 1;
+    color: var(--text-main);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.round-rank-score {
+    font-weight: 700;
+    color: var(--primary);
+}
