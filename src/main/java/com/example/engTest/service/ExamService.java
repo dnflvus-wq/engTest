@@ -44,7 +44,7 @@ public class ExamService {
         // [NEW] 이미 제출(COMPLETED)된 시험이 있는지 확인
         Exam existingExam = examMapper.findByUserAndRound(userId, roundId);
         if (existingExam != null && "COMPLETED".equals(existingExam.getStatus())) {
-            throw new IllegalStateException("이미 해당 회차의 시험을 제출했습니다.");
+            throw new IllegalStateException("You have already completed this exam round.");
         }
 
         // [Resume & Cleanup] Check for existing IN_PROGRESS exams
