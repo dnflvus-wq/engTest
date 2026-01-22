@@ -69,12 +69,7 @@ function AppRoutes() {
                 </PublicRoute>
             } />
 
-            {/* Full-screen exam routes (no sidebar) */}
-            <Route path="/exam/online/:roundId" element={
-                <ProtectedRoute>
-                    <OnlineExam />
-                </ProtectedRoute>
-            } />
+            {/* OnlineExam도 Layout 사용 - 공통 Sidebar/Header 적용 */}
 
             {/* Protected Routes with Layout */}
             <Route element={
@@ -83,6 +78,7 @@ function AppRoutes() {
                 </ProtectedRoute>
             }>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/exam/online/:roundId" element={<OnlineExam />} />
                 <Route path="/study" element={<Study />} />
                 <Route path="/exam" element={<ExamList />} />
                 <Route path="/exam/mode/:roundId" element={<ModeSelection />} />

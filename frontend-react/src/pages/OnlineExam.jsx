@@ -13,7 +13,6 @@ const OnlineExam = () => {
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(0);
     const [submitting, setSubmitting] = useState(false);
-    const [showSidebar, setShowSidebar] = useState(true);
     const timerRef = useRef(null);
 
     useEffect(() => {
@@ -27,7 +26,6 @@ const OnlineExam = () => {
 
     const startExamSession = async () => {
         try {
-            // 1. Start Exam
             const startRes = await fetch('/api/exams/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -41,13 +39,11 @@ const OnlineExam = () => {
             const examData = await startRes.json();
             setExam(examData);
 
-            // 2. Load Questions
             const questionsRes = await fetch(`/api/rounds/${roundId}/questions`);
             if (!questionsRes.ok) throw new Error('Failed to load questions');
             const questionsData = await questionsRes.json();
             setQuestions(questionsData);
 
-            // 3. Load Existing Answers
             const answersRes = await fetch(`/api/exams/${examData.id}/answers`);
             if (answersRes.ok) {
                 const existingAnswers = await answersRes.json();
@@ -60,7 +56,6 @@ const OnlineExam = () => {
                 setAnswers(answersMap);
             }
 
-            // 4. Set Timer (60 minutes default)
             setTimeLeft(60 * 60);
             startTimer();
 
@@ -94,7 +89,7 @@ const OnlineExam = () => {
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
     const handleAnswerChange = (questionId, value) => {
@@ -134,11 +129,6 @@ const OnlineExam = () => {
         }
     };
 
-    const handleQuestionJump = async (index) => {
-        await saveCurrentAnswer();
-        setCurrentQuestionIndex(index);
-    };
-
     const submitExam = async () => {
         await saveCurrentAnswer();
         setSubmitting(true);
@@ -169,7 +159,7 @@ const OnlineExam = () => {
         return (
             <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                height: '100vh', flexDirection: 'column', gap: '1rem', background: 'var(--bg-primary)'
+                height: '60vh', flexDirection: 'column', gap: '1rem'
             }}>
                 <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
                 <p>Loading Exam...</p>
@@ -178,204 +168,186 @@ const OnlineExam = () => {
     }
 
     const currentQuestion = questions[currentQuestionIndex];
-    const answeredCount = Object.keys(answers).filter(k => answers[k] && answers[k].trim() !== '').length;
+    const progressPercent = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
     return (
-        <div className="exam-container" style={{ display: 'flex', height: '100vh', flexDirection: 'column', background: 'var(--bg-primary)' }}>
-            {/* Header */}
-            <header style={{
-                padding: '0.75rem 1.5rem', background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.05)', zIndex: 10
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <button
-                        onClick={() => setShowSidebar(!showSidebar)}
-                        style={{
-                            background: 'var(--bg-secondary)', border: 'none', padding: '8px 12px',
-                            borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center'
-                        }}
-                    >
-                        <i className={`fa-solid ${showSidebar ? 'fa-chevron-left' : 'fa-bars'}`}></i>
-                    </button>
-                    <div>
-                        <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Online Exam</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-                            {answeredCount}/{questions.length} answered
-                        </div>
+        <div className="exam-page" style={{ display: 'flex', gap: '20px' }}>
+            {/* 왼쪽: Time & Progress 카드 */}
+            <div className="exam-sidebar" style={{ width: '200px', flexShrink: 0 }}>
+                {/* Time Remaining Card */}
+                <div className="clay-card" style={{ padding: '20px', textAlign: 'center', marginBottom: '15px' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        TIME REMAINING
                     </div>
-                </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{
-                        padding: '8px 16px', borderRadius: '20px',
-                        background: timeLeft < 300 ? 'var(--danger)' : 'var(--bg-secondary)',
-                        color: timeLeft < 300 ? 'white' : 'var(--text-main)',
-                        fontWeight: 'bold', fontSize: '1rem'
+                        fontSize: '1.8rem',
+                        fontWeight: 'bold',
+                        color: timeLeft < 300 ? 'var(--danger)' : 'var(--text-main)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
                     }}>
-                        <i className="fa-regular fa-clock"></i> {formatTime(timeLeft)}
+                        <i className="fa-regular fa-clock"></i>
+                        {formatTime(timeLeft)}
                     </div>
-                    <button
-                        className="btn-primary"
-                        onClick={finishExam}
-                        disabled={submitting}
-                        style={{
-                            background: 'var(--success)', border: 'none', padding: '8px 20px',
-                            borderRadius: '8px', fontWeight: 'bold'
-                        }}
-                    >
-                        {submitting ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Submit'}
-                    </button>
                 </div>
-            </header>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                {/* Sidebar */}
-                {showSidebar && (
-                    <aside style={{
-                        width: '220px', background: 'white', borderRight: '1px solid var(--border-color)',
-                        padding: '1rem', overflowY: 'auto', flexShrink: 0
+                {/* Progress Card */}
+                <div className="clay-card" style={{ padding: '20px' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-sub)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        PROGRESS
+                    </div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '12px', color: 'var(--text-main)' }}>
+                        {currentQuestionIndex + 1} / {questions.length}
+                    </div>
+                    <div style={{
+                        height: '6px',
+                        background: 'var(--border-color)',
+                        borderRadius: '3px',
+                        overflow: 'hidden'
                     }}>
-                        <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-sub)', fontSize: '0.9rem' }}>Questions</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                            {questions.map((q, idx) => {
-                                const isAnswered = answers[q.id] && answers[q.id].trim() !== '';
-                                const isCurrent = currentQuestionIndex === idx;
-                                return (
-                                    <button
-                                        key={q.id}
-                                        onClick={() => handleQuestionJump(idx)}
-                                        style={{
-                                            width: '100%', aspectRatio: '1', borderRadius: '8px',
-                                            border: isCurrent ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                                            background: isCurrent ? 'var(--primary)' : (isAnswered ? 'var(--success)' : 'white'),
-                                            color: (isCurrent || isAnswered) ? 'white' : 'var(--text-main)',
-                                            cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        {idx + 1}
-                                    </button>
-                                );
-                            })}
+                        <div style={{
+                            width: `${progressPercent}%`,
+                            height: '100%',
+                            background: 'var(--primary)',
+                            borderRadius: '3px',
+                            transition: 'width 0.3s ease'
+                        }}></div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 오른쪽: Question Card */}
+            <div className="exam-main" style={{ flex: 1 }}>
+                <div className="clay-card" style={{ padding: '40px', maxWidth: '700px' }}>
+                    {/* Question Badge */}
+                    <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+                        <span style={{
+                            display: 'inline-block',
+                            padding: '8px 24px',
+                            background: 'var(--primary)',
+                            color: 'white',
+                            borderRadius: '25px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600'
+                        }}>
+                            Question
+                        </span>
+                    </div>
+
+                    {/* Question Text */}
+                    <h2 style={{
+                        textAlign: 'center',
+                        marginBottom: '30px',
+                        fontSize: '1.2rem',
+                        fontWeight: '500',
+                        color: 'var(--text-main)',
+                        lineHeight: '1.6'
+                    }}>
+                        {currentQuestionIndex + 1}. {currentQuestion?.questionText}
+                    </h2>
+
+                    {/* Answer Input */}
+                    {currentQuestion?.answerType === 'CHOICE' && currentQuestion?.option1 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {[currentQuestion.option1, currentQuestion.option2, currentQuestion.option3, currentQuestion.option4]
+                                .filter(Boolean)
+                                .map((opt, optIdx) => {
+                                    const isSelected = answers[currentQuestion.id] === opt;
+                                    return (
+                                        <label
+                                            key={optIdx}
+                                            className="clay-card"
+                                            style={{
+                                                display: 'flex', alignItems: 'center', padding: '14px 18px',
+                                                border: isSelected ? '2px solid var(--primary)' : '2px solid transparent',
+                                                cursor: 'pointer',
+                                                background: isSelected ? 'var(--primary-light)' : 'var(--bg-primary)',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name={`q-${currentQuestion.id}`}
+                                                value={opt}
+                                                checked={isSelected}
+                                                onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                                                style={{ marginRight: '12px', accentColor: 'var(--primary)' }}
+                                            />
+                                            <span style={{ fontWeight: isSelected ? '600' : '400' }}>
+                                                {optIdx + 1}. {opt}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
                         </div>
-                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', fontSize: '0.85rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                <span style={{ width: '16px', height: '16px', background: 'var(--success)', borderRadius: '4px' }}></span>
-                                Answered
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                <span style={{ width: '16px', height: '16px', background: 'white', border: '1px solid var(--border-color)', borderRadius: '4px' }}></span>
-                                Unanswered
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ width: '16px', height: '16px', background: 'var(--primary)', borderRadius: '4px' }}></span>
-                                Current
-                            </div>
-                        </div>
-                    </aside>
-                )}
+                    ) : (
+                        <input
+                            type="text"
+                            className="clay-input"
+                            value={answers[currentQuestion?.id] || ''}
+                            onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                            placeholder="Enter your answer"
+                            style={{
+                                width: '100%',
+                                padding: '14px 18px',
+                                borderRadius: '12px',
+                                border: '2px solid var(--border-color)',
+                                fontSize: '1rem',
+                                background: 'var(--bg-primary)',
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    )}
 
-                {/* Main Content */}
-                <main style={{ flex: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div className="clay-card question-card" style={{ width: '100%', maxWidth: '800px', padding: '2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <span style={{
-                                padding: '4px 12px', background: 'var(--primary)', color: 'white',
-                                borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600'
-                            }}>
-                                Question {currentQuestionIndex + 1} of {questions.length}
-                            </span>
-                            <span style={{ color: 'var(--text-sub)', fontSize: '0.85rem' }}>
-                                {currentQuestion.answerType === 'CHOICE' ? 'Multiple Choice' : 'Text Answer'}
-                            </span>
-                        </div>
-
-                        <h2 style={{ marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '1.2rem' }}>
-                            {currentQuestion.questionText}
-                        </h2>
-
-                        {/* Answer Input */}
-                        {currentQuestion.answerType === 'CHOICE' && currentQuestion.option1 ? (
-                            <div className="options-grid" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {[currentQuestion.option1, currentQuestion.option2, currentQuestion.option3, currentQuestion.option4]
-                                    .filter(Boolean)
-                                    .map((opt, optIdx) => {
-                                        const isSelected = answers[currentQuestion.id] === opt;
-                                        return (
-                                            <label
-                                                key={optIdx}
-                                                className="option-item"
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', padding: '1rem',
-                                                    border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                                                    borderRadius: '12px', cursor: 'pointer',
-                                                    background: isSelected ? 'var(--primary-light)' : 'white',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`q-${currentQuestion.id}`}
-                                                    value={opt}
-                                                    checked={isSelected}
-                                                    onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                                                    style={{ marginRight: '1rem', accentColor: 'var(--primary)' }}
-                                                />
-                                                <span style={{ fontWeight: isSelected ? '600' : '400' }}>
-                                                    {optIdx + 1}. {opt}
-                                                </span>
-                                            </label>
-                                        );
-                                    })}
-                            </div>
-                        ) : (
-                            <textarea
-                                className="clay-input"
-                                value={answers[currentQuestion.id] || ''}
-                                onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                                placeholder="Type your answer here..."
-                                rows={5}
-                                style={{
-                                    width: '100%', padding: '1rem', borderRadius: '12px',
-                                    border: '2px solid var(--border-color)', fontSize: '1rem',
-                                    resize: 'vertical'
-                                }}
-                            />
-                        )}
-
-                        {/* Navigation */}
-                        <div className="nav-buttons" style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                    {/* Navigation Buttons */}
+                    <div style={{
+                        marginTop: '35px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '15px'
+                    }}>
+                        <button
+                            onClick={handlePrev}
+                            disabled={currentQuestionIndex === 0}
+                            className="clay-btn"
+                            style={{
+                                padding: '12px 28px',
+                                borderRadius: '25px',
+                                opacity: currentQuestionIndex === 0 ? 0.5 : 1
+                            }}
+                        >
+                            Previous
+                        </button>
+                        {currentQuestionIndex === questions.length - 1 ? (
                             <button
-                                className="btn-secondary"
-                                onClick={handlePrev}
-                                disabled={currentQuestionIndex === 0}
+                                onClick={finishExam}
+                                disabled={submitting}
+                                className="clay-btn btn-primary"
                                 style={{
-                                    padding: '10px 24px', borderRadius: '8px',
-                                    opacity: currentQuestionIndex === 0 ? 0.5 : 1
+                                    padding: '12px 28px',
+                                    borderRadius: '25px',
+                                    background: 'var(--success)'
                                 }}
                             >
-                                <i className="fa-solid fa-chevron-left"></i> Previous
+                                {submitting ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Submit'}
                             </button>
-                            {currentQuestionIndex === questions.length - 1 ? (
-                                <button
-                                    className="btn-primary"
-                                    onClick={finishExam}
-                                    disabled={submitting}
-                                    style={{ padding: '10px 24px', borderRadius: '8px', background: 'var(--success)' }}
-                                >
-                                    Finish Exam <i className="fa-solid fa-check"></i>
-                                </button>
-                            ) : (
-                                <button
-                                    className="btn-primary"
-                                    onClick={handleNext}
-                                    style={{ padding: '10px 24px', borderRadius: '8px' }}
-                                >
-                                    Next <i className="fa-solid fa-chevron-right"></i>
-                                </button>
-                            )}
-                        </div>
+                        ) : (
+                            <button
+                                onClick={handleNext}
+                                className="clay-btn btn-primary"
+                                style={{
+                                    padding: '12px 28px',
+                                    borderRadius: '25px'
+                                }}
+                            >
+                                Next
+                            </button>
+                        )}
                     </div>
-                </main>
+                </div>
             </div>
         </div>
     );

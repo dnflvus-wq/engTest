@@ -8,14 +8,6 @@ const Dashboard = () => {
 
     return (
         <section id="menuSection" className="active-section">
-            {/* Welcome Message */}
-            <div className="welcome-section" style={{ marginBottom: '2rem' }}>
-                <h2 style={{ margin: 0, color: 'var(--text-main)' }}>
-                    Welcome back, <span style={{ color: 'var(--primary)' }}>{user?.name || 'User'}</span>!
-                </h2>
-                <p style={{ color: 'var(--text-sub)', marginTop: '0.5rem' }}>What would you like to do today?</p>
-            </div>
-
             <div className="dashboard-grid">
                 {/* Study Materials Widget */}
                 <div className="clay-card widget" onClick={() => navigate('/study')}>

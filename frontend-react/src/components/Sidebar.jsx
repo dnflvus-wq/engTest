@@ -9,10 +9,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
     const navItems = [
         { path: '/dashboard', icon: 'fa-house', label: 'Dashboard' },
-        { path: '/exam', icon: 'fa-file-pen', label: 'Exams' },
-        { path: '/history', icon: 'fa-clock-rotate-left', label: 'History' },
-        { path: '/study', icon: 'fa-book-open-reader', label: 'Study' },
-        { path: '/analytics', icon: 'fa-chart-pie', label: 'Analytics' },
     ];
 
     const handleNavigate = (path) => {
@@ -50,9 +46,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             <span>{item.label}</span>
                         </li>
                     ))}
-
-                    {/* Divider */}
-                    <li style={{ borderTop: '1px solid var(--border-color)', margin: '1rem 0' }}></li>
 
                     {/* Admin */}
                     <li
