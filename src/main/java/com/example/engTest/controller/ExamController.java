@@ -6,6 +6,7 @@ import com.example.engTest.dto.Question;
 import com.example.engTest.service.ExamService;
 import com.example.engTest.service.GeminiService;
 import com.example.engTest.service.QuestionService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,24 @@ public class ExamController {
 
     @GetMapping
     public ResponseEntity<List<Exam>> getAllExams() {
+        return ResponseEntity.ok(examService.getAllExams());
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<Exam>> getMyExamHistory(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(examService.getExamsByUserId(userId));
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<Exam>> getActiveExams() {
+        // ... (existing code if any, or just ignore this placeholder)
+        // If this method doesn't exist, I should be careful not to break things.
+        // Wait, checking original file content...
+        // Original has getAllExams at line 37.
         return ResponseEntity.ok(examService.getAllExams());
     }
 

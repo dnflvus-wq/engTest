@@ -1,0 +1,72 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const Dashboard = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
+    return (
+        <section id="menuSection" className="active-section">
+            {/* Welcome Message */}
+            <div className="welcome-section" style={{ marginBottom: '2rem' }}>
+                <h2 style={{ margin: 0, color: 'var(--text-main)' }}>
+                    Welcome back, <span style={{ color: 'var(--primary)' }}>{user?.name || 'User'}</span>!
+                </h2>
+                <p style={{ color: 'var(--text-sub)', marginTop: '0.5rem' }}>What would you like to do today?</p>
+            </div>
+
+            <div className="dashboard-grid">
+                {/* Study Materials Widget */}
+                <div className="clay-card widget" onClick={() => navigate('/study')}>
+                    <div className="widget-icon color-blue">
+                        <i className="fa-solid fa-book-open-reader"></i>
+                    </div>
+                    <div className="widget-info">
+                        <h3>Study</h3>
+                        <p>Learning materials</p>
+                    </div>
+                    <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
+                </div>
+
+                {/* Exam Widget */}
+                <div className="clay-card widget" onClick={() => navigate('/exam')}>
+                    <div className="widget-icon color-purple">
+                        <i className="fa-solid fa-file-pen"></i>
+                    </div>
+                    <div className="widget-info">
+                        <h3>Take Exam</h3>
+                        <p>Start a new test</p>
+                    </div>
+                    <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
+                </div>
+
+                {/* History Widget */}
+                <div className="clay-card widget" onClick={() => navigate('/history')}>
+                    <div className="widget-icon color-pink">
+                        <i className="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div className="widget-info">
+                        <h3>History</h3>
+                        <p>Past results</p>
+                    </div>
+                    <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
+                </div>
+
+                {/* Stats Widget */}
+                <div className="clay-card widget" onClick={() => navigate('/analytics')}>
+                    <div className="widget-icon color-mint">
+                        <i className="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <div className="widget-info">
+                        <h3>Analytics</h3>
+                        <p>Check your progress</p>
+                    </div>
+                    <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default Dashboard;
