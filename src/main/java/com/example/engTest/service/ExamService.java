@@ -41,6 +41,12 @@ public class ExamService {
 
     @Transactional
     public Exam startExam(Long userId, Long roundId, String mode) {
+        // [NEW] 이미 제출(COMPLETED)된 시험이 있는지 확인
+        Exam existingExam = examMapper.findByUserAndRound(userId, roundId);
+        if (existingExam != null && "COMPLETED".equals(existingExam.getStatus())) {
+            throw new IllegalStateException("이미 해당 회차의 시험을 제출했습니다.");
+        }
+
         // [Resume & Cleanup] Check for existing IN_PROGRESS exams
         List<Exam> inProgressExams = examMapper.findInProgressByUserId(userId);
 
