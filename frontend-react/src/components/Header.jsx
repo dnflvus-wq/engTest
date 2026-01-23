@@ -43,7 +43,7 @@ const Header = ({ toggleSidebar }) => {
     }, []);
 
     // Show back button on sub-pages
-    const noBackButtonPaths = ['/', '/dashboard', '/admin'];
+    const noBackButtonPaths = ['/', '/dashboard'];
     const isShowBackButton = !noBackButtonPaths.includes(location.pathname);
 
     return (
@@ -100,7 +100,7 @@ const Header = ({ toggleSidebar }) => {
                             width: '32px', height: '32px', borderRadius: '50%',
                             background: 'var(--primary)', color: 'white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem', flexShrink: 0 // Prevent shrinking
                         }}>
                             <i className="fa-solid fa-user"></i>
                         </div>
@@ -117,7 +117,7 @@ const Header = ({ toggleSidebar }) => {
                             style={{
                                 position: 'absolute', top: '100%', right: 0,
                                 marginTop: '10px', minWidth: '150px',
-                                background: 'white', borderRadius: '12px',
+                                background: 'var(--clay-surface)', borderRadius: '12px',
                                 boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                                 overflow: 'hidden', zIndex: 1000
                             }}
@@ -131,7 +131,7 @@ const Header = ({ toggleSidebar }) => {
                                     transition: 'background 0.2s'
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                             >
                                 <i className="fa-solid fa-right-from-bracket" style={{ color: 'var(--danger)' }}></i>
                                 Logout

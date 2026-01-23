@@ -19,12 +19,9 @@ const ProtectedRoute = ({ children }) => {
 
     if (loading) {
         return (
-            <div className="loading-screen" style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                height: '100vh', flexDirection: 'column', gap: '1rem'
-            }}>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
-                <p>Loading...</p>
+            <div className="loading-overlay">
+                <div className="clay-spinner"></div>
+                <div className="loading-text">Loading...</div>
             </div>
         );
     }
@@ -42,12 +39,9 @@ const PublicRoute = ({ children }) => {
 
     if (loading) {
         return (
-            <div className="loading-screen" style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                height: '100vh', flexDirection: 'column', gap: '1rem'
-            }}>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
-                <p>Loading...</p>
+            <div className="loading-overlay">
+                <div className="clay-spinner"></div>
+                <div className="loading-text">Loading...</div>
             </div>
         );
     }

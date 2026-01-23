@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const ModeSelection = () => {
     const { roundId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [round, setRound] = useState(null);
 
     useEffect(() => {
@@ -16,6 +18,25 @@ const ModeSelection = () => {
             if (response.ok) {
                 const data = await response.json();
                 setRound(data);
+
+                // Check submission status
+                if (user) {
+                    try {
+                        const partRes = await fetch(`/api/rounds/${roundId}/participants`);
+                        if (partRes.ok) {
+                            const partData = await partRes.json();
+                            const participants = partData.participants || [];
+                            const myRecord = participants.find(p => String(p.userId) === String(user.id));
+
+                            if (myRecord && myRecord.status === 'COMPLETED') {
+                                alert('You have already submitted this exam.');
+                                navigate('/exam'); // Redirect to exam list
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error checking participant status:', err);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error loading round:', error);

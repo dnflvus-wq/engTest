@@ -71,6 +71,16 @@ const ExamList = () => {
             alert('This exam round is not active yet.');
             return;
         }
+
+        // Check if user has already submitted this exam
+        if (user && round.participants) {
+            const myRecord = round.participants.find(p => String(p.userId) === String(user.id));
+            if (myRecord && myRecord.status === 'COMPLETED') {
+                alert('You have already submitted this exam.');
+                return;
+            }
+        }
+
         // 모드 선택 페이지로 이동하거나 모달 표시
         // 여기서는 바로 모드 선택 창 표시
         navigate(`/exam/mode/${round.id}`);
@@ -118,7 +128,7 @@ const ExamList = () => {
                     {filteredRounds.length === 0 ? (
                         <p className="text-muted" style={{ textAlign: 'center', padding: '40px', gridColumn: '1/-1' }}>
                             {filter === 'COMPLETED' ? 'No completed exams found.' :
-                             filter === 'PENDING' ? 'No pending exams found.' : 'No exams found.'}
+                                filter === 'PENDING' ? 'No pending exams found.' : 'No exams found.'}
                         </p>
                     ) : (
                         filteredRounds.map((r) => {
