@@ -135,30 +135,37 @@ public class RoundController {
 
     @GetMapping("/{id}/participants")
     public ResponseEntity<?> getRoundParticipants(@PathVariable Long id) {
-        // 1. 라운드 정보 조회하여 현재 설정된 Pass Score 가져오기
-        Round round = roundService.getRoundById(id);
-        if (round == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            // 1. 라운드 정보 조회하여 현재 설정된 Pass Score 가져오기
+            Round round = roundService.getRoundById(id);
+            if (round == null) {
+                return ResponseEntity.notFound().build();
+            }
+            int passScore = round.getPassScore();
+
+            var allExams = examService.getExamsByRoundId(id);
+            var participants = allExams.stream()
+                    .map(e -> {
+                        double score = e.getScore() != null ? e.getScore().doubleValue() : 0;
+                        // 2. 현재 라운드의 Pass Score와 비교하여 동적으로 Pass/Fail 판단
+                        boolean isPassed = score >= passScore;
+
+                        java.util.HashMap<String, Object> map = new java.util.HashMap<>();
+                        map.put("userId", e.getUserId());
+                        map.put("userName", e.getUserName() != null ? e.getUserName() : "User #" + e.getUserId());
+                        map.put("status", e.getStatus() != null ? e.getStatus() : "UNKNOWN");
+                        map.put("score", score);
+                        map.put("isPassed", isPassed);
+                        map.put("submittedAt", e.getSubmittedAt() != null ? e.getSubmittedAt().toString() : "");
+                        return map;
+                    })
+                    .toList();
+            return ResponseEntity.ok(Map.of("participants", participants, "count", participants.size()));
+        } catch (Exception e) {
+            log.error("Error fetching participants for round " + id, e);
+            // 오류 발생 시에도 500 에러 대신 빈 목록 반환 (UI 중단 방지)
+            return ResponseEntity.ok(Map.of("participants", List.of(), "count", 0));
         }
-        int passScore = round.getPassScore();
-
-        var allExams = examService.getExamsByRoundId(id);
-        var participants = allExams.stream()
-                .map(e -> {
-                    double score = e.getScore() != null ? e.getScore().doubleValue() : 0;
-                    // 2. 현재 라운드의 Pass Score와 비교하여 동적으로 Pass/Fail 판단
-                    boolean isPassed = score >= passScore;
-
-                    return Map.of(
-                            "userId", e.getUserId(),
-                            "userName", e.getUserName() != null ? e.getUserName() : "User #" + e.getUserId(),
-                            "status", e.getStatus(),
-                            "score", score,
-                            "isPassed", isPassed,
-                            "submittedAt", e.getSubmittedAt() != null ? e.getSubmittedAt().toString() : "");
-                })
-                .toList();
-        return ResponseEntity.ok(Map.of("participants", participants, "count", participants.size()));
     }
 
     /**
