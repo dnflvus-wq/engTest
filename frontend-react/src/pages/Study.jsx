@@ -8,7 +8,7 @@ const Study = () => {
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [activeAccordions, setActiveAccordions] = useState(['vocabAccordion']);
+    const [activeAccordions, setActiveAccordions] = useState([]);
 
     useEffect(() => {
         loadRounds();

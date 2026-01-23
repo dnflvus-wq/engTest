@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd React frontend with original design CSS classes\n\n- Set up React 19 + Vite 7 + React Router 7\n- Create AuthContext for global user state management\n- Add ProtectedRoute/PublicRoute components\n- Migrate all pages to use original CSS classes:\n  - Dashboard, Analytics, ExamList, ModeSelection\n  - History, Study, Result pages\n  - OnlineExam, OfflineExam pages\n- Configure Vite proxy for API calls\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }

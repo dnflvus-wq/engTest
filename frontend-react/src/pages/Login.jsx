@@ -107,7 +107,7 @@ const Login = () => {
             </header>
 
             {/* Login Section */}
-            <section id="loginSection" className="active-section" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <section id="loginSection" className="active-section" style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}>
                 <div className="center-container" style={{ padding: '0', width: '100%', maxWidth: '400px' }}>
                     <div className="clay-card login-card" style={{ padding: '2.5rem', textAlign: 'center' }}>
                         <div className="login-icon" style={{
@@ -153,9 +153,9 @@ const Login = () => {
                                         className="custom-options"
                                         style={{
                                             position: 'absolute', top: '100%', left: 0, right: 0,
-                                            marginTop: '8px', background: 'white',
-                                            borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                                            maxHeight: '200px', overflowY: 'auto', zIndex: 100
+                                            marginTop: '8px', background: '#f0f2f5',
+                                            borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                            zIndex: 100, overflow: 'hidden', padding: '5px'
                                         }}
                                     >
                                         {users.length === 0 ? (
@@ -172,19 +172,26 @@ const Login = () => {
                                                         selectUser(user);
                                                     }}
                                                     style={{
-                                                        padding: '14px 16px', cursor: 'pointer',
-                                                        background: selectedUser?.id === user.id ? 'var(--primary-light)' : 'white',
-                                                        color: selectedUser?.id === user.id ? 'var(--primary)' : 'var(--text-main)',
-                                                        transition: 'background 0.2s'
+                                                        padding: '12px 16px', cursor: 'pointer',
+                                                        background: selectedUser?.id === user.id ? '#ffffff' : 'transparent',
+                                                        color: selectedUser?.id === user.id ? 'var(--primary)' : '#4a5568',
+                                                        transition: 'all 0.2s ease',
+                                                        borderRadius: '8px',
+                                                        fontWeight: selectedUser?.id === user.id ? 'bold' : 'normal',
+                                                        marginBottom: '2px'
                                                     }}
                                                     onMouseEnter={(e) => {
                                                         if (selectedUser?.id !== user.id) {
-                                                            e.currentTarget.style.background = 'var(--bg-secondary)';
+                                                            e.currentTarget.style.background = '#ffffff';
+                                                            e.currentTarget.style.color = 'var(--primary)';
+                                                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
                                                         }
                                                     }}
                                                     onMouseLeave={(e) => {
                                                         if (selectedUser?.id !== user.id) {
-                                                            e.currentTarget.style.background = 'white';
+                                                            e.currentTarget.style.background = 'transparent';
+                                                            e.currentTarget.style.color = '#4a5568';
+                                                            e.currentTarget.style.boxShadow = 'none';
                                                         }
                                                     }}
                                                 >

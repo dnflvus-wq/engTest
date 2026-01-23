@@ -76,16 +76,30 @@ const RoundDetail = ({ roundId, onBack, onUpdate }) => {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {round.status === 'CLOSED' && (
-                        <button onClick={() => handleStatusChange('ACTIVE')} className="btn-success">
+                        <button
+                            onClick={() => handleStatusChange('ACTIVE')}
+                            className="clay-btn btn-success"
+                            style={{ padding: '10px 20px', height: '44px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
                             <i className="fa-solid fa-play"></i> 활성화
                         </button>
                     )}
                     {round.status === 'ACTIVE' && (
-                        <button onClick={() => handleStatusChange('CLOSED')} className="btn-warning">
+                        <button
+                            onClick={() => handleStatusChange('CLOSED')}
+                            className="clay-btn btn-warning"
+                            style={{ padding: '10px 20px', height: '44px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
                             <i className="fa-solid fa-stop"></i> 종료
                         </button>
                     )}
-                    <button onClick={onBack} className="btn-secondary">뒤로</button>
+                    <button
+                        onClick={onBack}
+                        className="clay-btn btn-secondary"
+                        style={{ padding: '10px 20px', height: '44px', display: 'flex', alignItems: 'center' }}
+                    >
+                        뒤로
+                    </button>
                 </div>
             </div>
 

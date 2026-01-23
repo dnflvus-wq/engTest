@@ -5,6 +5,7 @@ const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
     const [questionCount, setQuestionCount] = useState(wordCount > 0 ? Math.min(wordCount, 30) : 30);
     const [passScore, setPassScore] = useState(Math.ceil(questionCount * 0.8));
     const [loading, setLoading] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleQuestionCountChange = (e) => {
         const count = parseInt(e.target.value) || 0;
@@ -64,16 +65,73 @@ const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
             <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                 <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>난이도</label>
-                    <select
-                        className="clay-input"
-                        value={difficulty}
-                        onChange={(e) => setDifficulty(e.target.value)}
-                        style={{ width: '100%', padding: '10px' }}
-                    >
-                        <option value="EASY">초급 (객관식)</option>
-                        <option value="MEDIUM">중급 (주관식)</option>
-                        <option value="HARD">고급 (문장 응용)</option>
-                    </select>
+                    <div className="custom-select-wrapper" style={{ position: 'relative', width: '100%' }}>
+                        <div
+                            className="custom-select-trigger"
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            style={{
+                                padding: '12px 15px',
+                                background: 'white',
+                                borderRadius: '12px',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                                border: '1px solid transparent',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <span style={{ fontWeight: '500' }}>
+                                {difficulty === 'EASY' && '초급 (객관식)'}
+                                {difficulty === 'MEDIUM' && '중급 (주관식)'}
+                                {difficulty === 'HARD' && '고급 (문장 응용)'}
+                            </span>
+                            <i className={`fa-solid fa-chevron-down`} style={{
+                                transition: 'transform 0.2s',
+                                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)'
+                            }}></i>
+                        </div>
+                        {isDropdownOpen && (
+                            <div className="custom-options" style={{
+                                position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0,
+                                background: 'white', borderRadius: '12px',
+                                boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden',
+                                animation: 'fadeIn 0.2s ease'
+                            }}>
+                                {[
+                                    { val: 'EASY', label: '초급 (객관식)' },
+                                    { val: 'MEDIUM', label: '중급 (주관식)' },
+                                    { val: 'HARD', label: '고급 (문장 응용)' }
+                                ].map(opt => (
+                                    <div
+                                        key={opt.val}
+                                        onClick={() => {
+                                            setDifficulty(opt.val);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        style={{
+                                            padding: '12px 15px',
+                                            cursor: 'pointer',
+                                            background: difficulty === opt.val ? '#e8f5e9' : 'white',
+                                            color: difficulty === opt.val ? 'var(--success-dark)' : 'inherit',
+                                            fontWeight: difficulty === opt.val ? 'bold' : 'normal',
+                                            borderBottom: '1px solid #f0f0f0'
+                                        }}
+                                        onMouseEnter={(e) => { if (difficulty !== opt.val) e.currentTarget.style.background = '#f9f9f9'; }}
+                                        onMouseLeave={(e) => { if (difficulty !== opt.val) e.currentTarget.style.background = 'white'; }}
+                                    >
+                                        {opt.label}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {/* Overlay to close dropdown when clicking outside */}
+                        {isDropdownOpen && (
+                            <div
+                                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99, cursor: 'default' }}
+                                onClick={() => setIsDropdownOpen(false)}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 <div className="form-group" style={{ minWidth: '100px' }}>
@@ -83,7 +141,16 @@ const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
                         className="clay-input"
                         value={questionCount}
                         onChange={handleQuestionCountChange}
-                        style={{ width: '80px', padding: '10px', textAlign: 'center' }}
+                        style={{
+                            width: '80px',
+                            padding: '12px',
+                            textAlign: 'center',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'white',
+                            boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.05)',
+                            fontWeight: 'bold'
+                        }}
                     />
                 </div>
 
@@ -94,7 +161,16 @@ const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
                         className="clay-input"
                         value={passScore}
                         onChange={(e) => setPassScore(e.target.value)}
-                        style={{ width: '80px', padding: '10px', textAlign: 'center' }}
+                        style={{
+                            width: '80px',
+                            padding: '12px',
+                            textAlign: 'center',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'white',
+                            boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.05)',
+                            fontWeight: 'bold'
+                        }}
                     />
                 </div>
 

@@ -6,6 +6,7 @@ const VocabularyManager = ({ roundId }) => {
     const [loading, setLoading] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
     const [ocrLoading, setOcrLoading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         loadVocabulary();
@@ -93,6 +94,34 @@ const VocabularyManager = ({ roundId }) => {
             // Create previews
             const previews = files.map(file => URL.createObjectURL(file));
             setPreviewImages(previews);
+        }
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            // Create synthetic event
+            const event = { target: { files: e.dataTransfer.files } };
+            handleImageChange(event);
+
+            // Also update the input element files if possible, though React handles state
+            const fileInput = document.getElementById('wordImages');
+            if (fileInput) fileInput.files = e.dataTransfer.files;
         }
     };
 
@@ -209,18 +238,34 @@ const VocabularyManager = ({ roundId }) => {
                                 <input
                                     type="text"
                                     className="clay-input"
-                                    placeholder="English"
+                                    placeholder="English (e.g. apple)"
                                     value={input.english}
                                     onChange={(e) => handleInputChange(idx, 'english', e.target.value)}
-                                    style={{ flex: 1, padding: '5px' }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 15px',
+                                        borderRadius: '15px',
+                                        border: 'none',
+                                        background: 'var(--bg-primary)',
+                                        boxShadow: 'inset 5px 5px 10px rgba(163,177,198,0.6), inset -5px -5px 10px rgba(255,255,255,0.5)',
+                                        fontSize: '0.95rem'
+                                    }}
                                 />
                                 <input
                                     type="text"
                                     className="clay-input"
-                                    placeholder="Korean"
+                                    placeholder="Korean (e.g. 사과)"
                                     value={input.korean}
                                     onChange={(e) => handleInputChange(idx, 'korean', e.target.value)}
-                                    style={{ flex: 1, padding: '5px' }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px 15px',
+                                        borderRadius: '15px',
+                                        border: 'none',
+                                        background: 'var(--bg-primary)',
+                                        boxShadow: 'inset 5px 5px 10px rgba(163,177,198,0.6), inset -5px -5px 10px rgba(255,255,255,0.5)',
+                                        fontSize: '0.95rem'
+                                    }}
                                 />
                                 <button onClick={() => removeInputRow(idx)} style={{ width: '30px', background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}>
                                     <i className="fa-solid fa-xmark"></i>
@@ -249,16 +294,34 @@ const VocabularyManager = ({ roundId }) => {
                             onChange={handleImageChange}
                             style={{ display: 'none' }}
                         />
-                        <label htmlFor="wordImages" className="file-upload-label" style={{
-                            display: 'block',
-                            padding: '20px',
-                            border: '2px dashed #ddd',
-                            borderRadius: '10px',
-                            textAlign: 'center',
-                            cursor: 'pointer'
-                        }}>
-                            <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '2rem', color: 'var(--primary)', marginBottom: '10px' }}></i>
-                            <div>클릭하여 이미지 선택</div>
+                        <label
+                            htmlFor="wordImages"
+                            className="file-upload-label"
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            style={{
+                                display: 'block',
+                                padding: '40px 20px',
+                                border: isDragging ? '2px dashed var(--primary)' : '2px dashed #cbd5e0',
+                                borderRadius: '15px',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                background: isDragging ? 'rgba(var(--primary-rgb), 0.05)' : '#f8f9fa',
+                                transition: 'all 0.2s ease',
+                                transform: isDragging ? 'scale(1.02)' : 'scale(1)'
+                            }}
+                        >
+                            <div style={{
+                                width: '60px', height: '60px', margin: '0 auto 15px',
+                                borderRadius: '50%', background: 'white',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '5px 5px 10px rgba(0,0,0,0.05)'
+                            }}>
+                                <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.8rem', color: 'var(--success)' }}></i>
+                            </div>
+                            <div style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '5px' }}>클릭하여 이미지 선택</div>
+                            <div style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>또는 파일을 이곳에 드래그하세요</div>
                         </label>
                     </div>
 
