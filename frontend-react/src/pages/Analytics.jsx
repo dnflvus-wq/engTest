@@ -87,7 +87,7 @@ const Analytics = () => {
                     <div className="ranking-list">
                         {stats?.userStats && stats.userStats.length > 0 ? (
                             stats.userStats.map((userStat, i) => {
-                                const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                                const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'iron';
                                 return (
                                     <div key={userStat.userId} className="ranking-item">
                                         <div className={`ranking-position ${posClass}`}>{i + 1}</div>
@@ -140,7 +140,7 @@ const Analytics = () => {
                                                 <i className="fa-solid fa-trophy"></i> Ranking
                                             </div>
                                             {round.ranking.slice(0, 4).map((exam, i) => {
-                                                const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                                                const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'iron';
                                                 return (
                                                     <div key={exam.id} className="round-ranking-row">
                                                         <span className={`round-rank-pos ${posClass}`}>{i + 1}</span>

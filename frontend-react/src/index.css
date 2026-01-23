@@ -72,3 +72,91 @@
         transform: scale(1);
     }
 }
+
+/* Ranking Badge Styles */
+.ranking-position,
+.round-rank-pos {
+    /* Base style (defaults) handled below */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    /* Needed for pseudo-elements */
+    overflow: hidden;
+    /* Clips the shimmer effect */
+}
+
+/* Gold - Premium Shimmer Effect */
+.ranking-position.gold,
+.round-rank-pos.gold {
+    background: linear-gradient(135deg, #FFD700, #FDB931) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
+    border: 1px solid #eab308;
+    text-shadow: 0 1px 1px rgba(161, 98, 7, 0.5);
+    z-index: 1;
+}
+
+/* The Shimmer Shine */
+.ranking-position.gold::before,
+.round-rank-pos.gold::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(to right,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.6) 50%,
+            rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-25deg);
+    animation: shimmer 2.2s infinite ease-in-out;
+    /* Speed increased from 3.5s to 2.2s */
+    pointer-events: none;
+}
+
+.ranking-position.silver,
+.round-rank-pos.silver {
+    background: linear-gradient(135deg, #f3f4f6, #9ca3af) !important;
+    color: #4b5563 !important;
+    box-shadow: 0 2px 6px rgba(156, 163, 175, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid #9ca3af;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ranking-position.bronze,
+.round-rank-pos.bronze {
+    background: linear-gradient(135deg, #fdba74, #ea580c) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.3) !important;
+    border: 1px solid #c2410c;
+    text-shadow: 0 1px 1px rgba(124, 45, 18, 0.5);
+}
+
+/* 4th+ Place (Iron/Gray) */
+.ranking-position.iron,
+.round-rank-pos.iron {
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1) !important;
+    color: #64748b !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    border: 1px solid #cbd5e1;
+    font-weight: 700 !important;
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    40%,
+    100% {
+        left: 200%;
+        opacity: 0;
+    }
+}
