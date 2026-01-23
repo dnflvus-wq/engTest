@@ -14,5 +14,6 @@ import java.time.LocalDateTime;
 public class User {
     private Long id;
     private String name;
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 }

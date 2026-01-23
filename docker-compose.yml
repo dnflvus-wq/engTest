@@ -1,23 +1,30 @@
 services:
-  # Spring Boot 애플리케이션
+  # React Frontend (Nginx)
+  frontend:
+    build: ./frontend-react
+    container_name: engtest-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # Spring Boot Backend
   app:
     build: .
     container_name: engtest-app
     env_file:
       - .env
     ports:
-      - "23145:8080"
+      - "23145:8080" # Reverted to legacy port
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/engtest?useUnicode=true&characterEncoding=utf8
       - SPRING_DATASOURCE_USERNAME=engtest
       - SPRING_DATASOURCE_PASSWORD=engtest123!
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.mariadb.jdbc.Driver
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      # Hot Reloading for Static Resources
-      - SPRING_WEB_RESOURCES_STATIC_LOCATIONS=file:/app/static/
     volumes:
       - uploads:/app/uploads
-      - ./src/main/resources/static:/app/static # Mount local static files to container
     depends_on:
       db:
         condition: service_healthy

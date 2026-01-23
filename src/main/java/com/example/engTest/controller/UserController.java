@@ -19,8 +19,14 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            return ResponseEntity.ok(userService.getAllUsers());
+        } catch (Exception e) {
+            e.printStackTrace(); // Log to console
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", String.valueOf(e.getMessage()), "cause", e.toString()));
+        }
     }
 
     @GetMapping("/{id}")
