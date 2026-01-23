@@ -1,1 +1,6 @@
 /* Reset default Vite styles to avoid conflict with custom styles */
+/* Fix double scrollbar issue in Layout */
+.container {
+    height: auto !important;
+    overflow-y: visible !important;
+}

@@ -9,6 +9,14 @@ const Study = () => {
     const [loading, setLoading] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [activeAccordions, setActiveAccordions] = useState([]);
+    const [playingVideoId, setPlayingVideoId] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         loadRounds();
@@ -16,6 +24,7 @@ const Study = () => {
 
     useEffect(() => {
         if (selectedRoundId) {
+            setPlayingVideoId(null); // Reset playing video when round changes
             loadStudyMaterials(selectedRoundId);
         }
     }, [selectedRoundId]);
@@ -194,27 +203,56 @@ const Study = () => {
                                     return (
                                         <div key={m.id} className="youtube-card">
                                             <div className="youtube-player-wrapper">
-                                                <img
-                                                    className="youtube-thumbnail"
-                                                    src={thumbnail}
-                                                    alt={m.title || 'Video'}
-                                                    onClick={() => openYoutube(m.url)}
-                                                />
-                                                <div
-                                                    className="play-overlay"
-                                                    onClick={() => openYoutube(m.url)}
-                                                >
-                                                    <i className="fa-solid fa-play"></i>
-                                                </div>
+                                                {playingVideoId === videoId ? (
+                                                    <iframe
+                                                        className="youtube-iframe"
+                                                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                                                        title={m.title}
+                                                        frameBorder="0"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+                                                    ></iframe>
+                                                ) : (
+                                                    <>
+                                                        <img
+                                                            className="youtube-thumbnail"
+                                                            src={thumbnail}
+                                                            alt={m.title || 'Video'}
+                                                            onClick={() => setPlayingVideoId(videoId)}
+                                                        />
+                                                        <div
+                                                            className="play-overlay"
+                                                            onClick={() => setPlayingVideoId(videoId)}
+                                                        >
+                                                            <i className="fa-solid fa-play"></i>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                             <div className="youtube-info">
                                                 <div className="youtube-title">{m.title || 'Video Lesson'}</div>
                                                 <div className="youtube-actions">
                                                     <button
                                                         className="btn-secondary btn-small"
+                                                        onClick={() => setPlayingVideoId(playingVideoId === videoId ? null : videoId)}
+                                                        style={playingVideoId === videoId ? { borderColor: 'var(--danger)', color: 'var(--danger)' } : {}}
+                                                    >
+                                                        {playingVideoId === videoId ? (
+                                                            <>
+                                                                <i className="fa-solid fa-stop"></i> 정지
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="fa-solid fa-play"></i> 재생
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        className="btn-secondary btn-small"
                                                         onClick={() => openYoutube(m.url)}
                                                     >
-                                                        <i className="fa-brands fa-youtube"></i> Open
+                                                        <i className="fa-brands fa-youtube"></i> YouTube
                                                     </button>
                                                 </div>
                                             </div>
@@ -258,14 +296,24 @@ const Study = () => {
                                                         <div className="ppt-title">{m.title || m.fileName || 'Document'}</div>
                                                     </div>
                                                 </div>
-                                                <a className="ppt-link" href={m.url} target="_blank" rel="noopener noreferrer" download>
-                                                    <i className="fa-solid fa-download"></i> Download
-                                                </a>
+                                                {!isMobile && (
+                                                    <a className="ppt-link" href={m.url} target="_blank" rel="noopener noreferrer" download>
+                                                        <i className="fa-solid fa-download"></i> Download
+                                                    </a>
+                                                )}
                                             </div>
                                             {isPdf && (
-                                                <div className="pdf-preview">
-                                                    <iframe src={`${m.url}#view=FitH`} title={m.title}></iframe>
-                                                </div>
+                                                isMobile ? (
+                                                    <div style={{ marginTop: '15px', width: '100%', textAlign: 'center' }}>
+                                                        <a href={m.url} target="_blank" rel="noopener noreferrer" className="clay-btn btn-primary" style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <i className="fa-solid fa-file-pdf"></i> PDF 보기 (View PDF)
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <div className="pdf-preview">
+                                                        <iframe src={`${m.url}#view=FitH`} title={m.title}></iframe>
+                                                    </div>
+                                                )
                                             )}
                                         </div>
                                     );

@@ -7,6 +7,7 @@ const MaterialManager = ({ roundId }) => {
     const [pptTitle, setPptTitle] = useState('');
     const [pptFile, setPptFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         loadMaterials();
@@ -88,6 +89,32 @@ const MaterialManager = ({ roundId }) => {
         }
     };
 
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            if (file.type === 'application/pdf') {
+                setPptFile(file);
+            } else {
+                alert('PDF 파일만 업로드 가능합니다.');
+            }
+        }
+    };
+
     return (
         <div className="material-manager">
             {/* YouTube Add */}
@@ -134,17 +161,38 @@ const MaterialManager = ({ roundId }) => {
                         onChange={(e) => setPptFile(e.target.files[0])}
                         style={{ display: 'none' }}
                     />
-                    <label htmlFor="pptFile" className="file-upload-label" style={{
-                        display: 'block',
-                        padding: '20px',
-                        border: '2px dashed #ddd',
-                        borderRadius: '10px',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        background: pptFile ? '#e3f2fd' : 'white'
-                    }}>
-                        <i className="fa-solid fa-file-arrow-up" style={{ fontSize: '2rem', color: 'var(--primary)', marginBottom: '10px' }}></i>
-                        <div>{pptFile ? pptFile.name : '클릭하여 PDF 선택'}</div>
+                    <label
+                        htmlFor="pptFile"
+                        className="file-upload-label"
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        style={{
+                            display: 'block',
+                            padding: '40px 20px',
+                            border: isDragging ? '2px dashed var(--primary)' : '2px dashed #cbd5e0',
+                            borderRadius: '15px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            background: isDragging ? 'rgba(var(--primary-rgb), 0.05)' : '#f8f9fa', // Not white
+                            transition: 'all 0.2s ease',
+                            transform: isDragging ? 'scale(1.02)' : 'scale(1)'
+                        }}
+                    >
+                        <div style={{
+                            width: '60px', height: '60px', margin: '0 auto 15px',
+                            borderRadius: '50%', background: 'white',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '5px 5px 10px rgba(0,0,0,0.05)'
+                        }}>
+                            <i className="fa-solid fa-file-pdf" style={{ fontSize: '1.8rem', color: 'var(--danger)' }}></i>
+                        </div>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '5px' }}>
+                            {pptFile ? pptFile.name : '클릭하여 PDF 선택'}
+                        </div>
+                        <div style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>
+                            {pptFile ? '변경하려면 다시 클릭하거나 드래그하세요' : '또는 파일을 이곳에 드래그하세요'}
+                        </div>
                     </label>
                 </div>
                 <button onClick={handleAddPpt} className="btn-primary" style={{ width: '100%', marginTop: '15px' }} disabled={loading}>업로드</button>
