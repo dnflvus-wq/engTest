@@ -6,10 +6,13 @@ import MaterialManager from './MaterialManager';
 const RoundDetail = ({ roundId, onBack, onUpdate }) => {
     const [round, setRound] = useState(null);
     const [loading, setLoading] = useState(true);
+
     const [activeTab, setActiveTab] = useState('vocabulary');
+    const [vocabCount, setVocabCount] = useState(0);
 
     useEffect(() => {
         loadRoundDetail();
+        fetchVocabularyCount();
     }, [roundId]);
 
     const loadRoundDetail = async () => {
@@ -23,6 +26,18 @@ const RoundDetail = ({ roundId, onBack, onUpdate }) => {
             console.error('Failed to load round:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchVocabularyCount = async () => {
+        try {
+            const res = await fetch(`/api/rounds/${roundId}/vocabulary`);
+            if (res.ok) {
+                const data = await res.json();
+                setVocabCount(data.length);
+            }
+        } catch (error) {
+            console.error('Failed to load vocabulary count:', error);
         }
     };
 
@@ -138,10 +153,13 @@ const RoundDetail = ({ roundId, onBack, onUpdate }) => {
 
             {activeTab === 'vocabulary' && (
                 <>
-                    <VocabularyManager roundId={roundId} />
+                    <VocabularyManager
+                        roundId={roundId}
+                        onVocabularyChange={fetchVocabularyCount}
+                    />
                     <QuestionGenerator
                         roundId={roundId}
-                        wordCount={round.questionCount || 0} // Approximate, actual logic should fetch vocab size
+                        wordCount={vocabCount}
                         onGenerated={() => {
                             loadRoundDetail(); // Reload to update question count
                             if (onUpdate) onUpdate();

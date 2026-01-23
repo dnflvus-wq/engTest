@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const VocabularyManager = ({ roundId }) => {
+const VocabularyManager = ({ roundId, onVocabularyChange }) => {
     const [vocabulary, setVocabulary] = useState([]);
     const [manualInputs, setManualInputs] = useState([{ english: '', korean: '' }]);
     const [loading, setLoading] = useState(false);
@@ -30,6 +30,7 @@ const VocabularyManager = ({ roundId }) => {
             const res = await fetch(`/api/vocabulary/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 loadVocabulary();
+                if (onVocabularyChange) onVocabularyChange();
             } else {
                 alert('삭제 실패');
             }
@@ -76,6 +77,7 @@ const VocabularyManager = ({ roundId }) => {
                 alert(`${wordsToSave.length}개 단어 저장 완료`);
                 setManualInputs([{ english: '', korean: '' }]);
                 loadVocabulary();
+                if (onVocabularyChange) onVocabularyChange();
             } else {
                 alert('저장 실패');
             }
