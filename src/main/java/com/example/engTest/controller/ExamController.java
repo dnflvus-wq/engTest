@@ -20,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Exam & Grading", description = "시험 응시, 채점, OCR 관련 API")
 public class ExamController {
 
     private final ExamService examService;
@@ -27,11 +28,13 @@ public class ExamController {
     private final GeminiService geminiService;
 
     @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary = "전체 시험 조회", description = "모든 시험 기록을 조회합니다.")
     public ResponseEntity<List<Exam>> getAllExams() {
         return ResponseEntity.ok(examService.getAllExams());
     }
 
     @GetMapping("/history")
+    @io.swagger.v3.oas.annotations.Operation(summary = "내 시험 기록 조회", description = "현재 로그인한 사용자의 시험 기록을 조회합니다.")
     public ResponseEntity<List<Exam>> getMyExamHistory(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
@@ -42,14 +45,11 @@ public class ExamController {
 
     @GetMapping("/active")
     public ResponseEntity<List<Exam>> getActiveExams() {
-        // ... (existing code if any, or just ignore this placeholder)
-        // If this method doesn't exist, I should be careful not to break things.
-        // Wait, checking original file content...
-        // Original has getAllExams at line 37.
         return ResponseEntity.ok(examService.getAllExams());
     }
 
     @GetMapping("/{id}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "시험 상세 조회", description = "ID로 특정 시험 정보를 조회합니다.")
     public ResponseEntity<Exam> getExamById(@PathVariable Long id) {
         Exam exam = examService.getExamById(id);
         if (exam == null) {
@@ -59,16 +59,19 @@ public class ExamController {
     }
 
     @GetMapping("/user/{userId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "사용자별 시험 기록", description = "특정 사용자의 모든 시험 기록을 조회합니다.")
     public ResponseEntity<List<Exam>> getExamsByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(examService.getExamsByUserId(userId));
     }
 
     @GetMapping("/round/{roundId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "회차별 시험 기록", description = "특정 회차의 모든 시험 기록을 조회합니다.")
     public ResponseEntity<List<Exam>> getExamsByRoundId(@PathVariable Long roundId) {
         return ResponseEntity.ok(examService.getExamsByRoundId(roundId));
     }
 
     @PostMapping("/start")
+    @io.swagger.v3.oas.annotations.Operation(summary = "시험 시작", description = "새로운 시험을 시작합니다 (중복 응시 불가).")
     public ResponseEntity<?> startExam(@RequestBody Map<String, Object> request) {
         try {
             if (request.get("userId") == null || request.get("roundId") == null) {
@@ -88,6 +91,7 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/answer/{questionId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "답안 제출 (이미지)", description = "이미지를 업로드하여 OCR 채점 후 답안을 저장합니다.")
     public ResponseEntity<?> submitAnswer(
             @PathVariable Long examId,
             @PathVariable Long questionId,
@@ -117,6 +121,7 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/answer/{questionId}/text")
+    @io.swagger.v3.oas.annotations.Operation(summary = "답안 제출 (텍스트)", description = "텍스트 답안을 제출하고 채점합니다.")
     public ResponseEntity<?> submitTextAnswer(
             @PathVariable Long examId,
             @PathVariable Long questionId,
@@ -145,6 +150,7 @@ public class ExamController {
     }
 
     @PostMapping("/{examId}/submit")
+    @io.swagger.v3.oas.annotations.Operation(summary = "시험 제출 (종료)", description = "시험을 종료하고 최종 점수를 계산합니다.")
     public ResponseEntity<?> submitExam(@PathVariable Long examId) {
         try {
             Exam exam = examService.submitExam(examId);
@@ -156,21 +162,25 @@ public class ExamController {
     }
 
     @GetMapping("/{examId}/answers")
+    @io.swagger.v3.oas.annotations.Operation(summary = "시험 답안 조회", description = "특정 시험의 제출된 답안 목록을 조회합니다.")
     public ResponseEntity<List<ExamAnswer>> getExamAnswers(@PathVariable Long examId) {
         return ResponseEntity.ok(examService.getExamAnswers(examId));
     }
 
     @GetMapping("/{examId}/wrong-answers")
+    @io.swagger.v3.oas.annotations.Operation(summary = "오답 조회", description = "특정 시험의 오답 목록만 조회합니다.")
     public ResponseEntity<List<ExamAnswer>> getWrongAnswers(@PathVariable Long examId) {
         return ResponseEntity.ok(examService.getWrongAnswers(examId));
     }
 
     @GetMapping("/ranking/{roundId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "회차별 순위", description = "특정 회차의 석차(랭킹)를 조회합니다.")
     public ResponseEntity<List<Exam>> getRankingByRound(@PathVariable Long roundId) {
         return ResponseEntity.ok(examService.getRankingByRound(roundId));
     }
 
     @DeleteMapping("/{id}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "시험 기록 삭제", description = "특정 시험 기록을 삭제합니다.")
     public ResponseEntity<Void> deleteExam(@PathVariable Long id) {
         examService.deleteExam(id);
         return ResponseEntity.ok().build();
@@ -180,6 +190,7 @@ public class ExamController {
      * 오프라인 답안지 OCR (답안 추출만, 채점 X)
      */
     @PostMapping("/{examId}/ocr")
+    @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안 OCR 추출", description = "오프라인 답안지 이미지를 업로드하여 답안 텍스트만 추출합니다 (채점 X).")
     public ResponseEntity<?> extractAnswersFromImage(
             @PathVariable Long examId,
             @RequestParam("answerSheet") MultipartFile answerSheet) {
@@ -210,6 +221,7 @@ public class ExamController {
      * 사용자 확인/수정된 오프라인 답안 채점
      */
     @PostMapping("/{examId}/submit-offline-graded")
+    @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안 최종 제출", description = "OCR 후 사용자가 검토한 답안을 최종 제출하고 채점합니다.")
     public ResponseEntity<?> submitOfflineGradedAnswers(
             @PathVariable Long examId,
             @RequestBody List<Map<String, Object>> answers) {
@@ -246,6 +258,7 @@ public class ExamController {
      * 오프라인 답안지 제출 및 채점 (레거시 - 이전 방식 호환용)
      */
     @PostMapping("/{examId}/submit-offline")
+    @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안지 제출 (구버전)", description = "[Legacy] 답안지 이미지를 업로드하여 즉시 채점합니다.")
     public ResponseEntity<?> submitOfflineAnswerSheet(
             @PathVariable Long examId,
             @RequestParam("answerSheet") MultipartFile answerSheet,

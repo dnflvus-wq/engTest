@@ -15,12 +15,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/stats")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Statistics", description = "전체 시스템 통계 API")
 public class StatsController {
 
     private final UserService userService;
     private final RoundService roundService;
 
     @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary = "대시보드 통계", description = "메인 대시보드 표시를 위한 종합 통계를 조회합니다.")
     public ResponseEntity<Map<String, Object>> getDashboard() {
         Map<String, Object> dashboard = new HashMap<>();
 
@@ -44,16 +46,19 @@ public class StatsController {
     }
 
     @GetMapping("/users")
+    @io.swagger.v3.oas.annotations.Operation(summary = "사용자 순위 통계", description = "사용자별 시험 성적 순위를 조회합니다.")
     public ResponseEntity<List<UserStats>> getUserRanking() {
         return ResponseEntity.ok(userService.getUserStats());
     }
 
     @GetMapping("/rounds")
+    @io.swagger.v3.oas.annotations.Operation(summary = "회차별 통계", description = "회차별 평균 점수, 응시자 수 등을 조회합니다.")
     public ResponseEntity<List<RoundStats>> getRoundStats() {
         return ResponseEntity.ok(roundService.getRoundStats());
     }
 
     @GetMapping("/users/{userId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "개인별 통계 상세", description = "ID로 특정 사용자의 통계 정보를 조회합니다.")
     public ResponseEntity<UserStats> getUserStats(@PathVariable Long userId) {
         UserStats stats = userService.getUserStatsById(userId);
         if (stats == null) {
@@ -63,6 +68,7 @@ public class StatsController {
     }
 
     @GetMapping("/rounds/{roundId}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "회차별 통계 상세", description = "ID로 특정 회차의 통계 정보를 조회합니다.")
     public ResponseEntity<RoundStats> getRoundStatsById(@PathVariable Long roundId) {
         RoundStats stats = roundService.getRoundStatsById(roundId);
         if (stats == null) {
