@@ -14,14 +14,14 @@
 
 | 항목 | 기술 |
 |------|------|
-| **백엔드** | Spring Boot 4.0.1 (Java 21) |
+| **백엔드** | Spring Boot 3.4.1 (Java 21) |
 | **ORM/SQL** | MyBatis 4.0.1 |
 | **데이터베이스** | MariaDB 10.11 |
-| **AI 문제 생성** | Google Gemini API (gemini-2.0-flash) |
-| **OCR (손글씨 인식)** | Google Cloud Vision API 또는 Naver Clova OCR |
+| **AI 문제 생성** | Google Gemini API (gemini-3-flash-preview) |
+| **OCR (손글씨 인식)** | Google Gemini Vision (멀티모달) |
 | **빌드 도구** | Gradle 9.2.1 |
 | **컨테이너화** | Docker & Docker Compose |
-| **프론트엔드** | 순수 HTML/CSS/JavaScript |
+| **프론트엔드** | React 19 + Vite |
 
 ---
 
@@ -38,7 +38,8 @@ engTest/
 │   │   ├── UserController.java         # 사용자 로그인/통계
 │   │   ├── RoundController.java        # 회차/문제 관리 + AI 생성
 │   │   ├── ExamController.java         # 시험 응시/채점/OCR
-│   │   └── StatsController.java        # 전체 통계
+│   │   ├── StatsController.java        # 전체 통계
+│   │   └── MaterialController.java     # 학습 자료 관리
 │   │
 │   ├── service/
 │   │   ├── UserService.java
@@ -64,11 +65,6 @@ engTest/
 │       └── UserStats.java
 │
 ├── src/main/resources/
-│   ├── static/
-│   │   ├── index.html                  # 단일 페이지 애플리케이션
-│   │   ├── css/style.css               # 반응형 디자인
-│   │   └── js/app.js                   # 모든 상호작용 로직
-│   │
 │   ├── mapper/                         # MyBatis XML
 │   │   ├── UserMapper.xml
 │   │   ├── RoundMapper.xml
@@ -80,6 +76,18 @@ engTest/
 │   │   └── schema.sql                  # DB 초기화 스크립트
 │   │
 │   └── application.yaml                # Spring 설정
+│
+├── frontend-react/
+│   ├── src/
+│   │   ├── components/                 # 재사용 컴포넌트
+│   │   ├── pages/                      # 페이지 컴포넌트
+│   │   ├── context/                    # 상태 관리 (AuthContext 등)
+│   │   ├── assets/                     # 정적 이미지 등
+│   │   ├── App.jsx                     # 메인 앱 컴포넌트
+│   │   └── main.jsx                    # 진입점
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
 │
 ├── Dockerfile                          # 멀티스테이지 빌드
 ├── docker-compose.yml                  # Spring Boot + MariaDB
@@ -121,38 +129,27 @@ DB_USER=root
 DB_PASSWORD=root123!
 ```
 
-### 2. Docker Compose로 실행
+### 2. Docker Compose로 실행 (배포용)
+한 번의 명령어로 **백엔드와 프론트엔드가 동시에 실행**됩니다.
 
 ```bash
 cd /c/Project/engTest
 
-# 서비스 시작
-docker-compose up -d
+# 서비스 전체 시작 (백엔드 + 프론트엔드 + DB)
+docker-compose up -d --build
 
 # 로그 확인
-docker-compose logs -f app
-
-# 서비스 종료
-docker-compose down
+docker-compose logs -f
 ```
 
-### 3. 접속
+### 3. 접속 정보
+| 서비스 | URL | 설명 |
+|---|---|---|
+| **프론트엔드** | `http://localhost:3000` | 실제 사용자 접속 주소 (Nginx) |
+| **백엔드 API** | `http://localhost:23145` | API 서버 (데이터 처리) |
+| **DB** | `localhost:23146` | MariaDB |
 
-```
-http://localhost:8080
-```
-
-### 4. 로컬 개발 (Docker 없이)
-
-MariaDB가 로컬에 설치되어 있다면:
-
-```bash
-java -jar build/libs/engTest-0.0.1-SNAPSHOT.jar \
-  --spring.datasource.url=jdbc:mariadb://localhost:3306/engtest \
-  --spring.datasource.username=root \
-  --spring.datasource.password=root \
-  --OPENAI_API_KEY=your-key
-```
+> **참고:** 로컬 개발 시에는 `npm run dev` (`http://localhost:5173`)를 사용하시면 수정 사항이 즉시 반영됩니다.
 
 ---
 
@@ -174,8 +171,8 @@ java -jar build/libs/engTest-0.0.1-SNAPSHOT.jar \
 - **객관식:** 4지선다형 객관식 (자동 채점)
 - **주관식 (손글씨):**
   - 사진 업로드
-  - Google Vision 또는 Clova OCR로 텍스트 인식
-  - 텍스트 정규화 후 유사도 80% 이상이면 정답 처리
+  - Google Gemini Vision (멀티모달)로 텍스트 인식 및 채점 동시 수행
+  - 텍스트 정규화 후 유사도 비교
 - **Levenshtein distance** 기반 유사도 계산
 
 ### 4. 채점 및 결과
@@ -234,6 +231,24 @@ GET    /api/stats/users           # 사용자 순위
 GET    /api/stats/rounds          # 회차별 통계
 GET    /api/stats/users/{id}      # 특정 사용자 통계
 GET    /api/stats/rounds/{id}     # 특정 회차 통계
+
+### 학습 자료 (Materials) & 단어장
+```
+GET    /api/rounds/{id}/materials          # 회차 자료 조회
+POST   /api/rounds/{id}/materials/youtube  # 유튜브 자료 추가
+POST   /api/rounds/{id}/materials/ppt      # PPT 자료 추가
+DELETE /api/materials/{id}                 # 자료 삭제
+GET    /api/rounds/{id}/vocabulary         # 단어장 조회
+POST   /api/rounds/{id}/vocabulary         # 단어장 저장
+DELETE /api/vocabulary/{id}                # 단어 삭제
+```
+
+### 추가 편의 기능 (Round/Exam)
+```
+POST   /api/rounds/extract-words           # 이미지에서 단어 추출 (OCR)
+POST   /api/rounds/{id}/generate-from-words # 단어장 기반 문제 생성
+POST   /api/exams/{id}/ocr                 # 답안지 OCR 추출 (채점 X)
+```
 ```
 
 ---
@@ -319,10 +334,9 @@ api.gemini.url=https://generativelanguage.googleapis.com/v1beta/models
 
 ```java
 - 이미지 Base64 인코딩
-- Gemini Vision API 호출 (손글씨 인식 + 채점 동시 수행)
+- Gemini Vision API 호출 (멀티모달: 텍스트+이미지 동시 전송)
 - JSON 응답 파싱 (extractedText, isCorrect, feedback)
-- 텍스트 채점은 정규화 + Levenshtein distance 기반
-- 80% 이상 유사하면 정답 처리
+- 텍스트 정규화 후 유사도 비교 (AI 또는 Levenshtein)
 ```
 
 ### 3. 시험 점수 계산 (ExamService.java:L90-110)
@@ -363,12 +377,12 @@ showAdmin()          # 관리자 화면
 ## 알려진 제한사항
 
 1. **OCR 정확도:**
-   - 손글씨가 명확해야 인식 잘 됨
-   - 정규화 후 80% 유사도 기준 (조정 가능)
+   - 손글씨 명확도에 따라 인식률 차이 발생
+   - Gemini Vision 3.0의 멀티모달 성능에 의존
 
 2. **API 비용:**
-   - Gemini API: 무료 티어 제공 (분당 15 요청)
-   - 유료 시 문제 생성당 약 $0.001 수준
+   - Gemini API: 현재 Preview 버전 (무료/유료 정책 확인 필요)
+   - 멀티모달 요청 시 텍스트보다 토큰 소모량 많음
 
 3. **브라우저:**
    - Chrome, Firefox, Safari 등 최신 브라우저 권장
@@ -471,7 +485,7 @@ docker-compose logs app | grep -i gemini
 - 프로젝트 경로: `C:\Project\engTest`
 - 빌드: `./gradlew build`
 - 실행: `docker-compose up -d`
-- 접속: `http://localhost:8080`
+- 접속: `http://localhost:23145`
 
 ---
 
