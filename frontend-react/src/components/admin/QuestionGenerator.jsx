@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
     const [difficulty, setDifficulty] = useState('MEDIUM');
@@ -12,6 +12,15 @@ const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
         setQuestionCount(count);
         setPassScore(Math.ceil(count * 0.8));
     };
+
+    // Update counts when wordCount changes (initial load or updates)
+    useEffect(() => {
+        if (wordCount > 0) {
+            const newCount = Math.min(wordCount, 30);
+            setQuestionCount(newCount);
+            setPassScore(Math.ceil(newCount * 0.8));
+        }
+    }, [wordCount]);
 
     const handleGenerate = async () => {
         if (wordCount === 0 && difficulty === 'MEDIUM') {
