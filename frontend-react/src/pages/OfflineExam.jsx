@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const OfflineExam = () => {
     const { roundId } = useParams();
@@ -45,7 +46,7 @@ const OfflineExam = () => {
 
         } catch (error) {
             console.error(error);
-            alert(error.message || 'Error initializing offline exam');
+            toast.error(error.message || 'Error initializing offline exam');
             navigate('/exam');
         } finally {
             setLoading(false);
@@ -89,7 +90,7 @@ const OfflineExam = () => {
 
         } catch (error) {
             console.error('OCR Error:', error);
-            alert('OCR processing failed. Please try again.');
+            toast.error('OCR processing failed. Please try again.');
         } finally {
             setProcessing(false);
         }
@@ -128,7 +129,7 @@ const OfflineExam = () => {
 
         } catch (error) {
             console.error('Submit Error:', error);
-            alert('Failed to submit exam.');
+            toast.error('Failed to submit exam.');
         } finally {
             setProcessing(false);
         }

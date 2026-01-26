@@ -34,6 +34,8 @@ server:
         max-age: 2147483647
         path: /
         secure: false
+  error:
+    include-message: always
 
 # MyBatis
 mybatis:

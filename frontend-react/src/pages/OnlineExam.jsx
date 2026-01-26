@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const OnlineExam = () => {
     const { roundId } = useParams();
@@ -34,7 +35,9 @@ const OnlineExam = () => {
 
             if (!startRes.ok) {
                 const errorData = await startRes.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to start exam');
+                // Check if it's our specific 400 error message (Spring Boot structure)
+                const msg = errorData.message || 'Failed to start exam';
+                throw new Error(msg);
             }
             const examData = await startRes.json();
             setExam(examData);
@@ -61,7 +64,8 @@ const OnlineExam = () => {
 
         } catch (error) {
             console.error('Error starting exam:', error);
-            alert(error.message || 'Error starting exam. Please try again.');
+            // Display clean English message as requested
+            toast.error(error.message || 'Error starting exam. Please try again.');
             navigate('/exam');
         } finally {
             setLoading(false);
@@ -82,7 +86,7 @@ const OnlineExam = () => {
     };
 
     const handleAutoSubmit = async () => {
-        alert('Time is up! Submitting your exam...');
+        toast.info('Time is up! Submitting your exam...');
         await submitExam();
     };
 
@@ -144,7 +148,7 @@ const OnlineExam = () => {
             }
         } catch (error) {
             console.error('Error submitting exam:', error);
-            alert('Failed to submit exam. Please try again.');
+            toast.error('Failed to submit exam. Please try again.');
         } finally {
             setSubmitting(false);
         }

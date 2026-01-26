@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const ExamList = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const [allRounds, setAllRounds] = useState([]);
     const [filteredRounds, setFilteredRounds] = useState([]);
     const [filter, setFilter] = useState('ALL');
     const [loading, setLoading] = useState(true);
 
+    // Re-fetch data whenever the location changes (e.g. navigating back)
     useEffect(() => {
         loadRounds();
-    }, []);
+    }, [location.key]);
 
     useEffect(() => {
         filterRounds();
@@ -20,8 +23,9 @@ const ExamList = () => {
 
     const loadRounds = async () => {
         try {
+            const noCacheHeaders = { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' };
             // 전체 라운드 가져오기
-            const response = await fetch('/api/rounds');
+            const response = await fetch('/api/rounds', { headers: noCacheHeaders });
             if (!response.ok) throw new Error('Failed to load rounds');
             const rounds = await response.json();
 
@@ -29,7 +33,7 @@ const ExamList = () => {
             const roundsWithParticipants = await Promise.all(
                 rounds.map(async (r) => {
                     try {
-                        const res = await fetch(`/api/rounds/${r.id}/participants`);
+                        const res = await fetch(`/api/rounds/${r.id}/participants`, { headers: noCacheHeaders });
                         if (res.ok) {
                             const data = await res.json();
                             return { ...r, participants: data.participants || [] };

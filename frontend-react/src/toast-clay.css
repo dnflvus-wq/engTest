@@ -1,0 +1,73 @@
+/* Custom Toastify Styles for Claymorphism Theme */
+:root {
+    --toastify-color-light: var(--bg-primary);
+    --toastify-color-dark: var(--bg-secondary);
+    --toastify-color-info: var(--primary);
+    --toastify-color-success: var(--success);
+    --toastify-color-warning: #f59e0b;
+    --toastify-color-error: var(--danger);
+
+    --toastify-toast-width: 360px;
+    --toastify-toast-background: var(--bg-primary);
+    --toastify-toast-min-height: 70px;
+    --toastify-toast-max-height: 800px;
+    --toastify-font-family: 'Outfit', sans-serif;
+    --toastify-z-index: 9999;
+}
+
+.Toastify__toast-container {
+    padding: 1rem;
+}
+
+.Toastify__toast {
+    border-radius: 20px !important;
+    padding: 16px 20px !important;
+    box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    margin-bottom: 1.5rem !important;
+    font-weight: 500;
+}
+
+/* Theme adaptation */
+.Toastify__toast--light {
+    background: var(--bg-primary) !important;
+    color: var(--text-main) !important;
+}
+
+.Toastify__toast--error {
+    background: var(--bg-primary) !important;
+    color: var(--danger) !important;
+    border-left: 6px solid var(--danger) !important;
+}
+
+.Toastify__toast--success {
+    background: var(--bg-primary) !important;
+    color: var(--success) !important;
+    border-left: 6px solid var(--success) !important;
+}
+
+.Toastify__toast--info {
+    background: var(--bg-primary) !important;
+    color: var(--primary) !important;
+    border-left: 6px solid var(--primary) !important;
+}
+
+.Toastify__toast-body {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.Toastify__close-button {
+    color: var(--text-sub) !important;
+    opacity: 0.6;
+}
+
+.Toastify__close-button:hover {
+    opacity: 1;
+}
+
+/* Custom Icons */
+.Toastify__toast-icon {
+    width: 24px;
+    margin-right: 12px;
+}

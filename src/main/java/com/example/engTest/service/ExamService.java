@@ -40,7 +40,7 @@ public class ExamService {
     }
 
     @Transactional
-    public Exam startExam(Long userId, Long roundId, String mode) {
+    public synchronized Exam startExam(Long userId, Long roundId, String mode) {
         // [NEW] 이미 제출(COMPLETED)된 시험이 있는지 확인
         Exam existingExam = examMapper.findByUserAndRound(userId, roundId);
         if (existingExam != null && "COMPLETED".equals(existingExam.getStatus())) {
@@ -57,20 +57,27 @@ public class ExamService {
                 // (Other in-progress exams for DIFFERENT rounds will remain until they are
                 // started and cleaned up,
                 // OR we can clean them up now. Let's clean up others to keep DB clean.)
-                cleanUpOtherExams(userId, oldExam.getId());
+                // RESUME: Found incomplete exam for this round -> Return it!
+                // (Only resume the exam for THIS round. Do not touch others.)
                 return oldExam;
             }
         }
 
         // If we reached here, no exam for this round exists.
-        // Cleanup ALL in-progress exams (since we are starting a NEW one)
-        for (Exam oldExam : inProgressExams) {
-            deleteExam(oldExam.getId());
-        }
+        // [CHANGED] "In Progress" Exam Cleanup Logic Removed
+        // We now allow multiple "In Progress" exams (one per round).
+        // The frontend handles navigation to the correct exam based on the round.
 
         // --- Create NEW Exam ---
         // 해당 회차의 문제 수 조회
         int questionCount = questionMapper.countByRoundId(roundId);
+
+        // [NEW] Validation: Prevent starting exam if no questions exist
+        if (questionCount == 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "No questions have been generated for this round yet. Please generate questions first.");
+        }
 
         Exam exam = Exam.builder()
                 .userId(userId)
@@ -99,15 +106,6 @@ public class ExamService {
         }
 
         return exam;
-    }
-
-    private void cleanUpOtherExams(Long userId, Long currentExamId) {
-        List<Exam> inProgressExams = examMapper.findInProgressByUserId(userId);
-        for (Exam ex : inProgressExams) {
-            if (!ex.getId().equals(currentExamId)) {
-                deleteExam(ex.getId());
-            }
-        }
     }
 
     @Transactional

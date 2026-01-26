@@ -4,7 +4,7 @@ services:
     build: ./frontend-react
     container_name: engtest-frontend
     ports:
-      - "5173:80"
+      - "23145:80"
     depends_on:
       - app
     restart: unless-stopped
@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
     ports:
-      - "23145:8080" # Reverted to legacy port
+      - "12121:8080" # Reverted to legacy port
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/engtest?useUnicode=true&characterEncoding=utf8
       - SPRING_DATASOURCE_USERNAME=engtest

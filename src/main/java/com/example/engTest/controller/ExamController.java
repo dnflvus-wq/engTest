@@ -81,9 +81,14 @@ public class ExamController {
 
             Exam exam = examService.startExam(userId, roundId, mode);
             return ResponseEntity.ok(exam);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("message", e.getReason()));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             log.error("Failed to start exam", e);
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "An unexpected error occurred: " + e.getMessage()));
         }
     }
 

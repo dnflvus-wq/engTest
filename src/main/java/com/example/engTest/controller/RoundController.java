@@ -141,7 +141,7 @@ public class RoundController {
             if (round == null) {
                 return ResponseEntity.notFound().build();
             }
-            int passScore = round.getPassScore();
+            int passScore = round.getPassScore() != null ? round.getPassScore() : 0;
 
             var allExams = examService.getExamsByRoundId(id);
             var participants = allExams.stream()
