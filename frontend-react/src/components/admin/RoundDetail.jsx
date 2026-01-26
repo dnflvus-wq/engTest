@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import VocabularyManager from './VocabularyManager';
 import QuestionGenerator from './QuestionGenerator';
+import ReviewQuestionGenerator from './ReviewQuestionGenerator';
 import MaterialManager from './MaterialManager';
 
 const RoundDetail = ({ roundId, onBack, onUpdate }) => {
@@ -162,6 +163,13 @@ const RoundDetail = ({ roundId, onBack, onUpdate }) => {
                         wordCount={vocabCount}
                         onGenerated={() => {
                             loadRoundDetail(); // Reload to update question count
+                            if (onUpdate) onUpdate();
+                        }}
+                    />
+                    <ReviewQuestionGenerator
+                        roundId={roundId}
+                        onGenerated={() => {
+                            loadRoundDetail();
                             if (onUpdate) onUpdate();
                         }}
                     />

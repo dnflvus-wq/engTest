@@ -24,4 +24,8 @@ public interface QuestionMapper {
     void deleteByRoundId(@Param("roundId") Long roundId);
 
     int countByRoundId(@Param("roundId") Long roundId);
+
+    List<Question> findByRoundIds(@Param("roundIds") List<Long> roundIds);
+
+    void deleteReviewByRoundId(@Param("roundId") Long roundId);
 }

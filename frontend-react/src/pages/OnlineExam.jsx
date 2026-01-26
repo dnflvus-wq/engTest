@@ -174,6 +174,18 @@ const OnlineExam = () => {
     const currentQuestion = questions[currentQuestionIndex];
     const progressPercent = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
+    // 일반 문제와 복습 문제 분리
+    const regularQuestions = questions.filter(q => !q.isReview);
+    const reviewQuestions = questions.filter(q => q.isReview);
+    const isCurrentReview = currentQuestion?.isReview;
+
+    // 현재 문제가 복습 문제 섹션의 첫 번째 문제인지 확인
+    const reviewStartIndex = regularQuestions.length;
+    const isFirstReviewQuestion = currentQuestionIndex === reviewStartIndex && reviewQuestions.length > 0;
+
+    // 복습 문제 번호 (일반 문제와 연속)
+    const displayQuestionNumber = currentQuestionIndex + 1;
+
     return (
         <div className="exam-page" style={{ display: 'flex', gap: '20px' }}>
             {/* 왼쪽: Time & Progress 카드 */}
@@ -214,11 +226,18 @@ const OnlineExam = () => {
                         <div style={{
                             width: `${progressPercent}%`,
                             height: '100%',
-                            background: 'var(--primary)',
+                            background: isCurrentReview ? 'var(--info)' : 'var(--primary)',
                             borderRadius: '3px',
                             transition: 'width 0.3s ease'
                         }}></div>
                     </div>
+                    {reviewQuestions.length > 0 && (
+                        <div style={{ marginTop: '10px', fontSize: '0.75rem', color: 'var(--text-sub)' }}>
+                            <span style={{ color: 'var(--primary)' }}>● {regularQuestions.length}</span>
+                            {' + '}
+                            <span style={{ color: 'var(--info)' }}>● {reviewQuestions.length} review</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -230,15 +249,32 @@ const OnlineExam = () => {
                         <span style={{
                             display: 'inline-block',
                             padding: '8px 24px',
-                            background: 'var(--primary)',
+                            background: isCurrentReview ? 'var(--info)' : 'var(--primary)',
                             color: 'white',
                             borderRadius: '25px',
                             fontSize: '0.85rem',
                             fontWeight: '600'
                         }}>
-                            Question
+                            {isCurrentReview ? 'Review Question' : 'Question'}
                         </span>
                     </div>
+
+                    {/* Review Section Divider */}
+                    {isFirstReviewQuestion && (
+                        <div style={{
+                            background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                            border: '2px solid var(--info)',
+                            borderRadius: '12px',
+                            padding: '15px 20px',
+                            marginBottom: '25px',
+                            textAlign: 'center'
+                        }}>
+                            <i className="fa-solid fa-rotate-left" style={{ marginRight: '8px', color: 'var(--info)' }}></i>
+                            <span style={{ fontWeight: '600', color: '#1565c0' }}>
+                                Review Questions Section ({reviewQuestions.length} questions)
+                            </span>
+                        </div>
+                    )}
 
                     {/* Question Text */}
                     <h2 style={{
@@ -249,7 +285,7 @@ const OnlineExam = () => {
                         color: 'var(--text-main)',
                         lineHeight: '1.6'
                     }}>
-                        {currentQuestionIndex + 1}. {currentQuestion?.questionText}
+                        {displayQuestionNumber}. {currentQuestion?.questionText}
                     </h2>
 
                     {/* Answer Input */}

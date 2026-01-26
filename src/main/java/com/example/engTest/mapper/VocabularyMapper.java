@@ -11,6 +11,8 @@ public interface VocabularyMapper {
 
     List<VocabularyWord> findByRoundId(@Param("roundId") Long roundId);
 
+    List<VocabularyWord> findByRoundIds(@Param("roundIds") List<Long> roundIds);
+
     void insert(VocabularyWord word);
 
     void insertBatch(@Param("list") List<VocabularyWord> words);

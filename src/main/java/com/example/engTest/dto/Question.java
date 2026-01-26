@@ -24,5 +24,6 @@ public class Question {
     private String option4;
     private String hint;
     private Integer seqNo;
+    private Boolean isReview;
     private LocalDateTime createdAt;
 }

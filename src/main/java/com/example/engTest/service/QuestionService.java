@@ -53,4 +53,13 @@ public class QuestionService {
     public int countByRoundId(Long roundId) {
         return questionMapper.countByRoundId(roundId);
     }
+
+    public List<Question> getQuestionsByRoundIds(List<Long> roundIds) {
+        return questionMapper.findByRoundIds(roundIds);
+    }
+
+    @Transactional
+    public void deleteReviewQuestionsByRoundId(Long roundId) {
+        questionMapper.deleteReviewByRoundId(roundId);
+    }
 }

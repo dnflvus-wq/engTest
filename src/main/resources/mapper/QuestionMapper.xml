@@ -15,11 +15,12 @@
         <result property="option4" column="option4"/>
         <result property="hint" column="hint"/>
         <result property="seqNo" column="seq_no"/>
+        <result property="isReview" column="is_review"/>
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
     <select id="findByRoundId" resultMap="questionResultMap">
-        SELECT * FROM questions WHERE round_id = #{roundId} ORDER BY seq_no
+        SELECT * FROM questions WHERE round_id = #{roundId} ORDER BY is_review ASC, seq_no ASC
     </select>
 
     <select id="findById" resultMap="questionResultMap">
@@ -27,15 +28,15 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no)
-        VALUES (#{roundId}, #{questionType}, #{answerType}, #{questionText}, #{answer}, #{option1}, #{option2}, #{option3}, #{option4}, #{hint}, #{seqNo})
+        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no, is_review)
+        VALUES (#{roundId}, #{questionType}, #{answerType}, #{questionText}, #{answer}, #{option1}, #{option2}, #{option3}, #{option4}, #{hint}, #{seqNo}, #{isReview})
     </insert>
 
     <insert id="insertBatch">
-        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no)
+        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no, is_review)
         VALUES
         <foreach collection="list" item="q" separator=",">
-            (#{q.roundId}, #{q.questionType}, #{q.answerType}, #{q.questionText}, #{q.answer}, #{q.option1}, #{q.option2}, #{q.option3}, #{q.option4}, #{q.hint}, #{q.seqNo})
+            (#{q.roundId}, #{q.questionType}, #{q.answerType}, #{q.questionText}, #{q.answer}, #{q.option1}, #{q.option2}, #{q.option3}, #{q.option4}, #{q.hint}, #{q.seqNo}, #{q.isReview})
         </foreach>
     </insert>
 
@@ -64,5 +65,19 @@
     <select id="countByRoundId" resultType="int">
         SELECT COUNT(*) FROM questions WHERE round_id = #{roundId}
     </select>
+
+    <!-- 복습 문제용: 여러 회차의 문제 조회 -->
+    <select id="findByRoundIds" resultMap="questionResultMap">
+        SELECT * FROM questions WHERE round_id IN
+        <foreach collection="roundIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND (is_review = FALSE OR is_review IS NULL)
+    </select>
+
+    <!-- 복습 문제만 삭제 -->
+    <delete id="deleteReviewByRoundId">
+        DELETE FROM questions WHERE round_id = #{roundId} AND is_review = TRUE
+    </delete>
 
 </mapper>

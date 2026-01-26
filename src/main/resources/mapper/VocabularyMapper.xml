@@ -16,6 +16,14 @@
         SELECT * FROM round_vocabulary WHERE round_id = #{roundId} ORDER BY seq_no, id
     </select>
 
+    <select id="findByRoundIds" resultMap="vocabularyResultMap">
+        SELECT * FROM round_vocabulary WHERE round_id IN
+        <foreach collection="roundIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY round_id, seq_no, id
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO round_vocabulary (round_id, english, korean, phonetic, seq_no)
         VALUES (#{roundId}, #{english}, #{korean}, #{phonetic}, #{seqNo})

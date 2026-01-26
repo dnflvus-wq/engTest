@@ -20,6 +20,13 @@ public class VocabularyService {
         return vocabularyMapper.findByRoundId(roundId);
     }
 
+    public List<VocabularyWord> getVocabularyByRoundIds(List<Long> roundIds) {
+        if (roundIds == null || roundIds.isEmpty()) {
+            return List.of();
+        }
+        return vocabularyMapper.findByRoundIds(roundIds);
+    }
+
     @Transactional
     public void saveVocabulary(Long roundId, List<String> words) {
         if (words == null || words.isEmpty()) {

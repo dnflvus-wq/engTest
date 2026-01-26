@@ -303,6 +303,148 @@ public class RoundController {
     }
 
     /**
-     * 발음기호 업데이트 (AI 생성)
+     * 현재 회차보다 이전에 생성된 회차 목록 조회
      */
+    @GetMapping("/{id}/previous")
+    @io.swagger.v3.oas.annotations.Operation(summary = "이전 회차 목록 조회", description = "현재 회차보다 이전에 생성된 모든 회차를 조회합니다.")
+    public ResponseEntity<?> getPreviousRounds(@PathVariable Long id) {
+        try {
+            Round currentRound = roundService.getRoundById(id);
+            if (currentRound == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            List<Round> allRounds = roundService.getAllRounds();
+            // 현재 회차보다 먼저 생성된 회차만 필터링 (ID가 작은 것 = 먼저 생성됨)
+            List<Round> previousRounds = allRounds.stream()
+                    .filter(r -> r.getId() < id)
+                    .toList();
+
+            return ResponseEntity.ok(previousRounds);
+        } catch (Exception e) {
+            log.error("Failed to get previous rounds", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * 복습 문제 생성 - 이전 회차들에서 문제를 복사하거나 단어를 기반으로 생성
+     */
+    @PostMapping("/{id}/generate-review")
+    @io.swagger.v3.oas.annotations.Operation(summary = "복습 문제 생성", description = "선택한 이전 회차들에서 문제를 가져와 복습 문제로 추가합니다.")
+    public ResponseEntity<?> generateReviewQuestions(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> request) {
+        try {
+            Round round = roundService.getRoundById(id);
+            if (round == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            @SuppressWarnings("unchecked")
+            List<Integer> sourceRoundIds = (List<Integer>) request.get("sourceRoundIds");
+            int questionCount = request.get("questionCount") != null
+                    ? ((Number) request.get("questionCount")).intValue()
+                    : 5;
+            String sourceType = (String) request.getOrDefault("sourceType", "QUESTIONS");
+
+            if (sourceRoundIds == null || sourceRoundIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "복습할 회차를 선택해주세요."));
+            }
+
+            // 기존 복습 문제만 삭제 (일반 문제는 유지)
+            questionService.deleteReviewQuestionsByRoundId(id);
+
+            List<Long> roundIds = sourceRoundIds.stream().map(Long::valueOf).toList();
+            List<Question> reviewQuestions = new ArrayList<>();
+            int seqNo = 1;
+
+            if ("VOCABULARY".equalsIgnoreCase(sourceType)) {
+                // 단어 기반 생성: 선택된 회차들의 단어에서 새 문제 생성
+                List<VocabularyWord> vocabulary = vocabularyService.getVocabularyByRoundIds(roundIds);
+
+                if (vocabulary.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "선택한 회차에 단어가 없습니다."));
+                }
+
+                // 셔플 후 지정된 개수만큼 선택
+                Collections.shuffle(vocabulary);
+                int count = Math.min(questionCount, vocabulary.size());
+                List<VocabularyWord> selectedWords = vocabulary.subList(0, count);
+
+                // 단어에서 문제 생성 (한글 뜻 → 영어 단어)
+                for (VocabularyWord word : selectedWords) {
+                    reviewQuestions.add(Question.builder()
+                            .roundId(id)
+                            .questionType("WORD")
+                            .answerType("TEXT")
+                            .questionText(word.getKorean())
+                            .answer(word.getEnglish())
+                            .seqNo(seqNo++)
+                            .isReview(true)
+                            .build());
+                }
+
+                log.info("Generated {} review questions from vocabulary for round {} from rounds {}",
+                        reviewQuestions.size(), id, sourceRoundIds);
+            } else {
+                // 기존 문제 복사: 선택된 회차들의 문제를 그대로 복사
+                List<Question> sourceQuestions = questionService.getQuestionsByRoundIds(roundIds);
+
+                if (sourceQuestions.isEmpty()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "선택한 회차에 문제가 없습니다."));
+                }
+
+                // 셔플 후 지정된 개수만큼 선택
+                Collections.shuffle(sourceQuestions);
+                int count = Math.min(questionCount, sourceQuestions.size());
+                List<Question> selectedQuestions = sourceQuestions.subList(0, count);
+
+                // 복습 문제로 복사
+                for (Question src : selectedQuestions) {
+                    reviewQuestions.add(Question.builder()
+                            .roundId(id)
+                            .questionType(src.getQuestionType())
+                            .answerType(src.getAnswerType())
+                            .questionText(src.getQuestionText())
+                            .answer(src.getAnswer())
+                            .option1(src.getOption1())
+                            .option2(src.getOption2())
+                            .option3(src.getOption3())
+                            .option4(src.getOption4())
+                            .hint(src.getHint())
+                            .seqNo(seqNo++)
+                            .isReview(true)
+                            .build());
+                }
+
+                log.info("Generated {} review questions by copying from round {} from rounds {}",
+                        reviewQuestions.size(), id, sourceRoundIds);
+            }
+
+            questionService.createQuestions(reviewQuestions);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "복습 문제가 생성되었습니다.",
+                    "count", reviewQuestions.size()));
+        } catch (Exception e) {
+            log.error("Failed to generate review questions", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * 복습 문제 삭제
+     */
+    @DeleteMapping("/{id}/review-questions")
+    @io.swagger.v3.oas.annotations.Operation(summary = "복습 문제 삭제", description = "해당 회차의 복습 문제만 삭제합니다.")
+    public ResponseEntity<?> deleteReviewQuestions(@PathVariable Long id) {
+        try {
+            questionService.deleteReviewQuestionsByRoundId(id);
+            return ResponseEntity.ok(Map.of("message", "복습 문제가 삭제되었습니다."));
+        } catch (Exception e) {
+            log.error("Failed to delete review questions", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

@@ -197,7 +197,8 @@ const OfflineExam = () => {
 
                 {/* 문제 목록 - 1단 세로 나열 (레거시 스타일) */}
                 <div className="questions-list" style={{ marginBottom: '2rem', padding: '30px 40px' }}>
-                    {questions.map((q, idx) => {
+                    {/* 일반 문제 */}
+                    {questions.filter(q => !q.isReview).map((q, idx) => {
                         const qNum = idx + 1;
                         const hasAnswer = ocrStep === 'REVIEW' && ocrResults[qNum];
                         return (
@@ -257,6 +258,95 @@ const OfflineExam = () => {
                             </div>
                         );
                     })}
+
+                    {/* 복습 문제 섹션 */}
+                    {questions.filter(q => q.isReview).length > 0 && (
+                        <>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                                border: '2px solid var(--info)',
+                                borderRadius: '15px',
+                                padding: '15px 20px',
+                                margin: '30px 0 20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px'
+                            }}>
+                                <i className="fa-solid fa-rotate-left" style={{ fontSize: '1.3rem', color: 'var(--info)' }}></i>
+                                <div>
+                                    <div style={{ fontWeight: '700', color: '#1565c0', fontSize: '1.1rem' }}>
+                                        Review Questions
+                                    </div>
+                                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                                        {questions.filter(q => q.isReview).length} questions from previous rounds
+                                    </div>
+                                </div>
+                            </div>
+
+                            {questions.filter(q => q.isReview).map((q, idx) => {
+                                const regularCount = questions.filter(q => !q.isReview).length;
+                                const qNum = regularCount + idx + 1;
+                                const hasAnswer = ocrStep === 'REVIEW' && ocrResults[qNum];
+                                return (
+                                    <div
+                                        key={q.id}
+                                        className={`legacy-question-card ${hasAnswer ? 'answered' : ''}`}
+                                        style={{ borderLeft: '4px solid var(--info)' }}
+                                    >
+                                        <div style={{ fontWeight: 'bold', marginBottom: '5px', color: 'var(--info)' }}>
+                                            {qNum}. {q.questionText}
+                                        </div>
+                                        {q.answerType === 'CHOICE' && q.option1 ? (
+                                            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', fontSize: '0.9rem', color: 'var(--text-sub)' }}>
+                                                <span>1. {q.option1}</span>
+                                                <span>2. {q.option2}</span>
+                                                <span>3. {q.option3}</span>
+                                                <span>4. {q.option4}</span>
+                                            </div>
+                                        ) : (
+                                            <span style={{
+                                                fontSize: '0.8rem',
+                                                padding: '3px 10px',
+                                                background: '#e3f2fd',
+                                                borderRadius: '12px',
+                                                color: '#1565c0'
+                                            }}>
+                                                Short Answer
+                                            </span>
+                                        )}
+                                        {/* OCR 결과 표시 및 수정 */}
+                                        {hasAnswer && (
+                                            <div style={{ marginTop: '10px', padding: '10px', background: 'white', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500' }}>OCR Answer:</span>
+                                                    <input
+                                                        type="text"
+                                                        value={ocrResults[qNum] || ''}
+                                                        onChange={(e) => handleAnswerChange(qNum, e.target.value)}
+                                                        className="clay-input"
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '8px 12px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid var(--border-color)',
+                                                            fontSize: '0.95rem'
+                                                        }}
+                                                    />
+                                                    <button
+                                                        className="clay-btn btn-small"
+                                                        onClick={() => handleAnswerChange(qNum, ocrResults[qNum])}
+                                                        style={{ padding: '6px 12px' }}
+                                                    >
+                                                        <i className="fa-solid fa-pen"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
                 </div>
 
                 {/* 업로드 섹션 - 문제 목록 아래 (레거시 스타일) */}
