@@ -43,6 +43,9 @@ dependencies {
 	// 파일 업로드
 	implementation 'commons-io:commons-io:2.15.1'
 
+	// Swagger API Docs
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
 	// DevTools
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
