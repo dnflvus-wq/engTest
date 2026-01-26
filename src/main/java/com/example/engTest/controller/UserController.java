@@ -20,20 +20,9 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-<<<<<<< HEAD
-    public ResponseEntity<?> getAllUsers() {
-        try {
-            return ResponseEntity.ok(userService.getAllUsers());
-        } catch (Exception e) {
-            e.printStackTrace(); // Log to console
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", String.valueOf(e.getMessage()), "cause", e.toString()));
-        }
-=======
     @io.swagger.v3.oas.annotations.Operation(summary = "전체 사용자 조회", description = "시스템에 등록된 모든 사용자를 조회합니다.")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
->>>>>>> 97ecb4a9357d479dddac3aa1899efdbacf01c82f
     }
 
     @GetMapping("/{id}")

@@ -5,6 +5,7 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
     const [manualInputs, setManualInputs] = useState([{ english: '', korean: '' }]);
     const [loading, setLoading] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([]);  // 파일 상태 추가
     const [ocrLoading, setOcrLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
 
@@ -91,10 +92,12 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
 
     // OCR Logic
     const handleImageChange = (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const files = Array.from(e.target.files);
+        const files = e.target.files || e.dataTransfer?.files;
+        if (files && files.length > 0) {
+            const fileArray = Array.from(files);
+            setSelectedFiles(fileArray);  // 파일을 state에 저장
             // Create previews
-            const previews = files.map(file => URL.createObjectURL(file));
+            const previews = fileArray.map(file => URL.createObjectURL(file));
             setPreviewImages(previews);
         }
     };
@@ -117,13 +120,8 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
         setIsDragging(false);
 
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            // Create synthetic event
-            const event = { target: { files: e.dataTransfer.files } };
-            handleImageChange(event);
-
-            // Also update the input element files if possible, though React handles state
-            const fileInput = document.getElementById('wordImages');
-            if (fileInput) fileInput.files = e.dataTransfer.files;
+            // 드래그된 파일을 직접 handleImageChange에 전달
+            handleImageChange({ dataTransfer: e.dataTransfer });
         }
     };
 
