@@ -31,7 +31,7 @@ const Study = () => {
 
     const loadRounds = async () => {
         try {
-            const res = await fetch('/api/rounds/active');
+            const res = await fetch('/api/rounds');
             if (res.ok) {
                 const data = await res.json();
                 setRounds(data);
