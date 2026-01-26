@@ -16,8 +16,7 @@ services:
     env_file:
       - .env
     ports:
-      - "12121:8080" # Reverted to legacy port
-      
+      - "12345:8080" # Reverted to legacy port
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/engtest?useUnicode=true&characterEncoding=utf8
       - SPRING_DATASOURCE_USERNAME=engtest
@@ -29,18 +28,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    restart: unless-stopped
-
-  # React Frontend (Nginx serving static files)
-  frontend:
-    build:
-      context: ./frontend-react
-      dockerfile: Dockerfile
-    container_name: engtest-frontend
-    ports:
-      - "3000:80" # Frontend accessible on port 3000
-    depends_on:
-      - app
     restart: unless-stopped
 
   # MariaDB
