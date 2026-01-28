@@ -184,7 +184,62 @@ const OfflineExam = () => {
                 body.dark-mode .legacy-question-card.answered {
                     background: rgba(22, 163, 74, 0.15) !important;
                     border: 1px solid var(--success) !important;
-                    box-shadow: none !important; 
+                    box-shadow: none !important;
+                }
+
+                /* Mobile Responsive */
+                @media (max-width: 768px) {
+                    .legacy-card-container {
+                        padding: 1rem;
+                        border-radius: 20px;
+                        margin: 0 10px;
+                    }
+                    .questions-list {
+                        padding: 10px !important;
+                    }
+                    .legacy-question-card {
+                        padding: 12px;
+                        margin-bottom: 15px;
+                    }
+                    .ocr-answer-box {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 8px !important;
+                    }
+                    .ocr-answer-box .ocr-label {
+                        margin-bottom: 4px;
+                    }
+                    .ocr-answer-box input {
+                        width: 100% !important;
+                        flex: none !important;
+                    }
+                    .ocr-answer-box button {
+                        align-self: flex-end;
+                    }
+                    .upload-section {
+                        padding: 1.5rem !important;
+                    }
+                    .upload-section h3 {
+                        font-size: 1rem !important;
+                        flex-direction: column !important;
+                        text-align: center;
+                    }
+                    .upload-section p {
+                        font-size: 0.85rem !important;
+                    }
+                    .upload-file-row {
+                        flex-direction: column !important;
+                        gap: 10px !important;
+                    }
+                    .upload-file-row button {
+                        width: 100% !important;
+                        white-space: normal !important;
+                    }
+                    .upload-file-row .file-name {
+                        word-break: break-all;
+                        text-align: center;
+                        font-size: 0.8rem !important;
+                    }
                 }
             `}</style>
 
@@ -196,7 +251,7 @@ const OfflineExam = () => {
                 </h2>
 
                 {/* 문제 목록 - 1단 세로 나열 (레거시 스타일) */}
-                <div className="questions-list" style={{ marginBottom: '2rem', padding: '30px 40px' }}>
+                <div className="questions-list" style={{ marginBottom: '2rem', padding: '30px 40px' }} >
                     {/* 일반 문제 */}
                     {questions.filter(q => !q.isReview).map((q, idx) => {
                         const qNum = idx + 1;
@@ -230,8 +285,8 @@ const OfflineExam = () => {
                                 {/* OCR 결과 표시 및 수정 */}
                                 {hasAnswer && (
                                     <div style={{ marginTop: '10px', padding: '10px', background: 'white', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500' }}>OCR Answer:</span>
+                                        <div className="ocr-answer-box" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span className="ocr-label" style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500', whiteSpace: 'nowrap' }}>OCR Answer:</span>
                                             <input
                                                 type="text"
                                                 value={ocrResults[qNum] || ''}
@@ -239,6 +294,7 @@ const OfflineExam = () => {
                                                 className="clay-input"
                                                 style={{
                                                     flex: 1,
+                                                    minWidth: 0,
                                                     padding: '8px 12px',
                                                     borderRadius: '8px',
                                                     border: '1px solid var(--border-color)',
@@ -248,7 +304,7 @@ const OfflineExam = () => {
                                             <button
                                                 className="clay-btn btn-small"
                                                 onClick={() => handleAnswerChange(qNum, ocrResults[qNum])}
-                                                style={{ padding: '6px 12px' }}
+                                                style={{ padding: '6px 12px', flexShrink: 0 }}
                                             >
                                                 <i className="fa-solid fa-pen"></i>
                                             </button>
@@ -317,8 +373,8 @@ const OfflineExam = () => {
                                         {/* OCR 결과 표시 및 수정 */}
                                         {hasAnswer && (
                                             <div style={{ marginTop: '10px', padding: '10px', background: 'white', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500' }}>OCR Answer:</span>
+                                                <div className="ocr-answer-box" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span className="ocr-label" style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500', whiteSpace: 'nowrap' }}>OCR Answer:</span>
                                                     <input
                                                         type="text"
                                                         value={ocrResults[qNum] || ''}
@@ -326,6 +382,7 @@ const OfflineExam = () => {
                                                         className="clay-input"
                                                         style={{
                                                             flex: 1,
+                                                            minWidth: 0,
                                                             padding: '8px 12px',
                                                             borderRadius: '8px',
                                                             border: '1px solid var(--border-color)',
@@ -335,7 +392,7 @@ const OfflineExam = () => {
                                                     <button
                                                         className="clay-btn btn-small"
                                                         onClick={() => handleAnswerChange(qNum, ocrResults[qNum])}
-                                                        style={{ padding: '6px 12px' }}
+                                                        style={{ padding: '6px 12px', flexShrink: 0 }}
                                                     >
                                                         <i className="fa-solid fa-pen"></i>
                                                     </button>
@@ -359,7 +416,7 @@ const OfflineExam = () => {
 
                 {/* STEP 1: UPLOAD */}
                 {ocrStep === 'UPLOAD' && !processing && (
-                    <div id="ocrUploadStep" className="clay-card" style={{
+                    <div id="ocrUploadStep" className="clay-card upload-section" style={{
                         textAlign: 'center',
                         padding: '2rem',
                         background: 'var(--bg-secondary)',
@@ -382,16 +439,16 @@ const OfflineExam = () => {
                             id="answerSheetInput"
                         />
 
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div className="upload-file-row" style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
                             <button
                                 className="clay-btn btn-secondary"
                                 onClick={() => document.getElementById('answerSheetInput').click()}
                                 style={{ padding: '10px 20px' }}
                             >
-                                <i className="fa-solid fa-camera"></i> Select Answer Sheet Photo...
+                                <i className="fa-solid fa-camera"></i> Select Photo
                             </button>
                             {selectedFile && (
-                                <span style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>
+                                <span className="file-name" style={{ color: 'var(--text-sub)', fontSize: '0.9rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {selectedFile.name}
                                 </span>
                             )}
@@ -407,11 +464,11 @@ const OfflineExam = () => {
                                         borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                                     }}
                                 />
-                                <div style={{ marginTop: '1rem' }}>
+                                <div style={{ marginTop: '1rem', padding: '0 10px' }}>
                                     <button
                                         className="clay-btn btn-primary"
                                         onClick={runOCR}
-                                        style={{ padding: '12px 24px', fontSize: '1rem' }}
+                                        style={{ padding: '12px 24px', fontSize: '1rem', width: '100%', maxWidth: '300px' }}
                                     >
                                         <i className="fa-solid fa-wand-magic-sparkles"></i> Run OCR
                                     </button>

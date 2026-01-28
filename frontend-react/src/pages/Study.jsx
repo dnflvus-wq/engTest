@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 
 const Study = () => {
     const [rounds, setRounds] = useState([]);
@@ -93,6 +94,44 @@ const Study = () => {
     const youtubeItems = materials.filter(m => m.materialType === 'YOUTUBE');
     const pptItems = materials.filter(m => m.materialType === 'PPT');
 
+    const downloadVocabularyExcel = () => {
+        if (vocabulary.length === 0) {
+            alert('No vocabulary to download');
+            return;
+        }
+
+        // Prepare data for Excel
+        const headers = ['No', 'English', 'Korean', 'Phonetic'];
+        const rows = vocabulary.map((v, idx) => [
+            idx + 1,
+            v.english || '',
+            v.korean || '',
+            v.phonetic || ''
+        ]);
+
+        // Create worksheet
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 5 },   // No
+            { wch: 30 },  // English
+            { wch: 40 },  // Korean
+            { wch: 20 }   // Phonetic
+        ];
+
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Vocabulary');
+
+        // Generate filename
+        const filename = `vocabulary_${selectedRoundTitle.replace(/[^a-zA-Z0-9가-힣]/g, '_')}.xlsx`;
+
+        // Download file
+        XLSX.writeFile(wb, filename);
+    };
+
     return (
         <section className="active-section">
             <div className="clay-card">
@@ -144,8 +183,35 @@ const Study = () => {
                         className="study-accordion-header"
                         onClick={() => toggleAccordion('vocabAccordion')}
                     >
-                        <span><i className="fa-solid fa-spell-check"></i> Vocabulary</span>
-                        <i className="fa-solid fa-chevron-down arrow-icon"></i>
+                        <span><i className="fa-solid fa-spell-check"></i> Vocabulary ({vocabulary.length})</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {vocabulary.length > 0 && (
+                                <button
+                                    className="btn-small"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        downloadVocabularyExcel();
+                                    }}
+                                    style={{
+                                        padding: '6px 12px',
+                                        fontSize: '0.8rem',
+                                        background: 'var(--success)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '5px'
+                                    }}
+                                    title="Download as Excel"
+                                >
+                                    <i className="fa-solid fa-file-excel"></i>
+                                    <span style={{ display: isMobile ? 'none' : 'inline' }}>Download</span>
+                                </button>
+                            )}
+                            <i className="fa-solid fa-chevron-down arrow-icon"></i>
+                        </div>
                     </div>
                     <div className="study-accordion-content">
                         <div className="vocabulary-grid">

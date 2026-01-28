@@ -83,6 +83,32 @@ const Login = () => {
 
     return (
         <main className="main-content" style={{ padding: '15px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <style>{`
+                @media (max-width: 768px) {
+                    .login-section-mobile {
+                        padding-top: 5vh !important;
+                        align-items: flex-start !important;
+                    }
+                    .login-card-mobile {
+                        padding: 1.5rem !important;
+                    }
+                    .login-card-mobile h2 {
+                        font-size: 1.5rem !important;
+                    }
+                    .login-icon-mobile {
+                        width: 60px !important;
+                        height: 60px !important;
+                        margin-bottom: 1rem !important;
+                    }
+                    .login-icon-mobile i {
+                        font-size: 1.5rem !important;
+                    }
+                    .custom-options-mobile {
+                        max-height: 200px;
+                        overflow-y: auto;
+                    }
+                }
+            `}</style>
             {/* Top Header */}
             <header className="top-header" style={{ flexWrap: 'nowrap', padding: '20px 30px' }}>
                 <div className="header-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -107,10 +133,10 @@ const Login = () => {
             </header>
 
             {/* Login Section */}
-            <section id="loginSection" className="active-section" style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}>
-                <div className="center-container" style={{ padding: '0', width: '100%', maxWidth: '400px' }}>
-                    <div className="clay-card login-card" style={{ padding: '2.5rem', textAlign: 'center' }}>
-                        <div className="login-icon" style={{
+            <section id="loginSection" className="active-section login-section-mobile" style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '10vh' }}>
+                <div className="center-container" style={{ padding: '0 15px', width: '100%', maxWidth: '400px' }}>
+                    <div className="clay-card login-card login-card-mobile" style={{ padding: '2.5rem', textAlign: 'center' }}>
+                        <div className="login-icon login-icon-mobile" style={{
                             width: '80px', height: '80px', margin: '0 auto 1.5rem',
                             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
                             borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -150,12 +176,13 @@ const Login = () => {
 
                                 {isDropdownOpen && (
                                     <div
-                                        className="custom-options"
+                                        className="custom-options custom-options-mobile"
                                         style={{
                                             position: 'absolute', top: '100%', left: 0, right: 0,
                                             marginTop: '8px', background: '#f0f2f5',
                                             borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                                            zIndex: 100, overflow: 'hidden', padding: '5px'
+                                            zIndex: 100, overflowY: 'auto', padding: '5px',
+                                            maxHeight: '250px'
                                         }}
                                     >
                                         {users.length === 0 ? (

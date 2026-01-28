@@ -8,6 +8,8 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
     const [selectedFiles, setSelectedFiles] = useState([]);  // 파일 상태 추가
     const [ocrLoading, setOcrLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [bulkText, setBulkText] = useState('');
+    const [bulkLoading, setBulkLoading] = useState(false);
 
     useEffect(() => {
         loadVocabulary();
@@ -88,6 +90,70 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Bulk Input Handler
+    const saveBulkWords = async () => {
+        if (!bulkText.trim()) {
+            alert('텍스트를 입력해주세요.');
+            return;
+        }
+
+        const lines = bulkText.split('\n').filter(line => line.trim());
+        const wordsToSave = [];
+
+        for (const line of lines) {
+            const colonIndex = line.indexOf(':');
+            if (colonIndex > 0) {
+                const english = line.substring(0, colonIndex).trim();
+                const korean = line.substring(colonIndex + 1).trim();
+                if (english && korean) {
+                    wordsToSave.push(`${english}:${korean}`);
+                }
+            }
+        }
+
+        if (wordsToSave.length === 0) {
+            alert('유효한 단어가 없습니다. "영어:한글" 형식으로 입력해주세요.');
+            return;
+        }
+
+        setBulkLoading(true);
+        try {
+            const res = await fetch(`/api/rounds/${roundId}/vocabulary`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wordsToSave)
+            });
+
+            if (res.ok) {
+                alert(`${wordsToSave.length}개 단어 저장 완료`);
+                setBulkText('');
+                loadVocabulary();
+                if (onVocabularyChange) onVocabularyChange();
+            } else {
+                alert('저장 실패');
+            }
+        } catch (error) {
+            console.error('Bulk save failed:', error);
+            alert('저장 중 오류 발생');
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    // Count valid lines in bulk text
+    const getBulkWordCount = () => {
+        if (!bulkText.trim()) return 0;
+        return bulkText.split('\n').filter(line => {
+            const colonIndex = line.indexOf(':');
+            if (colonIndex > 0) {
+                const english = line.substring(0, colonIndex).trim();
+                const korean = line.substring(colonIndex + 1).trim();
+                return english && korean;
+            }
+            return false;
+        }).length;
     };
 
     // OCR Logic
@@ -222,7 +288,7 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
                 </div>
             </div>
 
-            <div className="two-column-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="three-column-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
                 {/* Manual Input */}
                 <div className="material-add-section clay-card" style={{ padding: '15px' }}>
                     <h3>✏️ 수동 단어 입력</h3>
@@ -335,6 +401,74 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
 
                     <button onClick={extractWordsFromImages} className="btn-primary" style={{ width: '100%' }} disabled={ocrLoading}>
                         {ocrLoading ? <><i className="fa-solid fa-spinner fa-spin"></i> 추출 중...</> : '이미지에서 단어 추출'}
+                    </button>
+                </div>
+
+                {/* Bulk Input */}
+                <div className="material-add-section clay-card" style={{ padding: '15px' }}>
+                    <h3>📝 일괄 등록</h3>
+                    <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '10px' }}>
+                        한 줄에 하나씩 <strong>영어:한글</strong> 형식으로 입력
+                    </p>
+                    <textarea
+                        value={bulkText}
+                        onChange={(e) => setBulkText(e.target.value)}
+                        placeholder={`get married:결혼했다 (결혼식을 올렸다/행동)
+be married:기혼이다 (결혼한 사람이다/상태)
+be a student:학생이다
+be busy:바쁘다
+be off:떠나다 / 출근하지 않는다
+be in trouble:큰일 나다`}
+                        style={{
+                            width: '100%',
+                            height: '200px',
+                            padding: '12px 15px',
+                            borderRadius: '15px',
+                            border: 'none',
+                            background: 'var(--bg-primary)',
+                            boxShadow: 'inset 5px 5px 10px rgba(163,177,198,0.6), inset -5px -5px 10px rgba(255,255,255,0.5)',
+                            fontSize: '0.9rem',
+                            resize: 'vertical',
+                            fontFamily: 'inherit',
+                            lineHeight: '1.6'
+                        }}
+                    />
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: '10px',
+                        marginBottom: '10px'
+                    }}>
+                        <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                            인식된 단어: <strong style={{ color: 'var(--primary)' }}>{getBulkWordCount()}개</strong>
+                        </span>
+                        {bulkText && (
+                            <button
+                                onClick={() => setBulkText('')}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#999',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                <i className="fa-solid fa-xmark"></i> 초기화
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={saveBulkWords}
+                        className="btn-primary"
+                        style={{ width: '100%' }}
+                        disabled={bulkLoading || getBulkWordCount() === 0}
+                    >
+                        {bulkLoading ? (
+                            <><i className="fa-solid fa-spinner fa-spin"></i> 저장 중...</>
+                        ) : (
+                            <><i className="fa-solid fa-upload"></i> 일괄 등록 ({getBulkWordCount()}개)</>
+                        )}
                     </button>
                 </div>
             </div>
