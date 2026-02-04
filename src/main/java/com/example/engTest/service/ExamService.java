@@ -23,6 +23,92 @@ public class ExamService {
     private final QuestionMapper questionMapper;
     private final RoundMapper roundMapper;
 
+    /**
+     * 영어 축약형 → 풀어쓴 형태 매핑 테이블
+     */
+    private static final java.util.Map<String, String> CONTRACTIONS = java.util.Map.ofEntries(
+            // be 동사
+            java.util.Map.entry("i'm", "i am"),
+            java.util.Map.entry("you're", "you are"),
+            java.util.Map.entry("he's", "he is"),
+            java.util.Map.entry("she's", "she is"),
+            java.util.Map.entry("it's", "it is"),
+            java.util.Map.entry("we're", "we are"),
+            java.util.Map.entry("they're", "they are"),
+            java.util.Map.entry("that's", "that is"),
+            java.util.Map.entry("there's", "there is"),
+            java.util.Map.entry("here's", "here is"),
+            java.util.Map.entry("what's", "what is"),
+            java.util.Map.entry("who's", "who is"),
+            java.util.Map.entry("how's", "how is"),
+            java.util.Map.entry("where's", "where is"),
+
+            // not 축약
+            java.util.Map.entry("isn't", "is not"),
+            java.util.Map.entry("aren't", "are not"),
+            java.util.Map.entry("wasn't", "was not"),
+            java.util.Map.entry("weren't", "were not"),
+            java.util.Map.entry("don't", "do not"),
+            java.util.Map.entry("doesn't", "does not"),
+            java.util.Map.entry("didn't", "did not"),
+            java.util.Map.entry("can't", "cannot"),
+            java.util.Map.entry("couldn't", "could not"),
+            java.util.Map.entry("won't", "will not"),
+            java.util.Map.entry("wouldn't", "would not"),
+            java.util.Map.entry("shouldn't", "should not"),
+            java.util.Map.entry("mustn't", "must not"),
+            java.util.Map.entry("haven't", "have not"),
+            java.util.Map.entry("hasn't", "has not"),
+            java.util.Map.entry("hadn't", "had not"),
+
+            // will 축약
+            java.util.Map.entry("i'll", "i will"),
+            java.util.Map.entry("you'll", "you will"),
+            java.util.Map.entry("he'll", "he will"),
+            java.util.Map.entry("she'll", "she will"),
+            java.util.Map.entry("it'll", "it will"),
+            java.util.Map.entry("we'll", "we will"),
+            java.util.Map.entry("they'll", "they will"),
+            java.util.Map.entry("that'll", "that will"),
+
+            // would 축약
+            java.util.Map.entry("i'd", "i would"),
+            java.util.Map.entry("you'd", "you would"),
+            java.util.Map.entry("he'd", "he would"),
+            java.util.Map.entry("she'd", "she would"),
+            java.util.Map.entry("it'd", "it would"),
+            java.util.Map.entry("we'd", "we would"),
+            java.util.Map.entry("they'd", "they would"),
+
+            // have 축약
+            java.util.Map.entry("i've", "i have"),
+            java.util.Map.entry("you've", "you have"),
+            java.util.Map.entry("we've", "we have"),
+            java.util.Map.entry("they've", "they have"),
+            java.util.Map.entry("could've", "could have"),
+            java.util.Map.entry("would've", "would have"),
+            java.util.Map.entry("should've", "should have"),
+            java.util.Map.entry("might've", "might have"),
+            java.util.Map.entry("must've", "must have"),
+
+            // 기타
+            java.util.Map.entry("let's", "let us"),
+            java.util.Map.entry("y'all", "you all"));
+
+    /**
+     * 축약형을 풀어쓴 형태로 확장
+     */
+    private String expandContractions(String text) {
+        if (text == null) {
+            return "";
+        }
+        String result = text.toLowerCase().trim();
+        for (java.util.Map.Entry<String, String> entry : CONTRACTIONS.entrySet()) {
+            result = result.replace(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
     public List<Exam> getAllExams() {
         return examMapper.findAll();
     }
@@ -184,21 +270,20 @@ public class ExamService {
     }
 
     /**
-     * 답안 정규화: 소문자 변환 + 영문자/숫자/하이픈/아포스트로피만 유지 + 공백 제거
+     * 답안 정규화: 축약형 확장 후 소문자 변환 + 영숫자만 유지
      */
     public String normalizeAnswer(String answer) {
         if (answer == null) {
             return "";
         }
-        // 1. 소문자로 변환
-        String normalized = answer.toLowerCase();
-        // 2. 영문자(a-z), 숫자(0-9), 하이픈(-), 아포스트로피(') 만 유지
-        normalized = normalized.replaceAll("[^a-z0-9\\-']", "");
-        return normalized;
+        // 1. 축약형 확장 (I'm -> I am 등)
+        String expanded = expandContractions(answer);
+        // 2. 영문자(a-z), 숫자(0-9)만 유지 (하이픈, 아포스트로피, 공백 모두 제거)
+        return expanded.replaceAll("[^a-z0-9]", "");
     }
 
     /**
-     * 정규화 후 비교하여 채점
+     * 정규화 후 비교하여 채점 (축약형 동등 처리)
      */
     public boolean isCorrectWithNormalization(String userAnswer, String correctAnswer) {
         String normalizedUser = normalizeAnswer(userAnswer);
