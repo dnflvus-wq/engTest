@@ -1,10 +1,18 @@
-import React from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { LoadingSpinner } from '../common';
 
-const RoundList = ({ rounds, onSelectRound, onCreateClick }) => {
+const RoundList = () => {
+    const navigate = useNavigate();
+    const { rounds, loading } = useOutletContext();
+
+    if (loading && rounds.length === 0) {
+        return <LoadingSpinner message="Loading Admin..." />;
+    }
+
     return (
         <div className="section active-section">
             <div className="admin-actions">
-                <button onClick={onCreateClick} className="btn-primary">
+                <button onClick={() => navigate('/admin/create')} className="btn-primary">
                     <i className="fa-solid fa-plus"></i> 새 회차 생성
                 </button>
             </div>
@@ -14,7 +22,7 @@ const RoundList = ({ rounds, onSelectRound, onCreateClick }) => {
                     <p className="empty-message">생성된 회차가 없습니다.</p>
                 ) : (
                     rounds.map(r => (
-                        <div key={r.id} className="round-card" onClick={() => onSelectRound(r.id)}>
+                        <div key={r.id} className="round-card" onClick={() => navigate(`/admin/${r.id}`)}>
                             <h3>{r.title}</h3>
                             <p>{r.description || 'No description'}</p>
                             <div className="round-meta">

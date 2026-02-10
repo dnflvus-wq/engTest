@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 const ModeSelection = () => {
     const { roundId } = useParams();
@@ -14,28 +16,21 @@ const ModeSelection = () => {
 
     const loadRoundInfo = async () => {
         try {
-            const response = await fetch(`/api/rounds/${roundId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setRound(data);
+            const data = await api.get(`/rounds/${roundId}`);
+            setRound(data);
 
-                // Check submission status
-                if (user) {
-                    try {
-                        const partRes = await fetch(`/api/rounds/${roundId}/participants`);
-                        if (partRes.ok) {
-                            const partData = await partRes.json();
-                            const participants = partData.participants || [];
-                            const myRecord = participants.find(p => String(p.userId) === String(user.id));
+            if (user) {
+                try {
+                    const partData = await api.get(`/rounds/${roundId}/participants`);
+                    const participants = partData.participants || [];
+                    const myRecord = participants.find(p => String(p.userId) === String(user.id));
 
-                            if (myRecord && myRecord.status === 'COMPLETED') {
-                                alert('You have already submitted this exam.');
-                                navigate('/exam'); // Redirect to exam list
-                            }
-                        }
-                    } catch (err) {
-                        console.error('Error checking participant status:', err);
+                    if (myRecord && myRecord.status === 'COMPLETED') {
+                        toast.warn('You have already submitted this exam.');
+                        navigate('/exam');
                     }
+                } catch (err) {
+                    console.error('Error checking participant status:', err);
                 }
             }
         } catch (error) {
@@ -56,7 +51,7 @@ const ModeSelection = () => {
             <div className="mode-selection-container">
                 <h2 className="mb-medium">Choose Exam Mode</h2>
                 {round && (
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+                    <p className="mode-subtitle">
                         {round.title} - {round.questionCount} Questions
                     </p>
                 )}

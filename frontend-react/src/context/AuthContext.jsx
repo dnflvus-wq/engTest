@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -23,8 +23,10 @@ export const AuthProvider = ({ children }) => {
         try {
             // First check localStorage
             const savedUser = localStorage.getItem('user');
+            let localUser = null;
             if (savedUser) {
-                setUser(JSON.parse(savedUser));
+                localUser = JSON.parse(savedUser);
+                setUser(localUser);
             }
 
             // Then verify with server
@@ -33,9 +35,31 @@ export const AuthProvider = ({ children }) => {
                 const userData = await response.json();
                 setUser(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
+            } else if (localUser) {
+                // Session expired but we have local user - auto re-login
+                console.log('Session expired, auto re-logging in...');
+                try {
+                    const reloginResponse = await fetch('/api/users/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: localUser.name })
+                    });
+                    if (reloginResponse.ok) {
+                        const userData = await reloginResponse.json();
+                        setUser(userData);
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        console.log('Auto re-login successful');
+                    } else {
+                        // Re-login failed, clear local data
+                        localStorage.removeItem('user');
+                        setUser(null);
+                    }
+                } catch (reloginError) {
+                    console.error('Auto re-login failed:', reloginError);
+                    // Keep local user if server is unreachable
+                }
             } else {
-                // Session expired, clear local data
-                localStorage.removeItem('user');
+                // No local user and no session
                 setUser(null);
             }
         } catch (error) {

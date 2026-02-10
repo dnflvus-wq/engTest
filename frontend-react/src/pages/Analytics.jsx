@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { LoadingSpinner } from '../components/common';
+import api from '../utils/api';
 
 const Analytics = () => {
-    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [roundsWithRanking, setRoundsWithRanking] = useState([]);
@@ -13,19 +13,16 @@ const Analytics = () => {
 
     const loadStats = async () => {
         try {
-            const response = await fetch('/api/stats');
-            if (!response.ok) throw new Error('Failed to load stats');
-            const data = await response.json();
+            const data = await api.get('/stats');
             setStats(data);
 
             if (data.roundStats && data.roundStats.length > 0) {
                 const roundsData = await Promise.all(
                     data.roundStats.map(async (round) => {
                         try {
-                            const rankingRes = await fetch(`/api/exams/ranking/${round.roundId}`);
-                            const ranking = rankingRes.ok ? await rankingRes.json() : [];
+                            const ranking = await api.get(`/exams/ranking/${round.roundId}`);
                             return { ...round, ranking };
-                        } catch (e) {
+                        } catch {
                             return { ...round, ranking: [] };
                         }
                     })
@@ -39,13 +36,7 @@ const Analytics = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="loading-screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
-            </div>
-        );
-    }
+    if (loading) return <LoadingSpinner message="Loading analytics..." />;
 
     return (
         <section className="active-section">
@@ -54,7 +45,7 @@ const Analytics = () => {
                     <h2><i className="fa-solid fa-chart-pie"></i> Analytics Dashboard</h2>
                 </div>
 
-                {/* Overall Stats - 기존 HTML 구조 그대로 */}
+                {/* Overall Stats */}
                 <div className="stats-overview mt-medium">
                     <div className="stat-card">
                         <div className="stat-icon color-purple"><i className="fa-solid fa-users"></i></div>
@@ -79,9 +70,9 @@ const Analytics = () => {
                     </div>
                 </div>
 
-                {/* User Ranking - 기존 HTML 구조 그대로 */}
+                {/* User Ranking */}
                 <div className="mt-large">
-                    <h3 className="section-heading" style={{ marginBottom: '15px' }}>
+                    <h3 className="section-heading mb-medium">
                         <i className="fa-solid fa-trophy"></i> User Ranking
                     </h3>
                     <div className="ranking-list">
@@ -108,7 +99,7 @@ const Analytics = () => {
                     </div>
                 </div>
 
-                {/* Round Stats - 기존 HTML 구조 그대로 */}
+                {/* Round Stats */}
                 <div className="mt-large">
                     <h3 className="section-heading"><i className="fa-solid fa-chart-bar"></i> Exam Statistics</h3>
                     <div className="card-grid">
@@ -133,7 +124,6 @@ const Analytics = () => {
                                         <span className="round-stat-value">{round.minScore?.toFixed(1) || '0'}</span>
                                     </div>
 
-                                    {/* Mini Ranking */}
                                     {round.ranking && round.ranking.length > 0 && (
                                         <div className="round-ranking-mini">
                                             <div className="round-ranking-header">

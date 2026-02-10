@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LoadingSpinner } from '../components/common';
+import api from '../utils/api';
 
 const History = () => {
     const navigate = useNavigate();
@@ -16,14 +18,9 @@ const History = () => {
 
     const loadHistory = async (userId) => {
         try {
-            const res = await fetch(`/api/exams/user/${userId}`);
-            if (res.ok) {
-                const data = await res.json();
-                const sorted = data.sort((a, b) => new Date(b.submittedAt || b.createdAt) - new Date(a.submittedAt || a.createdAt));
-                setHistory(sorted);
-            } else {
-                console.error('Failed to load history');
-            }
+            const data = await api.get(`/exams/user/${userId}`);
+            const sorted = data.sort((a, b) => new Date(b.submittedAt || b.createdAt) - new Date(a.submittedAt || a.createdAt));
+            setHistory(sorted);
         } catch (error) {
             console.error('Error loading history:', error);
         } finally {
@@ -31,17 +28,7 @@ const History = () => {
         }
     };
 
-    const viewExamResult = (examId) => {
-        navigate(`/result/${examId}`);
-    };
-
-    if (loading) {
-        return (
-            <div className="loading-screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
-            </div>
-        );
-    }
+    if (loading) return <LoadingSpinner message="Loading history..." />;
 
     return (
         <section className="active-section">
@@ -49,7 +36,7 @@ const History = () => {
                 <div className="section-header">
                     <h2><i className="fa-solid fa-clock-rotate-left"></i> My Exam History</h2>
                 </div>
-                <div id="historyList" className="mt-medium">
+                <div className="mt-medium">
                     {history.length === 0 ? (
                         <div className="empty-state">
                             <i className="fa-solid fa-clock-rotate-left"></i>
@@ -58,14 +45,14 @@ const History = () => {
                     ) : (
                         history.map(exam => {
                             const date = exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString() : 'In Progress';
-                            let statusText = exam.status === 'COMPLETED' ? (exam.isPassed ? 'PASS' : 'FAIL') : 'In Progress';
-                            let statusClass = exam.status === 'COMPLETED' ? (exam.isPassed ? 'pass' : 'fail') : 'in-progress';
+                            const statusText = exam.status === 'COMPLETED' ? (exam.isPassed ? 'PASS' : 'FAIL') : 'In Progress';
+                            const statusClass = exam.status === 'COMPLETED' ? (exam.isPassed ? 'pass' : 'fail') : 'in-progress';
 
                             return (
                                 <div
                                     key={exam.id}
                                     className="history-item"
-                                    onClick={() => viewExamResult(exam.id)}
+                                    onClick={() => navigate(`/result/${exam.id}`)}
                                 >
                                     <div className="history-info">
                                         <div className="history-title">{exam.roundTitle || `Exam #${exam.roundId}`}</div>

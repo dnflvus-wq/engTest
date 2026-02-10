@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
+import { ClaySelect, LoadingSpinner } from '../components/common';
+import api from '../utils/api';
 
 const Study = () => {
     const [rounds, setRounds] = useState([]);
     const [selectedRoundId, setSelectedRoundId] = useState(null);
-    const [selectedRoundTitle, setSelectedRoundTitle] = useState('-- Select Round --');
     const [vocabulary, setVocabulary] = useState([]);
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
     const [activeAccordions, setActiveAccordions] = useState([]);
     const [playingVideoId, setPlayingVideoId] = useState(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -25,18 +26,15 @@ const Study = () => {
 
     useEffect(() => {
         if (selectedRoundId) {
-            setPlayingVideoId(null); // Reset playing video when round changes
+            setPlayingVideoId(null);
             loadStudyMaterials(selectedRoundId);
         }
     }, [selectedRoundId]);
 
     const loadRounds = async () => {
         try {
-            const res = await fetch('/api/rounds');
-            if (res.ok) {
-                const data = await res.json();
-                setRounds(data);
-            }
+            const data = await api.get('/rounds');
+            setRounds(data);
         } catch (error) {
             console.error('Failed to load rounds:', error);
         }
@@ -45,24 +43,17 @@ const Study = () => {
     const loadStudyMaterials = async (roundId) => {
         setLoading(true);
         try {
-            const [vocabRes, matRes] = await Promise.all([
-                fetch(`/api/rounds/${roundId}/vocabulary`),
-                fetch(`/api/rounds/${roundId}/materials`)
+            const [vocabData, matData] = await Promise.all([
+                api.get(`/rounds/${roundId}/vocabulary`),
+                api.get(`/rounds/${roundId}/materials`)
             ]);
-
-            if (vocabRes.ok) setVocabulary(await vocabRes.json());
-            if (matRes.ok) setMaterials(await matRes.json());
+            setVocabulary(vocabData);
+            setMaterials(matData);
         } catch (error) {
             console.error('Failed to load study materials:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const selectStudyRound = (id, title) => {
-        setSelectedRoundId(id);
-        setSelectedRoundTitle(title);
-        setDropdownOpen(false);
     };
 
     const toggleAccordion = (id) => {
@@ -94,42 +85,39 @@ const Study = () => {
     const youtubeItems = materials.filter(m => m.materialType === 'YOUTUBE');
     const pptItems = materials.filter(m => m.materialType === 'PPT');
 
-    const downloadVocabularyExcel = () => {
+    const roundOptions = rounds.map(r => ({ value: r.id, label: r.title }));
+    const selectedRoundTitle = rounds.find(r => r.id === selectedRoundId)?.title || '';
+
+    const downloadVocabularyExcel = async () => {
         if (vocabulary.length === 0) {
-            alert('No vocabulary to download');
+            toast.warn('No vocabulary to download');
             return;
         }
 
-        // Prepare data for Excel
         const headers = ['No', 'English', 'Korean', 'Phonetic'];
         const rows = vocabulary.map((v, idx) => [
-            idx + 1,
-            v.english || '',
-            v.korean || '',
-            v.phonetic || ''
+            idx + 1, v.english || '', v.korean || '', v.phonetic || ''
         ]);
 
-        // Create worksheet
         const wsData = [headers, ...rows];
         const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 40 }, { wch: 20 }];
 
-        // Set column widths
-        ws['!cols'] = [
-            { wch: 5 },   // No
-            { wch: 30 },  // English
-            { wch: 40 },  // Korean
-            { wch: 20 }   // Phonetic
-        ];
-
-        // Create workbook
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Vocabulary');
-
-        // Generate filename
         const filename = `vocabulary_${selectedRoundTitle.replace(/[^a-zA-Z0-9가-힣]/g, '_')}.xlsx`;
-
-        // Download file
         XLSX.writeFile(wb, filename);
+
+        try {
+            await api.post('/logs/record', {
+                action: 'VOCABULARY_DOWNLOAD',
+                targetType: 'FILE',
+                targetId: selectedRoundId,
+                details: `Downloaded vocabulary Excel: ${filename} (${vocabulary.length} words)`
+            });
+        } catch (e) {
+            console.error('Failed to log download:', e);
+        }
     };
 
     return (
@@ -139,45 +127,22 @@ const Study = () => {
                     <h2><i className="fa-solid fa-book-open-reader"></i> Study Materials</h2>
                 </div>
 
-                {/* Round Selection - Custom Dropdown */}
+                {/* Round Selection */}
                 <div className="study-round-select">
                     <label className="label">Select Exam Round</label>
-                    <div className="custom-select-wrapper" id="studyRoundSelectWrapper">
-                        <div
-                            className="custom-select-trigger"
-                            onClick={() => setDropdownOpen(!dropdownOpen)}
-                        >
-                            <span>{selectedRoundTitle}</span>
-                            <i className="fa-solid fa-chevron-down arrow"></i>
-                        </div>
-                        <div className={`custom-options ${dropdownOpen ? '' : 'hidden'}`}>
-                            {rounds.length === 0 ? (
-                                <div className="custom-option">No rounds available</div>
-                            ) : (
-                                rounds.map(r => (
-                                    <div
-                                        key={r.id}
-                                        className="custom-option"
-                                        onClick={() => selectStudyRound(r.id, r.title)}
-                                    >
-                                        {r.title}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
+                    <ClaySelect
+                        value={selectedRoundId}
+                        onChange={setSelectedRoundId}
+                        options={roundOptions}
+                        placeholder="-- Select Round --"
+                    />
                 </div>
 
-                {loading && (
-                    <div style={{ textAlign: 'center', padding: '2rem' }}>
-                        <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
-                    </div>
-                )}
+                {loading && <LoadingSpinner message="Loading materials..." />}
 
                 {/* Vocabulary Accordion */}
                 <div
                     className={`study-accordion-item ${activeAccordions.includes('vocabAccordion') ? 'active' : ''}`}
-                    id="vocabAccordion"
                 >
                     <div
                         className="study-accordion-header"
@@ -187,27 +152,15 @@ const Study = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             {vocabulary.length > 0 && (
                                 <button
-                                    className="btn-small"
+                                    className="study-excel-btn"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         downloadVocabularyExcel();
                                     }}
-                                    style={{
-                                        padding: '6px 12px',
-                                        fontSize: '0.8rem',
-                                        background: 'var(--success)',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '5px'
-                                    }}
                                     title="Download as Excel"
                                 >
                                     <i className="fa-solid fa-file-excel"></i>
-                                    <span style={{ display: isMobile ? 'none' : 'inline' }}>Download</span>
+                                    {!isMobile && <span>Download</span>}
                                 </button>
                             )}
                             <i className="fa-solid fa-chevron-down arrow-icon"></i>
@@ -230,10 +183,7 @@ const Study = () => {
                                     <div key={v.id} className="vocab-card">
                                         <div className="vocab-english">
                                             {v.english}
-                                            <button
-                                                className="speak-btn"
-                                                onClick={() => speakWord(v.english)}
-                                            >
+                                            <button className="speak-btn" onClick={() => speakWord(v.english)}>
                                                 <i className="fa-solid fa-volume-high"></i>
                                             </button>
                                         </div>
@@ -249,7 +199,6 @@ const Study = () => {
                 {/* YouTube Accordion */}
                 <div
                     className={`study-accordion-item ${activeAccordions.includes('youtubeAccordion') ? 'active' : ''}`}
-                    id="youtubeAccordion"
                 >
                     <div
                         className="study-accordion-header"
@@ -287,10 +236,7 @@ const Study = () => {
                                                             alt={m.title || 'Video'}
                                                             onClick={() => setPlayingVideoId(videoId)}
                                                         />
-                                                        <div
-                                                            className="play-overlay"
-                                                            onClick={() => setPlayingVideoId(videoId)}
-                                                        >
+                                                        <div className="play-overlay" onClick={() => setPlayingVideoId(videoId)}>
                                                             <i className="fa-solid fa-play"></i>
                                                         </div>
                                                     </>
@@ -305,19 +251,12 @@ const Study = () => {
                                                         style={playingVideoId === videoId ? { borderColor: 'var(--danger)', color: 'var(--danger)' } : {}}
                                                     >
                                                         {playingVideoId === videoId ? (
-                                                            <>
-                                                                <i className="fa-solid fa-stop"></i> 정지
-                                                            </>
+                                                            <><i className="fa-solid fa-stop"></i> 정지</>
                                                         ) : (
-                                                            <>
-                                                                <i className="fa-solid fa-play"></i> 재생
-                                                            </>
+                                                            <><i className="fa-solid fa-play"></i> 재생</>
                                                         )}
                                                     </button>
-                                                    <button
-                                                        className="btn-secondary btn-small"
-                                                        onClick={() => openYoutube(m.url)}
-                                                    >
+                                                    <button className="btn-secondary btn-small" onClick={() => openYoutube(m.url)}>
                                                         <i className="fa-brands fa-youtube"></i> YouTube
                                                     </button>
                                                 </div>
@@ -333,7 +272,6 @@ const Study = () => {
                 {/* PPT/Documents Accordion */}
                 <div
                     className={`study-accordion-item ${activeAccordions.includes('pptAccordion') ? 'active' : ''}`}
-                    id="pptAccordion"
                 >
                     <div
                         className="study-accordion-header"
@@ -371,7 +309,7 @@ const Study = () => {
                                             {isPdf && (
                                                 isMobile ? (
                                                     <div style={{ marginTop: '15px', width: '100%', textAlign: 'center' }}>
-                                                        <a href={m.url} target="_blank" rel="noopener noreferrer" className="clay-btn btn-primary" style={{ width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <a href={m.url} target="_blank" rel="noopener noreferrer" className="clay-btn btn-primary btn-block">
                                                             <i className="fa-solid fa-file-pdf"></i> PDF 보기 (View PDF)
                                                         </a>
                                                     </div>

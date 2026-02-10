@@ -1,15 +1,11 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     return (
-        <section id="menuSection" className="active-section">
+        <section className="active-section">
             <div className="dashboard-grid">
-                {/* Study Materials Widget */}
                 <div className="clay-card widget" onClick={() => navigate('/study')}>
                     <div className="widget-icon color-blue">
                         <i className="fa-solid fa-book-open-reader"></i>
@@ -21,7 +17,6 @@ const Dashboard = () => {
                     <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
                 </div>
 
-                {/* Exam Widget */}
                 <div className="clay-card widget" onClick={() => navigate('/exam')}>
                     <div className="widget-icon color-purple">
                         <i className="fa-solid fa-file-pen"></i>
@@ -33,7 +28,6 @@ const Dashboard = () => {
                     <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
                 </div>
 
-                {/* History Widget */}
                 <div className="clay-card widget" onClick={() => navigate('/history')}>
                     <div className="widget-icon color-pink">
                         <i className="fa-solid fa-clock-rotate-left"></i>
@@ -45,7 +39,6 @@ const Dashboard = () => {
                     <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
                 </div>
 
-                {/* Stats Widget */}
                 <div className="clay-card widget" onClick={() => navigate('/analytics')}>
                     <div className="widget-icon color-mint">
                         <i className="fa-solid fa-chart-pie"></i>

@@ -1,0 +1,309 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-02-10T08:21:16.409Z",
+  "activeFeatures": [
+    "frontend-react",
+    "context",
+    "admin"
+  ],
+  "primaryFeature": "frontend-react",
+  "features": {
+    "frontend-react": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-10T01:27:03.543Z",
+        "lastUpdated": "2026-02-10T08:21:16.408Z"
+      },
+      "lastFile": "c:\\Project\\engTest\\frontend-react\\src\\pages\\OfflineExam.jsx"
+    },
+    "context": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-10T01:27:11.462Z",
+        "lastUpdated": "2026-02-10T01:54:09.017Z"
+      },
+      "lastFile": "c:\\Project\\engTest\\frontend-react\\src\\context\\AuthContext.jsx"
+    },
+    "admin": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-10T01:29:53.271Z",
+        "lastUpdated": "2026-02-10T01:52:52.868Z"
+      },
+      "lastFile": "c:\\Project\\engTest\\frontend-react\\src\\components\\admin\\MaterialManager.jsx"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Dynamic",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-02-10T00:55:38.947Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-02-10T08:21:16.409Z"
+  },
+  "history": [
+    {
+      "timestamp": "2026-02-10T01:27:03.543Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:05.674Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:08.347Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:11.462Z",
+      "feature": "context",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:29.356Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:32.728Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:36.613Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:41.691Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:43.882Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:27:46.080Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:28:47.354Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:29:19.142Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:29:45.229Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:29:47.372Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:29:53.271Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:29:59.167Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:30:13.463Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:33:00.911Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:35:03.461Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:35:31.691Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:35:37.445Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:37:32.090Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:39:27.925Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:41:34.282Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:43:30.429Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:47:09.108Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:47:57.654Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:48:13.112Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:48:32.241Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:48:39.888Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:48:45.809Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:51:51.225Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:52:06.029Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:52:32.254Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:52:52.868Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:54:06.736Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T01:54:09.017Z",
+      "feature": "context",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T02:19:14.309Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T02:22:16.241Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T08:21:06.925Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-10T08:21:16.409Z",
+      "feature": "frontend-react",
+      "phase": "do",
+      "action": "updated"
+    }
+  ]
+}

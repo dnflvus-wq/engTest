@@ -1,38 +1,36 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../utils/api';
 
-const CreateRound = ({ onCreated, onCancel }) => {
+const CreateRound = () => {
+    const navigate = useNavigate();
+    const { loadRounds } = useOutletContext();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
         if (!title.trim()) {
-            alert('회차 제목을 입력하세요.');
+            toast.warn('회차 제목을 입력하세요.');
             return;
         }
 
         setLoading(true);
         try {
-            const response = await fetch('/api/rounds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: title,
-                    description: description,
-                    questionCount: 0,
-                    difficulty: 'MEDIUM',
-                    status: 'CLOSED'
-                })
+            await api.post('/rounds', {
+                title,
+                description,
+                questionCount: 0,
+                difficulty: 'MEDIUM',
+                status: 'CLOSED'
             });
-
-            if (!response.ok) throw new Error('회차 생성 실패');
-
-            const newRound = await response.json();
-            alert('회차가 생성되었습니다.');
-            onCreated(newRound);
+            toast.success('회차가 생성되었습니다.');
+            await loadRounds();
+            navigate('/admin');
         } catch (error) {
             console.error('Failed to create round:', error);
-            alert('회차 생성 실패: ' + error.message);
+            toast.error('회차 생성 실패: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -42,7 +40,7 @@ const CreateRound = ({ onCreated, onCancel }) => {
         <div className="section active-section">
             <div className="section-header">
                 <h2>새 회차 생성</h2>
-                <button onClick={onCancel} className="btn-secondary">뒤로</button>
+                <button onClick={() => navigate('/admin')} className="btn-secondary">뒤로</button>
             </div>
 
             <div className="clay-card">
@@ -68,9 +66,8 @@ const CreateRound = ({ onCreated, onCancel }) => {
                 </div>
                 <button
                     onClick={handleSubmit}
-                    className="btn-primary btn-large"
+                    className="btn-primary btn-large btn-block"
                     disabled={loading}
-                    style={{ width: '100%', marginTop: '1rem' }}
                 >
                     {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : '생성하기'}
                 </button>

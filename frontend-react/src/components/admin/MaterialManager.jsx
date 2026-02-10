@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-toastify';
+import { ConfirmModal } from '../common';
+import { useConfirm } from '../../hooks/useConfirm';
+import api from '../../utils/api';
 
 const MaterialManager = ({ roundId }) => {
+    const { confirm, modalProps } = useConfirm();
+    const fileInputRef = useRef(null);
+
     const [materials, setMaterials] = useState([]);
     const [youtubeTitle, setYoutubeTitle] = useState('');
     const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -15,91 +22,74 @@ const MaterialManager = ({ roundId }) => {
 
     const loadMaterials = async () => {
         try {
-            const res = await fetch(`/api/rounds/${roundId}/materials`);
-            if (res.ok) {
-                const data = await res.json();
-                setMaterials(data);
-            }
+            const data = await api.get(`/rounds/${roundId}/materials`);
+            setMaterials(data);
         } catch (error) {
             console.error('Failed to load materials:', error);
         }
     };
 
     const handleAddYoutube = async () => {
-        if (!youtubeUrl.trim()) return alert('URL을 입력하세요.');
+        if (!youtubeUrl.trim()) {
+            toast.warn('URL을 입력하세요.');
+            return;
+        }
         setLoading(true);
         try {
-            const res = await fetch(`/api/rounds/${roundId}/materials/youtube`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: youtubeTitle || 'YouTube Video',
-                    url: youtubeUrl
-                })
+            await api.post(`/rounds/${roundId}/materials/youtube`, {
+                title: youtubeTitle || 'YouTube Video',
+                url: youtubeUrl
             });
-            if (res.ok) {
-                alert('유튜브 영상 추가 완료');
-                setYoutubeTitle('');
-                setYoutubeUrl('');
-                loadMaterials();
-            } else {
-                alert('추가 실패');
-            }
+            toast.success('유튜브 영상 추가 완료');
+            setYoutubeTitle('');
+            setYoutubeUrl('');
+            loadMaterials();
         } catch (error) {
             console.error('Error:', error);
+            toast.error('추가 실패');
         } finally {
             setLoading(false);
         }
     };
 
     const handleAddPpt = async () => {
-        if (!pptFile) return alert('파일을 선택하세요.');
+        if (!pptFile) {
+            toast.warn('파일을 선택하세요.');
+            return;
+        }
         setLoading(true);
         try {
             const formData = new FormData();
             formData.append('file', pptFile);
             formData.append('title', pptTitle || pptFile.name);
 
-            const res = await fetch(`/api/rounds/${roundId}/materials/ppt`, {
-                method: 'POST',
-                body: formData
-            });
-            if (res.ok) {
-                alert('PDF 업로드 완료');
-                setPptTitle('');
-                setPptFile(null);
-                loadMaterials();
-            } else {
-                alert('업로드 실패');
-            }
+            await api.post(`/rounds/${roundId}/materials/ppt`, formData);
+            toast.success('PDF 업로드 완료');
+            setPptTitle('');
+            setPptFile(null);
+            loadMaterials();
         } catch (error) {
             console.error('Error:', error);
+            toast.error('업로드 실패');
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('삭제하시겠습니까?')) return;
+        const ok = await confirm('자료 삭제', '삭제하시겠습니까?', { confirmVariant: 'danger' });
+        if (!ok) return;
         try {
-            const res = await fetch(`/api/materials/${id}`, { method: 'DELETE' });
-            if (res.ok) loadMaterials();
+            await api.delete(`/materials/${id}`);
+            loadMaterials();
         } catch (error) {
             console.error('Delete error:', error);
+            toast.error('삭제 실패');
         }
     };
 
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-    };
+    const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
 
     const handleDrop = (e) => {
         e.preventDefault();
@@ -110,7 +100,7 @@ const MaterialManager = ({ roundId }) => {
             if (file.type === 'application/pdf') {
                 setPptFile(file);
             } else {
-                alert('PDF 파일만 업로드 가능합니다.');
+                toast.warn('PDF 파일만 업로드 가능합니다.');
             }
         }
     };
@@ -118,16 +108,15 @@ const MaterialManager = ({ roundId }) => {
     return (
         <div className="material-manager">
             {/* YouTube Add */}
-            <div className="material-add-section clay-card" style={{ marginBottom: '20px', padding: '15px' }}>
+            <div className="material-add-section clay-card admin-card-section mb-medium">
                 <h3>📺 유튜브 영상 추가</h3>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <div className="admin-yt-form">
                     <input
                         type="text"
                         className="clay-input"
                         placeholder="제목 (선택)"
                         value={youtubeTitle}
                         onChange={(e) => setYoutubeTitle(e.target.value)}
-                        style={{ flex: 1 }}
                     />
                     <input
                         type="text"
@@ -135,88 +124,68 @@ const MaterialManager = ({ roundId }) => {
                         placeholder="YouTube URL"
                         value={youtubeUrl}
                         onChange={(e) => setYoutubeUrl(e.target.value)}
-                        style={{ flex: 2 }}
                     />
                     <button onClick={handleAddYoutube} className="btn-primary" disabled={loading}>추가</button>
                 </div>
             </div>
 
             {/* PDF Add */}
-            <div className="material-add-section clay-card" style={{ marginBottom: '20px', padding: '15px' }}>
+            <div className="material-add-section clay-card admin-card-section mb-medium">
                 <h3>📄 PDF 자료 업로드</h3>
                 <input
                     type="text"
-                    className="clay-input"
+                    className="clay-input mb-small btn-block"
                     placeholder="자료 제목 (선택)"
                     value={pptTitle}
                     onChange={(e) => setPptTitle(e.target.value)}
-                    style={{ marginBottom: '10px', width: '100%' }}
                 />
                 <div className="file-upload-wrapper">
                     <input
                         type="file"
-                        id="pptFile"
+                        ref={fileInputRef}
                         accept=".pdf"
-                        className="hidden-file-input"
                         onChange={(e) => setPptFile(e.target.files[0])}
-                        style={{ display: 'none' }}
+                        hidden
                     />
                     <label
-                        htmlFor="pptFile"
-                        className="file-upload-label"
+                        className={`admin-upload-area ${isDragging ? 'dragging' : ''}`}
+                        onClick={() => fileInputRef.current?.click()}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        style={{
-                            display: 'block',
-                            padding: '40px 20px',
-                            border: isDragging ? '2px dashed var(--primary)' : '2px dashed #cbd5e0',
-                            borderRadius: '15px',
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            background: isDragging ? 'rgba(var(--primary-rgb), 0.05)' : '#f8f9fa', // Not white
-                            transition: 'all 0.2s ease',
-                            transform: isDragging ? 'scale(1.02)' : 'scale(1)'
-                        }}
                     >
-                        <div style={{
-                            width: '60px', height: '60px', margin: '0 auto 15px',
-                            borderRadius: '50%', background: 'white',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '5px 5px 10px rgba(0,0,0,0.05)'
-                        }}>
-                            <i className="fa-solid fa-file-pdf" style={{ fontSize: '1.8rem', color: 'var(--danger)' }}></i>
+                        <div className="admin-upload-icon">
+                            <i className="fa-solid fa-file-pdf" style={{ color: 'var(--danger)' }}></i>
                         </div>
-                        <div style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '5px' }}>
+                        <div className="admin-upload-text">
                             {pptFile ? pptFile.name : '클릭하여 PDF 선택'}
                         </div>
-                        <div style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>
+                        <div className="admin-upload-hint">
                             {pptFile ? '변경하려면 다시 클릭하거나 드래그하세요' : '또는 파일을 이곳에 드래그하세요'}
                         </div>
                     </label>
                 </div>
-                <button onClick={handleAddPpt} className="btn-primary" style={{ width: '100%', marginTop: '15px' }} disabled={loading}>업로드</button>
+                <button onClick={handleAddPpt} className="btn-primary btn-block mt-medium" disabled={loading}>업로드</button>
             </div>
 
             {/* List */}
-            <div className="material-list clay-card" style={{ padding: '15px' }}>
+            <div className="material-list clay-card admin-card-section">
                 <h3>📋 등록된 자료 ({materials.length})</h3>
-                {materials.length === 0 ? <p className="empty-message">등록된 자료가 없습니다.</p> : (
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                {materials.length === 0 ? (
+                    <p className="empty-message">등록된 자료가 없습니다.</p>
+                ) : (
+                    <ul className="admin-material-list">
                         {materials.map(m => (
-                            <li key={m.id} style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '10px',
-                                borderBottom: '1px solid #eee'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    {m.type === 'YOUTUBE' ? <i className="fa-brands fa-youtube" style={{ color: 'red' }}></i> : <i className="fa-solid fa-file-pdf" style={{ color: 'orange' }}></i>}
-                                    <span style={{ fontWeight: 'bold' }}>{m.title}</span>
-                                    <span style={{ fontSize: '0.8rem', color: '#888' }}>({m.type})</span>
+                            <li key={m.id} className="admin-material-item">
+                                <div className="admin-material-item-info">
+                                    {m.type === 'YOUTUBE'
+                                        ? <i className="fa-brands fa-youtube" style={{ color: 'red' }}></i>
+                                        : <i className="fa-solid fa-file-pdf" style={{ color: 'orange' }}></i>
+                                    }
+                                    <span className="title">{m.title}</span>
+                                    <span className="type">({m.type})</span>
                                 </div>
-                                <button onClick={() => handleDelete(m.id)} style={{ border: 'none', background: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
+                                <button onClick={() => handleDelete(m.id)} className="admin-icon-btn">
                                     <i className="fa-solid fa-trash"></i>
                                 </button>
                             </li>
@@ -224,6 +193,8 @@ const MaterialManager = ({ roundId }) => {
                     </ul>
                 )}
             </div>
+
+            <ConfirmModal {...modalProps} />
         </div>
     );
 };

@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-toastify';
+import { ConfirmModal } from '../common';
+import { useConfirm } from '../../hooks/useConfirm';
+import api from '../../utils/api';
 
 const VocabularyManager = ({ roundId, onVocabularyChange }) => {
+    const { confirm, modalProps } = useConfirm();
+    const fileInputRef = useRef(null);
+
     const [vocabulary, setVocabulary] = useState([]);
     const [manualInputs, setManualInputs] = useState([{ english: '', korean: '' }]);
     const [loading, setLoading] = useState(false);
     const [previewImages, setPreviewImages] = useState([]);
-    const [selectedFiles, setSelectedFiles] = useState([]);  // 파일 상태 추가
+    const [selectedFiles, setSelectedFiles] = useState([]);
     const [ocrLoading, setOcrLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [bulkText, setBulkText] = useState('');
@@ -17,32 +24,26 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
 
     const loadVocabulary = async () => {
         try {
-            const res = await fetch(`/api/rounds/${roundId}/vocabulary`);
-            if (res.ok) {
-                const data = await res.json();
-                setVocabulary(data);
-            }
+            const data = await api.get(`/rounds/${roundId}/vocabulary`);
+            setVocabulary(data);
         } catch (error) {
             console.error('Failed to load vocabulary:', error);
         }
     };
 
     const handleDeleteWord = async (id) => {
-        if (!confirm('정말 삭제하시겠습니까?')) return;
+        const ok = await confirm('단어 삭제', '정말 삭제하시겠습니까?', { confirmVariant: 'danger' });
+        if (!ok) return;
         try {
-            const res = await fetch(`/api/vocabulary/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                loadVocabulary();
-                if (onVocabularyChange) onVocabularyChange();
-            } else {
-                alert('삭제 실패');
-            }
+            await api.delete(`/vocabulary/${id}`);
+            loadVocabulary();
+            if (onVocabularyChange) onVocabularyChange();
         } catch (error) {
             console.error('Delete failed:', error);
+            toast.error('삭제 실패');
         }
     };
 
-    // Manual Input Handlers
     const addInputRow = () => {
         setManualInputs([...manualInputs, { english: '', korean: '' }]);
     };
@@ -64,38 +65,28 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
             .map(i => `${i.english}:${i.korean}`);
 
         if (wordsToSave.length === 0) {
-            alert('저장할 단어가 없습니다. 영어와 한글을 모두 입력해주세요.');
+            toast.warn('저장할 단어가 없습니다. 영어와 한글을 모두 입력해주세요.');
             return;
         }
 
         setLoading(true);
         try {
-            const res = await fetch(`/api/rounds/${roundId}/vocabulary`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(wordsToSave)
-            });
-
-            if (res.ok) {
-                alert(`${wordsToSave.length}개 단어 저장 완료`);
-                setManualInputs([{ english: '', korean: '' }]);
-                loadVocabulary();
-                if (onVocabularyChange) onVocabularyChange();
-            } else {
-                alert('저장 실패');
-            }
+            await api.post(`/rounds/${roundId}/vocabulary`, wordsToSave);
+            toast.success(`${wordsToSave.length}개 단어 저장 완료`);
+            setManualInputs([{ english: '', korean: '' }]);
+            loadVocabulary();
+            if (onVocabularyChange) onVocabularyChange();
         } catch (error) {
             console.error('Save failed:', error);
-            alert('저장 중 오류 발생');
+            toast.error('저장 중 오류 발생');
         } finally {
             setLoading(false);
         }
     };
 
-    // Bulk Input Handler
     const saveBulkWords = async () => {
         if (!bulkText.trim()) {
-            alert('텍스트를 입력해주세요.');
+            toast.warn('텍스트를 입력해주세요.');
             return;
         }
 
@@ -114,35 +105,25 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
         }
 
         if (wordsToSave.length === 0) {
-            alert('유효한 단어가 없습니다. "영어:한글" 형식으로 입력해주세요.');
+            toast.warn('유효한 단어가 없습니다. "영어:한글" 형식으로 입력해주세요.');
             return;
         }
 
         setBulkLoading(true);
         try {
-            const res = await fetch(`/api/rounds/${roundId}/vocabulary`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(wordsToSave)
-            });
-
-            if (res.ok) {
-                alert(`${wordsToSave.length}개 단어 저장 완료`);
-                setBulkText('');
-                loadVocabulary();
-                if (onVocabularyChange) onVocabularyChange();
-            } else {
-                alert('저장 실패');
-            }
+            await api.post(`/rounds/${roundId}/vocabulary`, wordsToSave);
+            toast.success(`${wordsToSave.length}개 단어 저장 완료`);
+            setBulkText('');
+            loadVocabulary();
+            if (onVocabularyChange) onVocabularyChange();
         } catch (error) {
             console.error('Bulk save failed:', error);
-            alert('저장 중 오류 발생');
+            toast.error('저장 중 오류 발생');
         } finally {
             setBulkLoading(false);
         }
     };
 
-    // Count valid lines in bulk text
     const getBulkWordCount = () => {
         if (!bulkText.trim()) return 0;
         return bulkText.split('\n').filter(line => {
@@ -156,55 +137,40 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
         }).length;
     };
 
-    // OCR Logic
     const handleImageChange = (e) => {
         const files = e.target.files || e.dataTransfer?.files;
         if (files && files.length > 0) {
             const fileArray = Array.from(files);
-            setSelectedFiles(fileArray);  // 파일을 state에 저장
-            // Create previews
+            setSelectedFiles(fileArray);
             const previews = fileArray.map(file => URL.createObjectURL(file));
             setPreviewImages(previews);
         }
     };
 
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-    };
+    const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
 
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            // 드래그된 파일을 직접 handleImageChange에 전달
             handleImageChange({ dataTransfer: e.dataTransfer });
         }
     };
 
     const extractWordsFromImages = async () => {
-        const fileInput = document.getElementById('wordImages');
-        if (!fileInput.files || fileInput.files.length === 0) {
-            alert('이미지를 선택해주세요.');
+        if (!selectedFiles || selectedFiles.length === 0) {
+            toast.warn('이미지를 선택해주세요.');
             return;
         }
 
         setOcrLoading(true);
         try {
             const formData = new FormData();
-            for (const file of fileInput.files) {
+            for (const file of selectedFiles) {
                 formData.append('images', file);
             }
-            // Prompt is handled by backend default or we can send custom
             const customPrompt = `당신은 영어 학습 교재에서 영어 표현을 추출하는 전문가입니다.
 ## [중요] 이미지 텍스트 그대로 추출
 - **절대로 뜻을 유추하거나 번역하지 마세요.**
@@ -215,37 +181,28 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
 
             formData.append('prompt', customPrompt);
 
-            const res = await fetch('/api/rounds/extract-words', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!res.ok) throw new Error('OCR Failed');
-
-            const data = await res.json();
+            const data = await api.post('/rounds/extract-words', formData);
             const extracted = data.words || [];
 
             if (extracted.length === 0) {
-                alert('추출된 단어가 없습니다.');
+                toast.info('추출된 단어가 없습니다.');
             } else {
-                // Add extracted words to manual inputs
                 const newInputs = extracted.map(line => {
                     const [eng, ...rest] = line.split(':');
                     return { english: eng?.trim() || '', korean: rest.join(':')?.trim() || '' };
                 });
 
-                // If the first row is empty, replace it
                 let currentInputs = [...manualInputs];
                 if (currentInputs.length === 1 && !currentInputs[0].english && !currentInputs[0].korean) {
                     currentInputs = [];
                 }
 
                 setManualInputs([...currentInputs, ...newInputs]);
-                alert(`${extracted.length}개 단어가 추출되었습니다. 확인 후 저장하세요.`);
+                toast.success(`${extracted.length}개 단어가 추출되었습니다. 확인 후 저장하세요.`);
             }
         } catch (error) {
             console.error('OCR Error:', error);
-            alert('단어 추출 실패: ' + error.message);
+            toast.error('단어 추출 실패: ' + error.message);
         } finally {
             setOcrLoading(false);
         }
@@ -254,29 +211,29 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
     return (
         <div className="vocabulary-manager">
             {/* Registered Words List */}
-            <div className="study-accordion-item active" style={{ marginBottom: '20px' }}>
+            <div className="study-accordion-item active mb-medium">
                 <div className="study-accordion-header">
                     <span>📋 등록된 단어 목록 ({vocabulary.length})</span>
                 </div>
-                <div className="study-accordion-content" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <div className="study-accordion-content admin-vocab-scroll">
                     {vocabulary.length === 0 ? (
                         <p className="empty-message">등록된 단어가 없습니다.</p>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table className="admin-vocab-table">
                             <thead>
-                                <tr style={{ background: '#f8f9fa' }}>
-                                    <th style={{ padding: '8px' }}>English</th>
-                                    <th style={{ padding: '8px' }}>Korean</th>
-                                    <th style={{ padding: '8px', width: '50px' }}>Action</th>
+                                <tr>
+                                    <th>English</th>
+                                    <th>Korean</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {vocabulary.map(v => (
-                                    <tr key={v.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: '8px', fontWeight: '600' }}>{v.english}</td>
-                                        <td style={{ padding: '8px' }}>{v.korean}</td>
-                                        <td style={{ padding: '8px', textAlign: 'center' }}>
-                                            <button onClick={() => handleDeleteWord(v.id)} style={{ border: 'none', background: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
+                                    <tr key={v.id}>
+                                        <td>{v.english}</td>
+                                        <td>{v.korean}</td>
+                                        <td className="center">
+                                            <button onClick={() => handleDeleteWord(v.id)} className="admin-icon-btn">
                                                 <i className="fa-solid fa-trash"></i>
                                             </button>
                                         </td>
@@ -288,34 +245,25 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
                 </div>
             </div>
 
-            <div className="three-column-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+            <div className="admin-three-col">
                 {/* Manual Input */}
-                <div className="material-add-section clay-card" style={{ padding: '15px' }}>
+                <div className="material-add-section clay-card admin-card-section">
                     <h3>✏️ 수동 단어 입력</h3>
-                    <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-                        <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 'bold' }}>ENGLISH</span>
-                        <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 'bold' }}>KOREAN</span>
-                        <span style={{ width: '30px' }}></span>
+                    <div className="admin-input-header">
+                        <span>ENGLISH</span>
+                        <span>KOREAN</span>
+                        <span className="spacer"></span>
                     </div>
 
                     <div className="manual-input-list">
                         {manualInputs.map((input, idx) => (
-                            <div key={idx} style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+                            <div key={idx} className="admin-input-row">
                                 <input
                                     type="text"
                                     className="clay-input"
                                     placeholder="English (e.g. apple)"
                                     value={input.english}
                                     onChange={(e) => handleInputChange(idx, 'english', e.target.value)}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 15px',
-                                        borderRadius: '15px',
-                                        border: 'none',
-                                        background: 'var(--bg-primary)',
-                                        boxShadow: 'inset 5px 5px 10px rgba(163,177,198,0.6), inset -5px -5px 10px rgba(255,255,255,0.5)',
-                                        fontSize: '0.95rem'
-                                    }}
                                 />
                                 <input
                                     type="text"
@@ -323,145 +271,88 @@ const VocabularyManager = ({ roundId, onVocabularyChange }) => {
                                     placeholder="Korean (e.g. 사과)"
                                     value={input.korean}
                                     onChange={(e) => handleInputChange(idx, 'korean', e.target.value)}
-                                    style={{
-                                        flex: 1,
-                                        padding: '12px 15px',
-                                        borderRadius: '15px',
-                                        border: 'none',
-                                        background: 'var(--bg-primary)',
-                                        boxShadow: 'inset 5px 5px 10px rgba(163,177,198,0.6), inset -5px -5px 10px rgba(255,255,255,0.5)',
-                                        fontSize: '0.95rem'
-                                    }}
                                 />
-                                <button onClick={() => removeInputRow(idx)} style={{ width: '30px', background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}>
+                                <button onClick={() => removeInputRow(idx)} className="admin-icon-btn muted">
                                     <i className="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
                         ))}
                     </div>
 
-                    <button onClick={addInputRow} className="btn-secondary" style={{ width: '100%', marginTop: '10px', fontSize: '0.9rem' }}>
+                    <button onClick={addInputRow} className="btn-secondary btn-block mt-small">
                         <i className="fa-solid fa-plus"></i> 단어 추가
                     </button>
-                    <button onClick={saveManualWords} className="btn-primary" style={{ width: '100%', marginTop: '15px' }} disabled={loading}>
+                    <button onClick={saveManualWords} className="btn-primary btn-block mt-medium" disabled={loading}>
                         {loading ? '저장 중...' : '단어 저장'}
                     </button>
                 </div>
 
                 {/* Image OCR */}
-                <div className="material-add-section clay-card" style={{ padding: '15px' }}>
+                <div className="material-add-section clay-card admin-card-section">
                     <h3>🖼️ 이미지에서 단어 추출</h3>
-                    <div className="file-upload-wrapper" style={{ margin: '15px 0' }}>
+                    <div className="file-upload-wrapper mt-medium mb-medium">
                         <input
                             type="file"
-                            id="wordImages"
+                            ref={fileInputRef}
                             accept="image/*"
                             multiple
                             onChange={handleImageChange}
-                            style={{ display: 'none' }}
+                            hidden
                         />
                         <label
-                            htmlFor="wordImages"
-                            className="file-upload-label"
+                            className={`admin-upload-area ${isDragging ? 'dragging' : ''}`}
+                            onClick={() => fileInputRef.current?.click()}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
-                            style={{
-                                display: 'block',
-                                padding: '40px 20px',
-                                border: isDragging ? '2px dashed var(--primary)' : '2px dashed #cbd5e0',
-                                borderRadius: '15px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                background: isDragging ? 'rgba(var(--primary-rgb), 0.05)' : '#f8f9fa',
-                                transition: 'all 0.2s ease',
-                                transform: isDragging ? 'scale(1.02)' : 'scale(1)'
-                            }}
                         >
-                            <div style={{
-                                width: '60px', height: '60px', margin: '0 auto 15px',
-                                borderRadius: '50%', background: 'white',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                boxShadow: '5px 5px 10px rgba(0,0,0,0.05)'
-                            }}>
-                                <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.8rem', color: 'var(--success)' }}></i>
+                            <div className="admin-upload-icon">
+                                <i className="fa-solid fa-cloud-arrow-up" style={{ color: 'var(--success)' }}></i>
                             </div>
-                            <div style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '5px' }}>클릭하여 이미지 선택</div>
-                            <div style={{ color: 'var(--text-sub)', fontSize: '0.9rem' }}>또는 파일을 이곳에 드래그하세요</div>
+                            <div className="admin-upload-text">클릭하여 이미지 선택</div>
+                            <div className="admin-upload-hint">또는 파일을 이곳에 드래그하세요</div>
                         </label>
                     </div>
 
                     {previewImages.length > 0 && (
-                        <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', marginBottom: '15px' }}>
+                        <div className="admin-preview-row">
                             {previewImages.map((src, i) => (
-                                <img key={i} src={src} alt="preview" style={{ height: '60px', borderRadius: '5px' }} />
+                                <img key={i} src={src} alt="preview" />
                             ))}
                         </div>
                     )}
 
-                    <button onClick={extractWordsFromImages} className="btn-primary" style={{ width: '100%' }} disabled={ocrLoading}>
+                    <button onClick={extractWordsFromImages} className="btn-primary btn-block" disabled={ocrLoading}>
                         {ocrLoading ? <><i className="fa-solid fa-spinner fa-spin"></i> 추출 중...</> : '이미지에서 단어 추출'}
                     </button>
                 </div>
 
                 {/* Bulk Input */}
-                <div className="material-add-section clay-card" style={{ padding: '15px' }}>
+                <div className="material-add-section clay-card admin-card-section">
                     <h3>📝 일괄 등록</h3>
-                    <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '10px' }}>
+                    <p className="admin-bulk-hint">
                         한 줄에 하나씩 <strong>영어:한글</strong> 형식으로 입력
                     </p>
                     <textarea
                         value={bulkText}
                         onChange={(e) => setBulkText(e.target.value)}
-                        placeholder={`get married:결혼했다 (결혼식을 올렸다/행동)
-be married:기혼이다 (결혼한 사람이다/상태)
-be a student:학생이다
-be busy:바쁘다
-be off:떠나다 / 출근하지 않는다
-be in trouble:큰일 나다`}
-                        style={{
-                            width: '100%',
-                            height: '200px',
-                            padding: '12px 15px',
-                            borderRadius: '15px',
-                            border: 'none',
-                            background: 'var(--bg-primary)',
-                            boxShadow: 'inset 5px 5px 10px rgba(163,177,198,0.6), inset -5px -5px 10px rgba(255,255,255,0.5)',
-                            fontSize: '0.9rem',
-                            resize: 'vertical',
-                            fontFamily: 'inherit',
-                            lineHeight: '1.6'
-                        }}
+                        placeholder={`get married:결혼했다 (결혼식을 올렸다/행동)\nbe married:기혼이다 (결혼한 사람이다/상태)\nbe a student:학생이다\nbe busy:바쁘다\nbe off:떠나다 / 출근하지 않는다\nbe in trouble:큰일 나다`}
+                        className="clay-input"
+                        rows={8}
                     />
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginTop: '10px',
-                        marginBottom: '10px'
-                    }}>
-                        <span style={{ fontSize: '0.85rem', color: '#666' }}>
-                            인식된 단어: <strong style={{ color: 'var(--primary)' }}>{getBulkWordCount()}개</strong>
+                    <div className="admin-bulk-footer">
+                        <span className="count">
+                            인식된 단어: <strong>{getBulkWordCount()}개</strong>
                         </span>
                         {bulkText && (
-                            <button
-                                onClick={() => setBulkText('')}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#999',
-                                    cursor: 'pointer',
-                                    fontSize: '0.85rem'
-                                }}
-                            >
+                            <button onClick={() => setBulkText('')} className="admin-icon-btn muted">
                                 <i className="fa-solid fa-xmark"></i> 초기화
                             </button>
                         )}
                     </div>
                     <button
                         onClick={saveBulkWords}
-                        className="btn-primary"
-                        style={{ width: '100%' }}
+                        className="btn-primary btn-block"
                         disabled={bulkLoading || getBulkWordCount() === 0}
                     >
                         {bulkLoading ? (
@@ -472,6 +363,8 @@ be in trouble:큰일 나다`}
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal {...modalProps} />
         </div>
     );
 };

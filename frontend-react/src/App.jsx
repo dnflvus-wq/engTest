@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import './toast-clay.css'; // Custom Clay Styles
+import './toast-clay.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { LoadingSpinner } from './components/common';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
@@ -15,18 +17,16 @@ import History from './pages/History';
 import Study from './pages/Study';
 import Analytics from './pages/Analytics';
 import ModeSelection from './pages/ModeSelection';
+import Logs from './pages/Logs';
+import RoundList from './components/admin/RoundList';
+import CreateRound from './components/admin/CreateRound';
+import RoundDetail from './components/admin/RoundDetail';
 
-// Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
 
     if (loading) {
-        return (
-            <div className="loading-overlay">
-                <div className="clay-spinner"></div>
-                <div className="loading-text">Loading...</div>
-            </div>
-        );
+        return <LoadingSpinner fullScreen />;
     }
 
     if (!user) {
@@ -36,17 +36,11 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-// Public Route - redirect to dashboard if already logged in
 const PublicRoute = ({ children }) => {
     const { user, loading } = useAuth();
 
     if (loading) {
-        return (
-            <div className="loading-overlay">
-                <div className="clay-spinner"></div>
-                <div className="loading-text">Loading...</div>
-            </div>
-        );
+        return <LoadingSpinner fullScreen />;
     }
 
     if (user) {
@@ -59,16 +53,12 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
     return (
         <Routes>
-            {/* Public Route */}
             <Route path="/" element={
                 <PublicRoute>
                     <Login />
                 </PublicRoute>
             } />
 
-            {/* OnlineExam도 Layout 사용 - 공통 Sidebar/Header 적용 */}
-
-            {/* Protected Routes with Layout */}
             <Route element={
                 <ProtectedRoute>
                     <Layout />
@@ -83,10 +73,14 @@ function AppRoutes() {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/exam/offline/:roundId" element={<OfflineExam />} />
                 <Route path="/result/:examId" element={<Result />} />
-                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin" element={<Admin />}>
+                    <Route index element={<RoundList />} />
+                    <Route path="create" element={<CreateRound />} />
+                    <Route path=":roundId" element={<RoundDetail />} />
+                </Route>
+                <Route path="/logs" element={<Logs />} />
             </Route>
 
-            {/* Catch all - redirect to dashboard */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
     );
@@ -95,10 +89,12 @@ function AppRoutes() {
 function App() {
     return (
         <BrowserRouter>
-            <AuthProvider>
-                <AppRoutes />
-                <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-            </AuthProvider>
+            <ThemeProvider>
+                <AuthProvider>
+                    <AppRoutes />
+                    <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+                </AuthProvider>
+            </ThemeProvider>
         </BrowserRouter>
     );
 }

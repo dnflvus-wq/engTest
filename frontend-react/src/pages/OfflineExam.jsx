@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
+import { LoadingSpinner, ConfirmModal } from '../components/common';
+import { useConfirm } from '../hooks/useConfirm';
+import api from '../utils/api';
 
 const OfflineExam = () => {
     const { roundId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { confirm, modalProps } = useConfirm();
+    const fileInputRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -26,24 +31,15 @@ const OfflineExam = () => {
 
     const startExamSession = async () => {
         try {
-            const startRes = await fetch('/api/exams/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, roundId: roundId, mode: 'OFFLINE' })
+            const examData = await api.post('/exams/start', {
+                userId: user.id,
+                roundId: roundId,
+                mode: 'OFFLINE'
             });
-
-            if (!startRes.ok) {
-                const errorData = await startRes.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to start exam');
-            }
-            const examData = await startRes.json();
             setExam(examData);
 
-            const questionsRes = await fetch(`/api/rounds/${roundId}/questions`);
-            if (!questionsRes.ok) throw new Error('Failed to load questions');
-            const questionsData = await questionsRes.json();
+            const questionsData = await api.get(`/rounds/${roundId}/questions`);
             setQuestions(questionsData);
-
         } catch (error) {
             console.error(error);
             toast.error(error.message || 'Error initializing offline exam');
@@ -72,14 +68,7 @@ const OfflineExam = () => {
             const formData = new FormData();
             formData.append('answerSheet', selectedFile);
 
-            const response = await fetch(`/api/exams/${exam.id}/ocr`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) throw new Error('OCR Failed');
-
-            const data = await response.json();
+            const data = await api.post(`/exams/${exam.id}/ocr`, formData);
 
             const resultsMap = {};
             data.ocrResults.forEach(r => {
@@ -87,7 +76,6 @@ const OfflineExam = () => {
             });
             setOcrResults(resultsMap);
             setOcrStep('REVIEW');
-
         } catch (error) {
             console.error('OCR Error:', error);
             toast.error('OCR processing failed. Please try again.');
@@ -101,7 +89,8 @@ const OfflineExam = () => {
     };
 
     const submitExam = async () => {
-        if (!window.confirm('Submit these answers?')) return;
+        const ok = await confirm('Submit Exam', 'Submit these answers?');
+        if (!ok) return;
 
         setProcessing(true);
         try {
@@ -117,16 +106,8 @@ const OfflineExam = () => {
                 }
             });
 
-            const response = await fetch(`/api/exams/${exam.id}/submit-offline-graded`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error('Submission Failed');
-
+            await api.post(`/exams/${exam.id}/submit-offline-graded`, payload);
             navigate(`/result/${exam.id}`);
-
         } catch (error) {
             console.error('Submit Error:', error);
             toast.error('Failed to submit exam.');
@@ -136,268 +117,90 @@ const OfflineExam = () => {
     };
 
     if (loading) {
-        return (
-            <div className="loading-screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh' }}>
-                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)' }}></i>
-            </div>
-        );
+        return <LoadingSpinner message="Loading Exam..." />;
     }
+
+    const regularQuestions = questions.filter(q => !q.isReview);
+    const reviewQuestions = questions.filter(q => q.isReview);
 
     return (
         <section className="active-section">
-            <style>{`
-                .legacy-card-container {
-                    background: var(--bg-secondary);
-                    max-width: 800px;
-                    margin: 0 auto;
-                    /* 그림자 잘림 방지를 위해 패딩 넉넉하게 확보 */
-                    padding: 2.5rem;
-                    border-radius: 30px;
-                    box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light);
-                    border: none !important;
-                }
-                .legacy-question-card {
-                    margin-bottom: 20px; /* 카드 간 간격 확보 */
-                    padding: 15px;
-                    border-radius: 20px;
-                    box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
-                    background: var(--bg-secondary);
-                    border: 1px solid transparent; 
-                }
-                .legacy-question-card.answered {
-                    border: 2px solid var(--success) !important;
-                    background: var(--success-light) !important;
-                }
-                
-                /* Dark Mode Override */
-                body.dark-mode .legacy-card-container {
-                    background: #2d3748;
-                    /* 잘림 해결 후 적절한 강도로 조정: 0.4 */
-                    box-shadow: 12px 12px 24px rgba(0,0,0,0.6), -8px -8px 16px rgba(255,255,255,0.4);
-                }
-                body.dark-mode .legacy-question-card {
-                    background: #2d3748;
-                    /* 잘림 해결 후 적절한 강도로 조정 */
-                    box-shadow: 6px 6px 14px rgba(0,0,0,0.6), -6px -6px 14px rgba(255,255,255,0.4);
-                    color: var(--text-main);
-                }
-                body.dark-mode .legacy-question-card.answered {
-                    background: rgba(22, 163, 74, 0.15) !important;
-                    border: 1px solid var(--success) !important;
-                    box-shadow: none !important;
-                }
-
-                /* Mobile Responsive */
-                @media (max-width: 768px) {
-                    .legacy-card-container {
-                        padding: 1rem;
-                        border-radius: 20px;
-                        margin: 0 10px;
-                    }
-                    .questions-list {
-                        padding: 10px !important;
-                    }
-                    .legacy-question-card {
-                        padding: 12px;
-                        margin-bottom: 15px;
-                    }
-                    .ocr-answer-box {
-                        flex-direction: column !important;
-                        align-items: stretch !important;
-                        gap: 8px !important;
-                    }
-                    .ocr-answer-box .ocr-label {
-                        margin-bottom: 4px;
-                    }
-                    .ocr-answer-box input {
-                        width: 100% !important;
-                        flex: none !important;
-                    }
-                    .ocr-answer-box button {
-                        align-self: flex-end;
-                    }
-                    .upload-section {
-                        padding: 1.5rem !important;
-                    }
-                    .upload-section h3 {
-                        font-size: 1rem !important;
-                        flex-direction: column !important;
-                        text-align: center;
-                    }
-                    .upload-section p {
-                        font-size: 0.85rem !important;
-                    }
-                    .upload-file-row {
-                        flex-direction: column !important;
-                        gap: 10px !important;
-                    }
-                    .upload-file-row button {
-                        width: 100% !important;
-                        white-space: normal !important;
-                    }
-                    .upload-file-row .file-name {
-                        word-break: break-all;
-                        text-align: center;
-                        font-size: 0.8rem !important;
-                    }
-                }
-            `}</style>
-
-            {/* Header - 레거시 스타일 */}
             <div className="legacy-card-container">
-                <h2 className="section-heading" style={{ margin: '0 0 1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <i className="fa-solid fa-edit" style={{ color: 'var(--primary)' }}></i>
+                <h2 className="offline-heading">
+                    <i className="fa-solid fa-edit"></i>
                     Offline Exam Sheet
                 </h2>
 
-                {/* 문제 목록 - 1단 세로 나열 (레거시 스타일) */}
-                <div className="questions-list" style={{ marginBottom: '2rem', padding: '30px 40px' }} >
-                    {/* 일반 문제 */}
-                    {questions.filter(q => !q.isReview).map((q, idx) => {
+                <div className="questions-list">
+                    {/* Regular Questions */}
+                    {regularQuestions.map((q, idx) => {
                         const qNum = idx + 1;
                         const hasAnswer = ocrStep === 'REVIEW' && ocrResults[qNum];
                         return (
-                            <div
-                                key={q.id}
-                                className={`legacy-question-card ${hasAnswer ? 'answered' : ''}`}
-                            >
-                                <div style={{ fontWeight: 'bold', marginBottom: '5px', color: 'var(--primary)' }}>
-                                    Q{qNum}. {q.questionText}
+                            <div key={q.id} className={`legacy-question-card ${hasAnswer ? 'answered' : ''}`}>
+                                <div className="offline-question-header">
+                                    <span className="offline-q-badge">Q{qNum}</span>
+                                    <span className="offline-q-text">{q.questionText}</span>
                                 </div>
                                 {q.answerType === 'CHOICE' && q.option1 ? (
-                                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', fontSize: '0.9rem', color: 'var(--text-sub)' }}>
+                                    <div className="question-choices">
                                         <span>1. {q.option1}</span>
                                         <span>2. {q.option2}</span>
                                         <span>3. {q.option3}</span>
                                         <span>4. {q.option4}</span>
                                     </div>
                                 ) : (
-                                    <span style={{
-                                        fontSize: '0.8rem',
-                                        padding: '3px 10px',
-                                        background: 'var(--bg-primary)',
-                                        borderRadius: '12px',
-                                        color: 'var(--text-sub)'
-                                    }}>
-                                        Short Answer
-                                    </span>
+                                    <span className="answer-type-badge">Short Answer</span>
                                 )}
-                                {/* OCR 결과 표시 및 수정 */}
                                 {hasAnswer && (
-                                    <div style={{ marginTop: '10px', padding: '10px', background: 'white', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                        <div className="ocr-answer-box" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span className="ocr-label" style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500', whiteSpace: 'nowrap' }}>OCR Answer:</span>
-                                            <input
-                                                type="text"
-                                                value={ocrResults[qNum] || ''}
-                                                onChange={(e) => handleAnswerChange(qNum, e.target.value)}
-                                                className="clay-input"
-                                                style={{
-                                                    flex: 1,
-                                                    minWidth: 0,
-                                                    padding: '8px 12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid var(--border-color)',
-                                                    fontSize: '0.95rem'
-                                                }}
-                                            />
-                                            <button
-                                                className="clay-btn btn-small"
-                                                onClick={() => handleAnswerChange(qNum, ocrResults[qNum])}
-                                                style={{ padding: '6px 12px', flexShrink: 0 }}
-                                            >
-                                                <i className="fa-solid fa-pen"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <OcrResultBox
+                                        qNum={qNum}
+                                        value={ocrResults[qNum]}
+                                        onChange={handleAnswerChange}
+                                    />
                                 )}
                             </div>
                         );
                     })}
 
-                    {/* 복습 문제 섹션 */}
-                    {questions.filter(q => q.isReview).length > 0 && (
+                    {/* Review Questions Section */}
+                    {reviewQuestions.length > 0 && (
                         <>
-                            <div style={{
-                                background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                                border: '2px solid var(--info)',
-                                borderRadius: '15px',
-                                padding: '15px 20px',
-                                margin: '30px 0 20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px'
-                            }}>
-                                <i className="fa-solid fa-rotate-left" style={{ fontSize: '1.3rem', color: 'var(--info)' }}></i>
+                            <div className="review-banner">
+                                <i className="fa-solid fa-rotate-left review-banner-icon"></i>
                                 <div>
-                                    <div style={{ fontWeight: '700', color: '#1565c0', fontSize: '1.1rem' }}>
-                                        Review Questions
-                                    </div>
-                                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                                        {questions.filter(q => q.isReview).length} questions from previous rounds
+                                    <div className="review-banner-title">Review Questions</div>
+                                    <div className="review-banner-subtitle">
+                                        {reviewQuestions.length} questions from previous rounds
                                     </div>
                                 </div>
                             </div>
 
-                            {questions.filter(q => q.isReview).map((q, idx) => {
-                                const regularCount = questions.filter(q => !q.isReview).length;
-                                const qNum = regularCount + idx + 1;
+                            {reviewQuestions.map((q, idx) => {
+                                const qNum = regularQuestions.length + idx + 1;
                                 const hasAnswer = ocrStep === 'REVIEW' && ocrResults[qNum];
                                 return (
-                                    <div
-                                        key={q.id}
-                                        className={`legacy-question-card ${hasAnswer ? 'answered' : ''}`}
-                                        style={{ borderLeft: '4px solid var(--info)' }}
-                                    >
-                                        <div style={{ fontWeight: 'bold', marginBottom: '5px', color: 'var(--info)' }}>
-                                            {qNum}. {q.questionText}
+                                    <div key={q.id} className={`legacy-question-card review-question-card ${hasAnswer ? 'answered' : ''}`}>
+                                        <div className="offline-question-header">
+                                            <span className="offline-q-badge review">{qNum}</span>
+                                            <span className="offline-q-text">{q.questionText}</span>
                                         </div>
                                         {q.answerType === 'CHOICE' && q.option1 ? (
-                                            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', fontSize: '0.9rem', color: 'var(--text-sub)' }}>
+                                            <div className="question-choices">
                                                 <span>1. {q.option1}</span>
                                                 <span>2. {q.option2}</span>
                                                 <span>3. {q.option3}</span>
                                                 <span>4. {q.option4}</span>
                                             </div>
                                         ) : (
-                                            <span style={{
-                                                fontSize: '0.8rem',
-                                                padding: '3px 10px',
-                                                background: '#e3f2fd',
-                                                borderRadius: '12px',
-                                                color: '#1565c0'
-                                            }}>
-                                                Short Answer
-                                            </span>
+                                            <span className="answer-type-badge-review">Short Answer</span>
                                         )}
-                                        {/* OCR 결과 표시 및 수정 */}
                                         {hasAnswer && (
-                                            <div style={{ marginTop: '10px', padding: '10px', background: 'white', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                                <div className="ocr-answer-box" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <span className="ocr-label" style={{ fontSize: '0.85rem', color: 'var(--text-sub)', fontWeight: '500', whiteSpace: 'nowrap' }}>OCR Answer:</span>
-                                                    <input
-                                                        type="text"
-                                                        value={ocrResults[qNum] || ''}
-                                                        onChange={(e) => handleAnswerChange(qNum, e.target.value)}
-                                                        className="clay-input"
-                                                        style={{
-                                                            flex: 1,
-                                                            minWidth: 0,
-                                                            padding: '8px 12px',
-                                                            borderRadius: '8px',
-                                                            border: '1px solid var(--border-color)',
-                                                            fontSize: '0.95rem'
-                                                        }}
-                                                    />
-                                                    <button
-                                                        className="clay-btn btn-small"
-                                                        onClick={() => handleAnswerChange(qNum, ocrResults[qNum])}
-                                                        style={{ padding: '6px 12px', flexShrink: 0 }}
-                                                    >
-                                                        <i className="fa-solid fa-pen"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            <OcrResultBox
+                                                qNum={qNum}
+                                                value={ocrResults[qNum]}
+                                                onChange={handleAnswerChange}
+                                            />
                                         )}
                                     </div>
                                 );
@@ -406,69 +209,53 @@ const OfflineExam = () => {
                     )}
                 </div>
 
-                {/* 업로드 섹션 - 문제 목록 아래 (레거시 스타일) */}
+                {/* Processing Indicator */}
                 {processing && (
-                    <div style={{ textAlign: 'center', padding: '2rem', background: 'var(--bg-secondary)', borderRadius: '12px', marginBottom: '1rem' }}>
-                        <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)', marginBottom: '1rem' }}></i>
-                        <p style={{ margin: 0, fontWeight: '500' }}>Processing OCR...</p>
+                    <div className="processing-section">
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                        <p>Processing OCR...</p>
                     </div>
                 )}
 
                 {/* STEP 1: UPLOAD */}
                 {ocrStep === 'UPLOAD' && !processing && (
-                    <div id="ocrUploadStep" className="clay-card upload-section" style={{
-                        textAlign: 'center',
-                        padding: '2rem',
-                        background: 'var(--bg-secondary)',
-                        border: '2px dashed var(--border-color)'
-                    }}>
-                        <h3 style={{ margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                            <i className="fa-solid fa-cloud-arrow-up" style={{ color: 'var(--primary)' }}></i>
+                    <div className="clay-card upload-section">
+                        <h3 className="upload-heading">
+                            <i className="fa-solid fa-cloud-arrow-up"></i>
                             Step 1: Upload Answer Sheet
                         </h3>
-                        <p style={{ color: 'var(--text-sub)', marginBottom: '1.5rem' }}>
+                        <p className="upload-description">
                             Take a photo of your written answer sheet and upload it here.
                         </p>
 
                         <input
+                            ref={fileInputRef}
                             type="file"
                             accept="image/*"
                             capture="environment"
                             onChange={handleFileChange}
                             style={{ display: 'none' }}
-                            id="answerSheetInput"
                         />
 
-                        <div className="upload-file-row" style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                        <div className="upload-file-row">
                             <button
                                 className="clay-btn btn-secondary"
-                                onClick={() => document.getElementById('answerSheetInput').click()}
-                                style={{ padding: '10px 20px' }}
+                                onClick={() => fileInputRef.current?.click()}
                             >
                                 <i className="fa-solid fa-camera"></i> Select Photo
                             </button>
                             {selectedFile && (
-                                <span className="file-name" style={{ color: 'var(--text-sub)', fontSize: '0.9rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {selectedFile.name}
-                                </span>
+                                <span className="file-name">{selectedFile.name}</span>
                             )}
                         </div>
 
                         {previewUrl && (
-                            <div style={{ marginTop: '1rem' }}>
-                                <img
-                                    src={previewUrl}
-                                    alt="Preview"
-                                    style={{
-                                        maxWidth: '100%', maxHeight: '300px',
-                                        borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-                                    }}
-                                />
-                                <div style={{ marginTop: '1rem', padding: '0 10px' }}>
+                            <div className="preview-container">
+                                <img src={previewUrl} alt="Preview" className="preview-image" />
+                                <div className="preview-actions">
                                     <button
-                                        className="clay-btn btn-primary"
+                                        className="clay-btn btn-primary btn-block"
                                         onClick={runOCR}
-                                        style={{ padding: '12px 24px', fontSize: '1rem', width: '100%', maxWidth: '300px' }}
                                     >
                                         <i className="fa-solid fa-wand-magic-sparkles"></i> Run OCR
                                     </button>
@@ -480,38 +267,34 @@ const OfflineExam = () => {
 
                 {/* STEP 2: REVIEW & SUBMIT */}
                 {ocrStep === 'REVIEW' && !processing && (
-                    <div id="ocrSubmitStep" className="clay-card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)' }}>
-                        <div style={{
-                            background: 'var(--success)', color: 'white',
-                            padding: '1rem', borderRadius: '12px', marginBottom: '1rem',
-                            display: 'flex', alignItems: 'center', gap: '12px'
-                        }}>
-                            <i className="fa-solid fa-check-circle" style={{ fontSize: '1.5rem' }}></i>
+                    <div className="clay-card" style={{ padding: '1.5rem' }}>
+                        <div className="ocr-success-banner">
+                            <i className="fa-solid fa-check-circle"></i>
                             <div>
                                 <strong>OCR Analysis Complete!</strong>
-                                <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                                <div className="ocr-success-detail">
                                     Review and edit answers above, then submit.
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="ocr-actions">
                             <button
                                 className="clay-btn btn-secondary"
+                                style={{ flex: 1 }}
                                 onClick={() => {
                                     setOcrStep('UPLOAD');
                                     setOcrResults({});
                                     setSelectedFile(null);
                                     setPreviewUrl(null);
                                 }}
-                                style={{ flex: 1, padding: '12px' }}
                             >
                                 <i className="fa-solid fa-arrow-left"></i> Reset
                             </button>
                             <button
                                 className="clay-btn btn-primary"
+                                style={{ flex: 2, background: 'var(--success)' }}
                                 onClick={submitExam}
-                                style={{ flex: 2, padding: '12px', background: 'var(--success)' }}
                             >
                                 <i className="fa-solid fa-check"></i> Submit Answers
                             </button>
@@ -519,8 +302,32 @@ const OfflineExam = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal {...modalProps} />
         </section>
     );
 };
+
+/** OCR Result inline sub-component */
+const OcrResultBox = ({ qNum, value, onChange }) => (
+    <div className="ocr-result-container">
+        <div className="ocr-answer-box">
+            <span className="ocr-label">OCR Answer:</span>
+            <input
+                type="text"
+                value={value || ''}
+                onChange={(e) => onChange(qNum, e.target.value)}
+                className="clay-input ocr-input"
+            />
+            <button
+                className="clay-btn btn-small"
+                onClick={() => onChange(qNum, value)}
+                style={{ flexShrink: 0 }}
+            >
+                <i className="fa-solid fa-pen"></i>
+            </button>
+        </div>
+    </div>
+);
 
 export default OfflineExam;
