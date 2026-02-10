@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.BookChapterMapper">
+
+    <resultMap id="bookChapterResultMap" type="com.example.engTest.dto.BookChapter">
+        <id property="id" column="id"/>
+        <result property="bookId" column="book_id"/>
+        <result property="bookTitle" column="book_title"/>
+        <result property="partNumber" column="part_number"/>
+        <result property="partTitle" column="part_title"/>
+        <result property="chapterNumber" column="chapter_number"/>
+        <result property="chapterLabel" column="chapter_label"/>
+        <result property="chapterTitle" column="chapter_title"/>
+        <result property="seqNo" column="seq_no"/>
+        <result property="usedInRound" column="used_in_round"/>
+        <result property="assignedRoundId" column="assigned_round_id"/>
+    </resultMap>
+
+    <!-- 전체 챕터 + 사용여부 (회차 생성 UI용) -->
+    <select id="findAllWithUsage" resultMap="bookChapterResultMap">
+        SELECT bc.*,
+               CASE WHEN rc.round_id IS NOT NULL THEN TRUE ELSE FALSE END AS used_in_round,
+               rc.round_id AS assigned_round_id
+        FROM book_chapters bc
+        LEFT JOIN round_chapters rc ON bc.id = rc.chapter_id
+        ORDER BY bc.book_id, bc.seq_no
+    </select>
+
+    <select id="findByBookId" resultMap="bookChapterResultMap">
+        SELECT * FROM book_chapters WHERE book_id = #{bookId} ORDER BY seq_no
+    </select>
+
+    <select id="findByRoundId" resultMap="bookChapterResultMap">
+        SELECT bc.*
+        FROM book_chapters bc
+        INNER JOIN round_chapters rc ON bc.id = rc.chapter_id
+        WHERE rc.round_id = #{roundId}
+        ORDER BY bc.book_id, bc.seq_no
+    </select>
+
+    <insert id="insertRoundChapters">
+        INSERT INTO round_chapters (round_id, chapter_id) VALUES
+        <foreach collection="chapterIds" item="chapterId" separator=",">
+            (#{roundId}, #{chapterId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteRoundChapters">
+        DELETE FROM round_chapters WHERE round_id = #{roundId}
+    </delete>
+
+    <!-- 사용자가 완료한 챕터 ID 목록 -->
+    <select id="findCompletedChapterIdsByUserId" resultType="java.lang.Long">
+        SELECT DISTINCT rc.chapter_id
+        FROM round_chapters rc
+        INNER JOIN exams e ON e.round_id = rc.round_id
+        WHERE e.user_id = #{userId}
+          AND e.status = 'COMPLETED'
+    </select>
+
+    <!-- 사용자의 총 외운 단어 수 -->
+    <select id="getTotalVocabularyCountByUserId" resultType="java.lang.Integer">
+        SELECT COALESCE(COUNT(DISTINCT rv.id), 0)
+        FROM round_vocabulary rv
+        INNER JOIN exams e ON e.round_id = rv.round_id
+        WHERE e.user_id = #{userId}
+          AND e.status = 'COMPLETED'
+    </select>
+
+</mapper>

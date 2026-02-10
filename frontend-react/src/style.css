@@ -4707,85 +4707,64 @@ body.dark-mode .custom-select-trigger:hover {
 }
 
 .progress-cell {
-    width: 44px;
-    height: 44px;
+    width: 85px;
+    height: 50px;
     border-radius: var(--radius-md);
     background: var(--clay-surface);
     box-shadow: var(--clay-shadow-out-sm);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--text-muted);
+    gap: 2px;
     transition: all 0.3s ease;
     cursor: default;
+    overflow: hidden;
+    padding: 4px 6px;
+}
+
+.progress-cell-number {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.progress-cell-keyword {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1;
 }
 
 .progress-cell.completed {
     background: linear-gradient(135deg, #34d399, #10b981);
-    color: white;
     box-shadow: 0 2px 8px rgba(52, 211, 153, 0.4);
 }
 
-.progress-cell:hover {
-    transform: translateY(-2px);
-}
-
-/* Book 2: Day Grid (10 rows x 10 columns) */
-.progress-day-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.progress-day-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.progress-day-row-label {
-    width: 110px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-align: right;
-    flex-shrink: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.progress-day-row-cells {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.progress-day-cell {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: var(--clay-surface);
-    box-shadow: var(--clay-shadow-out-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    transition: all 0.3s ease;
-    cursor: default;
-}
-
-.progress-day-cell.completed {
-    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+.progress-cell.completed .progress-cell-number,
+.progress-cell.completed .progress-cell-keyword {
     color: white;
+    opacity: 1;
+}
+
+.progress-cell.completed-purple {
+    background: linear-gradient(135deg, #a78bfa, #7c3aed);
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
 }
 
-.progress-day-cell:hover {
+.progress-cell.completed-purple .progress-cell-number,
+.progress-cell.completed-purple .progress-cell-keyword {
+    color: white;
+    opacity: 1;
+}
+
+.progress-cell:hover {
     transform: translateY(-2px);
 }
 
@@ -4911,27 +4890,18 @@ body.dark-mode .custom-select-trigger:hover {
         padding: 18px;
     }
 
-    .progress-day-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .progress-day-row-label {
-        text-align: left;
-        width: auto;
-        margin-bottom: 4px;
-    }
-
     .progress-cell {
-        width: 36px;
-        height: 36px;
+        width: 70px;
+        height: 44px;
+        padding: 3px 4px;
+    }
+
+    .progress-cell-number {
         font-size: 0.65rem;
     }
 
-    .progress-day-cell {
-        width: 30px;
-        height: 30px;
-        font-size: 0.55rem;
+    .progress-cell-keyword {
+        font-size: 0.5rem;
     }
 
     .progress-chapter-grid {

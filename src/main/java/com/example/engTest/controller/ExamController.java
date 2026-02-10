@@ -45,7 +45,7 @@ public class ExamController {
 
     @GetMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "시험 상세 조회", description = "ID로 특정 시험 정보를 조회합니다.")
-    public ResponseEntity<Exam> getExamById(@PathVariable Long id) {
+    public ResponseEntity<Exam> getExamById(@PathVariable("id") Long id) {
         Exam exam = examService.getExamById(id);
         if (exam == null) {
             return ResponseEntity.notFound().build();
@@ -55,13 +55,13 @@ public class ExamController {
 
     @GetMapping("/user/{userId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "사용자별 시험 기록", description = "특정 사용자의 모든 시험 기록을 조회합니다.")
-    public ResponseEntity<List<Exam>> getExamsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<Exam>> getExamsByUserId(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok(examService.getExamsByUserId(userId));
     }
 
     @GetMapping("/round/{roundId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차별 시험 기록", description = "특정 회차의 모든 시험 기록을 조회합니다.")
-    public ResponseEntity<List<Exam>> getExamsByRoundId(@PathVariable Long roundId) {
+    public ResponseEntity<List<Exam>> getExamsByRoundId(@PathVariable("roundId") Long roundId) {
         return ResponseEntity.ok(examService.getExamsByRoundId(roundId));
     }
 
@@ -93,8 +93,8 @@ public class ExamController {
     @PostMapping("/{examId}/answer/{questionId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "답안 제출 (이미지)", description = "이미지를 업로드하여 OCR 채점 후 답안을 저장합니다.")
     public ResponseEntity<?> submitAnswer(
-            @PathVariable Long examId,
-            @PathVariable Long questionId,
+            @PathVariable("examId") Long examId,
+            @PathVariable("questionId") Long questionId,
             @RequestParam("image") MultipartFile image,
             @RequestParam("prompt") String prompt) {
         try {
@@ -123,8 +123,8 @@ public class ExamController {
     @PostMapping("/{examId}/answer/{questionId}/text")
     @io.swagger.v3.oas.annotations.Operation(summary = "답안 제출 (텍스트)", description = "텍스트 답안을 제출하고 채점합니다.")
     public ResponseEntity<?> submitTextAnswer(
-            @PathVariable Long examId,
-            @PathVariable Long questionId,
+            @PathVariable("examId") Long examId,
+            @PathVariable("questionId") Long questionId,
             @RequestBody Map<String, String> request) {
         try {
             String userAnswer = request.get("answer");
@@ -151,7 +151,7 @@ public class ExamController {
 
     @PostMapping("/{examId}/submit")
     @io.swagger.v3.oas.annotations.Operation(summary = "시험 제출 (종료)", description = "시험을 종료하고 최종 점수를 계산합니다.")
-    public ResponseEntity<?> submitExam(@PathVariable Long examId) {
+    public ResponseEntity<?> submitExam(@PathVariable("examId") Long examId) {
         try {
             Exam exam = examService.submitExam(examId);
             return ResponseEntity.ok(exam);
@@ -163,25 +163,25 @@ public class ExamController {
 
     @GetMapping("/{examId}/answers")
     @io.swagger.v3.oas.annotations.Operation(summary = "시험 답안 조회", description = "특정 시험의 제출된 답안 목록을 조회합니다.")
-    public ResponseEntity<List<ExamAnswer>> getExamAnswers(@PathVariable Long examId) {
+    public ResponseEntity<List<ExamAnswer>> getExamAnswers(@PathVariable("examId") Long examId) {
         return ResponseEntity.ok(examService.getExamAnswers(examId));
     }
 
     @GetMapping("/{examId}/wrong-answers")
     @io.swagger.v3.oas.annotations.Operation(summary = "오답 조회", description = "특정 시험의 오답 목록만 조회합니다.")
-    public ResponseEntity<List<ExamAnswer>> getWrongAnswers(@PathVariable Long examId) {
+    public ResponseEntity<List<ExamAnswer>> getWrongAnswers(@PathVariable("examId") Long examId) {
         return ResponseEntity.ok(examService.getWrongAnswers(examId));
     }
 
     @GetMapping("/ranking/{roundId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차별 순위", description = "특정 회차의 석차(랭킹)를 조회합니다.")
-    public ResponseEntity<List<Exam>> getRankingByRound(@PathVariable Long roundId) {
+    public ResponseEntity<List<Exam>> getRankingByRound(@PathVariable("roundId") Long roundId) {
         return ResponseEntity.ok(examService.getRankingByRound(roundId));
     }
 
     @DeleteMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "시험 기록 삭제", description = "특정 시험 기록을 삭제합니다.")
-    public ResponseEntity<Void> deleteExam(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteExam(@PathVariable("id") Long id) {
         examService.deleteExam(id);
         return ResponseEntity.ok().build();
     }
@@ -192,7 +192,7 @@ public class ExamController {
     @PostMapping("/{examId}/ocr")
     @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안 OCR 추출", description = "오프라인 답안지 이미지를 업로드하여 답안 텍스트만 추출합니다 (채점 X).")
     public ResponseEntity<?> extractAnswersFromImage(
-            @PathVariable Long examId,
+            @PathVariable("examId") Long examId,
             @RequestParam("answerSheet") MultipartFile answerSheet) {
         try {
             Exam exam = examService.getExamById(examId);
@@ -223,7 +223,7 @@ public class ExamController {
     @PostMapping("/{examId}/submit-offline-graded")
     @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안 최종 제출", description = "OCR 후 사용자가 검토한 답안을 최종 제출하고 채점합니다.")
     public ResponseEntity<?> submitOfflineGradedAnswers(
-            @PathVariable Long examId,
+            @PathVariable("examId") Long examId,
             @RequestBody List<Map<String, Object>> answers) {
         try {
             Exam exam = examService.getExamById(examId);
@@ -260,7 +260,7 @@ public class ExamController {
     @PostMapping("/{examId}/submit-offline")
     @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안지 제출 (구버전)", description = "[Legacy] 답안지 이미지를 업로드하여 즉시 채점합니다.")
     public ResponseEntity<?> submitOfflineAnswerSheet(
-            @PathVariable Long examId,
+            @PathVariable("examId") Long examId,
             @RequestParam("answerSheet") MultipartFile answerSheet,
             @RequestParam("prompt") String prompt) {
         try {

@@ -27,7 +27,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "사용자 상세 조회", description = "ID로 특정 사용자를 조회합니다.")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
         User user = userService.getUserById(id);
         if (user == null) {
             return ResponseEntity.notFound().build();
@@ -78,7 +78,7 @@ public class UserController {
 
     @GetMapping("/{id}/stats")
     @io.swagger.v3.oas.annotations.Operation(summary = "특정 사용자 통계", description = "ID로 특정 사용자의 시험 통계를 조회합니다.")
-    public ResponseEntity<UserStats> getUserStatsById(@PathVariable Long id) {
+    public ResponseEntity<UserStats> getUserStatsById(@PathVariable("id") Long id) {
         UserStats stats = userService.getUserStatsById(id);
         if (stats == null) {
             return ResponseEntity.notFound().build();

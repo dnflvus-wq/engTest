@@ -49,7 +49,7 @@ public class RoundController {
 
     @GetMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차 상세 조회", description = "ID로 특정 회차 정보를 조회합니다.")
-    public ResponseEntity<Round> getRoundById(@PathVariable Long id) {
+    public ResponseEntity<Round> getRoundById(@PathVariable("id") Long id) {
         Round round = roundService.getRoundById(id);
         if (round == null) {
             return ResponseEntity.notFound().build();
@@ -66,7 +66,7 @@ public class RoundController {
 
     @PostMapping("/{id}/generate")
     @io.swagger.v3.oas.annotations.Operation(summary = "AI 문제 생성", description = "LLM(Gemini)을 사용하여 문제를 자동으로 생성합니다.")
-    public ResponseEntity<?> generateQuestions(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> generateQuestions(@PathVariable("id") Long id, @RequestBody Map<String, Object> request) {
         try {
             Round round = roundService.getRoundById(id);
             if (round == null) {
@@ -101,14 +101,14 @@ public class RoundController {
 
     @GetMapping("/{id}/questions")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차 문제 조회", description = "특정 회차에 등록된 모든 문제를 조회합니다.")
-    public ResponseEntity<List<Question>> getQuestions(@PathVariable Long id) {
+    public ResponseEntity<List<Question>> getQuestions(@PathVariable("id") Long id) {
         List<Question> questions = questionService.getQuestionsByRoundId(id);
         return ResponseEntity.ok(questions);
     }
 
     @PutMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차 정보 수정", description = "회차의 제목, 설명 등을 수정합니다.")
-    public ResponseEntity<Void> updateRound(@PathVariable Long id, @RequestBody Round round) {
+    public ResponseEntity<Void> updateRound(@PathVariable("id") Long id, @RequestBody Round round) {
         round.setId(id);
         roundService.updateRound(round);
         return ResponseEntity.ok().build();
@@ -116,7 +116,7 @@ public class RoundController {
 
     @PutMapping("/{id}/status")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차 상태 변경", description = "회차의 상태를 변경합니다 (예: ACTIVE, INACTIVE).")
-    public ResponseEntity<Void> updateRoundStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+    public ResponseEntity<Void> updateRoundStatus(@PathVariable("id") Long id, @RequestBody Map<String, String> request) {
         String status = request.get("status");
         roundService.updateRoundStatus(id, status);
         return ResponseEntity.ok().build();
@@ -124,7 +124,7 @@ public class RoundController {
 
     @DeleteMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차 삭제", description = "회차와 관련된 모든 데이터(문제, 시험기록 등)를 삭제합니다.")
-    public ResponseEntity<Void> deleteRound(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteRound(@PathVariable("id") Long id) {
         roundService.deleteRound(id);
         return ResponseEntity.ok().build();
     }
@@ -137,7 +137,7 @@ public class RoundController {
 
     @GetMapping("/{id}/stats")
     @io.swagger.v3.oas.annotations.Operation(summary = "특정 회차 통계", description = "ID로 특정 회차의 통계를 조회합니다.")
-    public ResponseEntity<RoundStats> getRoundStatsById(@PathVariable Long id) {
+    public ResponseEntity<RoundStats> getRoundStatsById(@PathVariable("id") Long id) {
         RoundStats stats = roundService.getRoundStatsById(id);
         if (stats == null) {
             return ResponseEntity.notFound().build();
@@ -147,7 +147,7 @@ public class RoundController {
 
     @GetMapping("/{id}/participants")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차 참여자 목록", description = "특정 회차에 응시한 사용자 목록과 결과를 조회합니다.")
-    public ResponseEntity<?> getRoundParticipants(@PathVariable Long id) {
+    public ResponseEntity<?> getRoundParticipants(@PathVariable("id") Long id) {
         try {
             // 1. 라운드 정보 조회하여 현재 설정된 Pass Score 가져오기
             Round round = roundService.getRoundById(id);
@@ -224,7 +224,7 @@ public class RoundController {
     @PostMapping("/{id}/generate-from-words")
     @io.swagger.v3.oas.annotations.Operation(summary = "단어장 기반 문제 생성", description = "추출된 단어 목록을 기반으로 문제를 생성합니다.")
     public ResponseEntity<?> generateQuestionsFromWords(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> request) {
         try {
             Round round = roundService.getRoundById(id);
@@ -307,7 +307,7 @@ public class RoundController {
      */
     @GetMapping("/{id}/previous")
     @io.swagger.v3.oas.annotations.Operation(summary = "이전 회차 목록 조회", description = "현재 회차보다 이전에 생성된 모든 회차를 조회합니다.")
-    public ResponseEntity<?> getPreviousRounds(@PathVariable Long id) {
+    public ResponseEntity<?> getPreviousRounds(@PathVariable("id") Long id) {
         try {
             Round currentRound = roundService.getRoundById(id);
             if (currentRound == null) {
@@ -333,7 +333,7 @@ public class RoundController {
     @PostMapping("/{id}/generate-review")
     @io.swagger.v3.oas.annotations.Operation(summary = "복습 문제 생성", description = "선택한 이전 회차들에서 문제를 가져와 복습 문제로 추가합니다.")
     public ResponseEntity<?> generateReviewQuestions(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> request) {
         try {
             Round round = roundService.getRoundById(id);
@@ -438,7 +438,7 @@ public class RoundController {
      */
     @DeleteMapping("/{id}/review-questions")
     @io.swagger.v3.oas.annotations.Operation(summary = "복습 문제 삭제", description = "해당 회차의 복습 문제만 삭제합니다.")
-    public ResponseEntity<?> deleteReviewQuestions(@PathVariable Long id) {
+    public ResponseEntity<?> deleteReviewQuestions(@PathVariable("id") Long id) {
         try {
             questionService.deleteReviewQuestionsByRoundId(id);
             return ResponseEntity.ok(Map.of("message", "복습 문제가 삭제되었습니다."));

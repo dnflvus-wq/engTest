@@ -26,7 +26,7 @@ async function request(endpoint, options = {}) {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
-            errorData.message || `Request failed: ${response.status}`,
+            errorData.message || errorData.error || `Request failed: ${response.status}`,
             response.status,
             errorData
         );

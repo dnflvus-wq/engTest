@@ -18,6 +18,7 @@ import Study from './pages/Study';
 import Analytics from './pages/Analytics';
 import ModeSelection from './pages/ModeSelection';
 import Logs from './pages/Logs';
+import Progress from './pages/Progress';
 import RoundList from './components/admin/RoundList';
 import CreateRound from './components/admin/CreateRound';
 import RoundDetail from './components/admin/RoundDetail';
@@ -71,6 +72,7 @@ function AppRoutes() {
                 <Route path="/exam/mode/:roundId" element={<ModeSelection />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/progress" element={<Progress />} />
                 <Route path="/exam/offline/:roundId" element={<OfflineExam />} />
                 <Route path="/result/:examId" element={<Result />} />
                 <Route path="/admin" element={<Admin />}>

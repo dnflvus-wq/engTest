@@ -59,7 +59,7 @@ public class StatsController {
 
     @GetMapping("/users/{userId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "개인별 통계 상세", description = "ID로 특정 사용자의 통계 정보를 조회합니다.")
-    public ResponseEntity<UserStats> getUserStats(@PathVariable Long userId) {
+    public ResponseEntity<UserStats> getUserStats(@PathVariable("userId") Long userId) {
         UserStats stats = userService.getUserStatsById(userId);
         if (stats == null) {
             return ResponseEntity.notFound().build();
@@ -69,7 +69,7 @@ public class StatsController {
 
     @GetMapping("/rounds/{roundId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "회차별 통계 상세", description = "ID로 특정 회차의 통계 정보를 조회합니다.")
-    public ResponseEntity<RoundStats> getRoundStatsById(@PathVariable Long roundId) {
+    public ResponseEntity<RoundStats> getRoundStatsById(@PathVariable("roundId") Long roundId) {
         RoundStats stats = roundService.getRoundStatsById(roundId);
         if (stats == null) {
             return ResponseEntity.notFound().build();

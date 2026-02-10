@@ -17,6 +17,17 @@ const Dashboard = () => {
                     <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
                 </div>
 
+                <div className="clay-card widget" onClick={() => navigate('/progress')}>
+                    <div className="widget-icon color-mint">
+                        <i className="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div className="widget-info">
+                        <h3>Progress</h3>
+                        <p>Track your learning</p>
+                    </div>
+                    <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
+                </div>
+
                 <div className="clay-card widget" onClick={() => navigate('/exam')}>
                     <div className="widget-icon color-purple">
                         <i className="fa-solid fa-file-pen"></i>
