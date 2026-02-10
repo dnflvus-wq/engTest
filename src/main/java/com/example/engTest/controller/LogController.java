@@ -3,6 +3,7 @@ package com.example.engTest.controller;
 import com.example.engTest.dto.ActivityLog;
 import com.example.engTest.service.ActivityLogService;
 import com.example.engTest.service.LogSettingService;
+import com.example.engTest.utils.RequestUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -118,7 +119,7 @@ public class LogController {
         }
 
         // IP 주소 추출
-        String ipAddress = getClientIp(httpRequest);
+        String ipAddress = RequestUtils.getClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
         // 로그 기록
@@ -130,17 +131,4 @@ public class LogController {
         return ResponseEntity.ok(Map.of("message", "Log recorded successfully"));
     }
 
-    private String getClientIp(jakarta.servlet.http.HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
 }

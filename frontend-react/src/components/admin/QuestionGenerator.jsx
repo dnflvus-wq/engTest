@@ -89,7 +89,7 @@ const QuestionGenerator = ({ roundId, wordCount, onGenerated }) => {
                         type="number"
                         className="admin-num-input"
                         value={passScore}
-                        onChange={(e) => setPassScore(e.target.value)}
+                        onChange={(e) => setPassScore(parseInt(e.target.value) || 0)}
                     />
                 </div>
 

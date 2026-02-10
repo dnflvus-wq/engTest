@@ -36,16 +36,6 @@ public class QuestionService {
     }
 
     @Transactional
-    public void updateQuestion(Question question) {
-        questionMapper.update(question);
-    }
-
-    @Transactional
-    public void deleteQuestion(Long id) {
-        questionMapper.delete(id);
-    }
-
-    @Transactional
     public void deleteQuestionsByRoundId(Long roundId) {
         questionMapper.deleteByRoundId(roundId);
     }

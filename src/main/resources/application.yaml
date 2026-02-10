@@ -1,12 +1,10 @@
 spring:
-  main:
-    allow-bean-definition-overriding: true
   application:
     name: engTest
 
   # DataSource
   datasource:
-    url: jdbc:mariadb://${DB_HOST:db}:${DB_PORT:3306}/${DB_NAME:engtest}?useUnicode=true&characterEncoding=utf8
+    url: jdbc:mariadb://${DB_HOST:localhost}:${DB_PORT:23146}/${DB_NAME:engtest}?useUnicode=true&characterEncoding=utf8
     username: ${DB_USER:engtest}
     password: ${DB_PASSWORD:engtest123!}
     driver-class-name: org.mariadb.jdbc.Driver
@@ -25,7 +23,7 @@ spring:
 
 # Server
 server:
-  port: 8080
+  port: ${SERVER_PORT:23144}
   servlet:
     session:
       timeout: 0

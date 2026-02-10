@@ -43,11 +43,6 @@ public class ExamController {
         return ResponseEntity.ok(examService.getExamsByUserId(userId));
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<List<Exam>> getActiveExams() {
-        return ResponseEntity.ok(examService.getAllExams());
-    }
-
     @GetMapping("/{id}")
     @io.swagger.v3.oas.annotations.Operation(summary = "시험 상세 조회", description = "ID로 특정 시험 정보를 조회합니다.")
     public ResponseEntity<Exam> getExamById(@PathVariable Long id) {
@@ -85,13 +80,13 @@ public class ExamController {
             Exam exam = examService.startExam(userId, roundId, mode);
             return ResponseEntity.ok(exam);
         } catch (org.springframework.web.server.ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(Map.of("message", e.getReason()));
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("Failed to start exam", e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("message", "An unexpected error occurred: " + e.getMessage()));
+                    .body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
         }
     }
 

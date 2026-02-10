@@ -25,11 +25,6 @@ public interface ExamMapper {
 
     void update(Exam exam);
 
-    void updateScore(@Param("id") Long id, @Param("correctCount") Integer correctCount,
-            @Param("score") java.math.BigDecimal score);
-
-    void updateStatus(@Param("id") Long id, @Param("status") String status);
-
     void delete(@Param("id") Long id);
 
     void deleteByRoundId(@Param("roundId") Long roundId);
@@ -37,6 +32,4 @@ public interface ExamMapper {
     List<Exam> getRankingByRound(@Param("roundId") Long roundId);
 
     int countCompletedByRoundId(@Param("roundId") Long roundId);
-
-    List<Exam> findCompletedByRoundId(@Param("roundId") Long roundId);
 }

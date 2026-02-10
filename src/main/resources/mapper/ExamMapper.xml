@@ -85,14 +85,6 @@
         WHERE id = #{id}
     </update>
 
-    <update id="updateScore">
-        UPDATE exams SET correct_count = #{correctCount}, score = #{score} WHERE id = #{id}
-    </update>
-
-    <update id="updateStatus">
-        UPDATE exams SET status = #{status}, submitted_at = CURRENT_TIMESTAMP WHERE id = #{id}
-    </update>
-
     <delete id="delete">
         DELETE FROM exams WHERE id = #{id}
     </delete>
@@ -113,15 +105,6 @@
     <select id="countCompletedByRoundId" resultType="int">
         SELECT COUNT(*) FROM exams
         WHERE round_id = #{roundId} AND status = 'COMPLETED'
-    </select>
-
-    <select id="findCompletedByRoundId" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
-        WHERE e.round_id = #{roundId} AND e.status = 'COMPLETED'
-        ORDER BY e.submitted_at ASC
     </select>
 
 </mapper>

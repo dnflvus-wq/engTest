@@ -9,7 +9,7 @@ const Logs = () => {
     const [loading, setLoading] = useState(true);
     const [actions, setActions] = useState([]);
     const [settings, setSettings] = useState({});
-    const [showSettings, setShowSettings] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
 
     const [filters, setFilters] = useState({
         action: '',
@@ -90,6 +90,7 @@ const Logs = () => {
         try {
             await api.put('/logs/settings', settings);
             toast.success('Settings saved successfully!');
+            setShowSettingsModal(false);
         } catch (error) {
             console.error('Failed to save settings:', error);
             toast.error('Failed to save settings');
@@ -164,7 +165,7 @@ const Logs = () => {
             <div className="logs-header">
                 <h1><i className="fa-solid fa-clipboard-list"></i> Activity Logs</h1>
                 <div className="logs-header-actions">
-                    <button className="clay-btn" onClick={() => setShowSettings(!showSettings)}>
+                    <button className="clay-btn" onClick={() => setShowSettingsModal(true)}>
                         <i className="fa-solid fa-cog"></i> Settings
                     </button>
                     <button className="clay-btn btn-primary" onClick={exportToExcel}>
@@ -173,72 +174,80 @@ const Logs = () => {
                 </div>
             </div>
 
-            {/* Settings Panel */}
-            {showSettings && (
-                <div className="clay-card clay-card-section">
-                    <h3 style={{ marginBottom: '1rem' }}>Log Settings</h3>
-                    <div className="logs-settings-grid">
-                        <div>
-                            <label className="form-label">Retention Days</label>
-                            <input
-                                type="number"
-                                className="clay-input"
-                                value={settings.retention_days || '90'}
-                                onChange={(e) => handleSettingChange('retention_days', e.target.value)}
-                            />
+            {/* Settings Modal */}
+            {showSettingsModal && (
+                <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
+                    <div className="clay-card modal-box" style={{ maxWidth: '480px', textAlign: 'left', maxHeight: '90vh', overflowY: 'auto' }}
+                         onClick={e => e.stopPropagation()}>
+                        <h3 className="modal-title" style={{ textAlign: 'left' }}>Log Settings</h3>
+                        <div className="logs-settings-grid">
+                            <div>
+                                <label className="form-label">Retention Days</label>
+                                <input
+                                    type="number"
+                                    className="clay-input"
+                                    value={settings.retention_days || '90'}
+                                    onChange={(e) => handleSettingChange('retention_days', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Auto Delete</label>
+                                <ClaySelect
+                                    value={settings.auto_delete_enabled || 'true'}
+                                    onChange={(v) => handleSettingChange('auto_delete_enabled', v)}
+                                    options={enabledOptions}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Log Login</label>
+                                <ClaySelect
+                                    value={settings.log_login || 'true'}
+                                    onChange={(v) => handleSettingChange('log_login', v)}
+                                    options={enabledOptions}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Log Exam</label>
+                                <ClaySelect
+                                    value={settings.log_exam || 'true'}
+                                    onChange={(v) => handleSettingChange('log_exam', v)}
+                                    options={enabledOptions}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Log File</label>
+                                <ClaySelect
+                                    value={settings.log_file || 'true'}
+                                    onChange={(v) => handleSettingChange('log_file', v)}
+                                    options={enabledOptions}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Log Admin</label>
+                                <ClaySelect
+                                    value={settings.log_admin || 'true'}
+                                    onChange={(v) => handleSettingChange('log_admin', v)}
+                                    options={enabledOptions}
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Log Errors</label>
+                                <ClaySelect
+                                    value={settings.log_error || 'true'}
+                                    onChange={(v) => handleSettingChange('log_error', v)}
+                                    options={enabledOptions}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="form-label">Auto Delete</label>
-                            <ClaySelect
-                                value={settings.auto_delete_enabled || 'true'}
-                                onChange={(v) => handleSettingChange('auto_delete_enabled', v)}
-                                options={enabledOptions}
-                            />
-                        </div>
-                        <div>
-                            <label className="form-label">Log Login</label>
-                            <ClaySelect
-                                value={settings.log_login || 'true'}
-                                onChange={(v) => handleSettingChange('log_login', v)}
-                                options={enabledOptions}
-                            />
-                        </div>
-                        <div>
-                            <label className="form-label">Log Exam</label>
-                            <ClaySelect
-                                value={settings.log_exam || 'true'}
-                                onChange={(v) => handleSettingChange('log_exam', v)}
-                                options={enabledOptions}
-                            />
-                        </div>
-                        <div>
-                            <label className="form-label">Log File</label>
-                            <ClaySelect
-                                value={settings.log_file || 'true'}
-                                onChange={(v) => handleSettingChange('log_file', v)}
-                                options={enabledOptions}
-                            />
-                        </div>
-                        <div>
-                            <label className="form-label">Log Admin</label>
-                            <ClaySelect
-                                value={settings.log_admin || 'true'}
-                                onChange={(v) => handleSettingChange('log_admin', v)}
-                                options={enabledOptions}
-                            />
-                        </div>
-                        <div>
-                            <label className="form-label">Log Errors</label>
-                            <ClaySelect
-                                value={settings.log_error || 'true'}
-                                onChange={(v) => handleSettingChange('log_error', v)}
-                                options={enabledOptions}
-                            />
+                        <div className="modal-footer" style={{ marginTop: '1.5rem' }}>
+                            <button className="clay-btn" onClick={() => setShowSettingsModal(false)}>
+                                Cancel
+                            </button>
+                            <button className="clay-btn btn-primary" onClick={saveSettings}>
+                                <i className="fa-solid fa-save"></i> Save
+                            </button>
                         </div>
                     </div>
-                    <button className="clay-btn btn-primary" onClick={saveSettings} style={{ marginTop: '1.5rem' }}>
-                        <i className="fa-solid fa-save"></i> Save Settings
-                    </button>
                 </div>
             )}
 

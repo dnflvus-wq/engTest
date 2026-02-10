@@ -2,6 +2,7 @@ package com.example.engTest.config;
 
 import com.example.engTest.dto.User;
 import com.example.engTest.service.ActivityLogService;
+import com.example.engTest.utils.RequestUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,7 @@ public class ActivityLoggingAspect {
 
         // Request 정보를 지금 (동기적으로) 추출
         HttpServletRequest request = getCurrentRequest();
-        String ipAddress = getClientIp(request);
+        String ipAddress = RequestUtils.getClientIp(request);
         String userAgent = request != null ? request.getHeader("User-Agent") : null;
         String requestPath = request != null ? request.getRequestURI() : null;
         String httpMethod = request != null ? request.getMethod() : null;
@@ -200,23 +201,4 @@ public class ActivityLoggingAspect {
         }
     }
 
-    private String getClientIp(HttpServletRequest request) {
-        if (request == null)
-            return null;
-
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
 }

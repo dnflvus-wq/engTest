@@ -23,10 +23,6 @@ public class UserService {
         return userMapper.findById(id);
     }
 
-    public User getUserByName(String name) {
-        return userMapper.findByName(name);
-    }
-
     @Transactional
     public User getOrCreateUser(String name) {
         User user = userMapper.findByName(name);
@@ -35,22 +31,6 @@ public class UserService {
             userMapper.insert(user);
         }
         return user;
-    }
-
-    @Transactional
-    public User createUser(User user) {
-        userMapper.insert(user);
-        return user;
-    }
-
-    @Transactional
-    public void updateUser(User user) {
-        userMapper.update(user);
-    }
-
-    @Transactional
-    public void deleteUser(Long id) {
-        userMapper.delete(id);
     }
 
     public List<UserStats> getUserStats() {

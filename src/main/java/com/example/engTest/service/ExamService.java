@@ -1,6 +1,9 @@
 package com.example.engTest.service;
 
-import com.example.engTest.dto.*;
+import com.example.engTest.dto.Exam;
+import com.example.engTest.dto.ExamAnswer;
+import com.example.engTest.dto.Question;
+import com.example.engTest.dto.Round;
 import com.example.engTest.mapper.ExamAnswerMapper;
 import com.example.engTest.mapper.ExamMapper;
 import com.example.engTest.mapper.QuestionMapper;
@@ -133,26 +136,13 @@ public class ExamService {
             throw new IllegalStateException("You have already completed this exam round.");
         }
 
-        // [Resume & Cleanup] Check for existing IN_PROGRESS exams
+        // 진행 중인 시험이 있으면 이어서 진행 (resume)
         List<Exam> inProgressExams = examMapper.findInProgressByUserId(userId);
-
-        // Check if there is an existing exam for THIS round
         for (Exam oldExam : inProgressExams) {
             if (oldExam.getRoundId().equals(roundId)) {
-                // RESUME: Found incomplete exam for this round -> Return it!
-                // (Other in-progress exams for DIFFERENT rounds will remain until they are
-                // started and cleaned up,
-                // OR we can clean them up now. Let's clean up others to keep DB clean.)
-                // RESUME: Found incomplete exam for this round -> Return it!
-                // (Only resume the exam for THIS round. Do not touch others.)
                 return oldExam;
             }
         }
-
-        // If we reached here, no exam for this round exists.
-        // [CHANGED] "In Progress" Exam Cleanup Logic Removed
-        // We now allow multiple "In Progress" exams (one per round).
-        // The frontend handles navigation to the correct exam based on the round.
 
         // --- Create NEW Exam ---
         // 해당 회차의 문제 수 조회
@@ -235,10 +225,6 @@ public class ExamService {
         }
 
         return exam;
-    }
-
-    public List<Exam> getCompletedExamsByRoundId(Long roundId) {
-        return examMapper.findCompletedByRoundId(roundId);
     }
 
     public List<ExamAnswer> getExamAnswers(Long examId) {

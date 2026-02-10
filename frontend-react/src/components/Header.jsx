@@ -33,7 +33,11 @@ const Header = ({ toggleSidebar }) => {
         <header className="top-header">
             <div className="header-title" id="headerTitleArea">
                 <div className="header-left-mobile mobile-only">
-                    <i className="fa-solid fa-bars" onClick={toggleSidebar}></i>
+                    {isShowBackButton ? (
+                        <i className="fa-solid fa-arrow-left" onClick={() => navigate(-1)}></i>
+                    ) : (
+                        <i className="fa-solid fa-bars" onClick={toggleSidebar}></i>
+                    )}
                     <div className="logo-area-mobile">
                         <i className="fa-solid fa-layer-group"></i>
                         <span>EstellExam</span>
@@ -41,7 +45,7 @@ const Header = ({ toggleSidebar }) => {
                 </div>
 
                 {isShowBackButton && (
-                    <button className="clay-btn btn-secondary btn-small" id="headerCloseBtn" onClick={() => navigate(-1)}>
+                    <button className="clay-btn btn-secondary btn-small pc-only" id="headerCloseBtn" onClick={() => navigate(-1)}>
                         <i className="fa-solid fa-arrow-left"></i> Back
                     </button>
                 )}

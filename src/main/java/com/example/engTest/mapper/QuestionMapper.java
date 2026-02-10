@@ -17,8 +17,6 @@ public interface QuestionMapper {
 
     void insertBatch(@Param("list") List<Question> questions);
 
-    void update(Question question);
-
     void delete(@Param("id") Long id);
 
     void deleteByRoundId(@Param("roundId") Long roundId);
