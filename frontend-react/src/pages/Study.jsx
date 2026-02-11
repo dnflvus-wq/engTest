@@ -22,6 +22,8 @@ const Study = () => {
 
     useEffect(() => {
         loadRounds();
+        // Track study page visit
+        api.post('/actions/track', { action: 'STUDY_PAGE_VISIT' }).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -69,6 +71,8 @@ const Study = () => {
             utterance.lang = 'en-US';
             utterance.rate = 0.8;
             speechSynthesis.speak(utterance);
+            // Track TTS click
+            api.post('/actions/track', { action: 'TTS_CLICK' }).catch(() => {});
         }
     };
 
@@ -80,6 +84,13 @@ const Study = () => {
 
     const openYoutube = (url) => {
         window.open(url, '_blank');
+    };
+
+    const handlePlayVideo = (videoId) => {
+        setPlayingVideoId(videoId);
+        if (videoId) {
+            api.post('/actions/track', { action: 'VIDEO_PLAY' }).catch(() => {});
+        }
     };
 
     const youtubeItems = materials.filter(m => m.materialType === 'YOUTUBE');
@@ -234,9 +245,9 @@ const Study = () => {
                                                             className="youtube-thumbnail"
                                                             src={thumbnail}
                                                             alt={m.title || 'Video'}
-                                                            onClick={() => setPlayingVideoId(videoId)}
+                                                            onClick={() => handlePlayVideo(videoId)}
                                                         />
-                                                        <div className="play-overlay" onClick={() => setPlayingVideoId(videoId)}>
+                                                        <div className="play-overlay" onClick={() => handlePlayVideo(videoId)}>
                                                             <i className="fa-solid fa-play"></i>
                                                         </div>
                                                     </>
@@ -247,7 +258,7 @@ const Study = () => {
                                                 <div className="youtube-actions">
                                                     <button
                                                         className="btn-secondary btn-small"
-                                                        onClick={() => setPlayingVideoId(playingVideoId === videoId ? null : videoId)}
+                                                        onClick={() => handlePlayVideo(playingVideoId === videoId ? null : videoId)}
                                                         style={playingVideoId === videoId ? { borderColor: 'var(--danger)', color: 'var(--danger)' } : {}}
                                                     >
                                                         {playingVideoId === videoId ? (

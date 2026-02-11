@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.BadgeMapper">
+
+    <resultMap id="badgeResultMap" type="com.example.engTest.dto.Badge">
+        <id property="id" column="id"/>
+        <result property="achievementId" column="achievement_id"/>
+        <result property="nameKr" column="name_kr"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="descriptionKr" column="description_kr"/>
+        <result property="icon" column="icon"/>
+        <result property="rarity" column="rarity"/>
+        <result property="profileEffect" column="profile_effect"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="userBadgeResultMap" type="com.example.engTest.dto.UserBadge">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="badgeId" column="badge_id"/>
+        <result property="slotNumber" column="slot_number"/>
+        <result property="earnedAt" column="earned_at"/>
+        <result property="nameKr" column="name_kr"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="icon" column="icon"/>
+        <result property="rarity" column="rarity"/>
+        <result property="profileEffect" column="profile_effect"/>
+        <result property="descriptionKr" column="description_kr"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="badgeResultMap">
+        SELECT * FROM badges ORDER BY rarity DESC, name_kr
+    </select>
+
+    <select id="findById" resultMap="badgeResultMap">
+        SELECT * FROM badges WHERE id = #{id}
+    </select>
+
+    <select id="findUserBadges" resultMap="userBadgeResultMap">
+        SELECT ub.*, b.name_kr, b.name_en, b.icon, b.rarity, b.profile_effect, b.description_kr
+        FROM user_badges ub
+        JOIN badges b ON ub.badge_id = b.id
+        WHERE ub.user_id = #{userId}
+        ORDER BY ub.earned_at DESC
+    </select>
+
+    <select id="findEquippedBadges" resultMap="userBadgeResultMap">
+        SELECT ub.*, b.name_kr, b.name_en, b.icon, b.rarity, b.profile_effect, b.description_kr
+        FROM user_badges ub
+        JOIN badges b ON ub.badge_id = b.id
+        WHERE ub.user_id = #{userId} AND ub.slot_number IS NOT NULL
+        ORDER BY ub.slot_number
+    </select>
+
+    <select id="findUserBadge" resultMap="userBadgeResultMap">
+        SELECT ub.*, b.name_kr, b.name_en, b.icon, b.rarity, b.profile_effect, b.description_kr
+        FROM user_badges ub
+        JOIN badges b ON ub.badge_id = b.id
+        WHERE ub.user_id = #{userId} AND ub.badge_id = #{badgeId}
+    </select>
+
+    <insert id="insertUserBadge" useGeneratedKeys="true" keyProperty="id">
+        INSERT IGNORE INTO user_badges (user_id, badge_id)
+        VALUES (#{userId}, #{badgeId})
+    </insert>
+
+    <update id="equipBadge">
+        UPDATE user_badges SET slot_number = #{slotNumber}
+        WHERE user_id = #{userId} AND badge_id = #{badgeId}
+    </update>
+
+    <update id="unequipBadge">
+        UPDATE user_badges SET slot_number = NULL
+        WHERE user_id = #{userId} AND slot_number = #{slotNumber}
+    </update>
+
+    <update id="unequipBadgeById">
+        UPDATE user_badges SET slot_number = NULL
+        WHERE user_id = #{userId} AND badge_id = #{badgeId}
+    </update>
+
+    <select id="countUserBadges" resultType="int">
+        SELECT COUNT(*) FROM user_badges WHERE user_id = #{userId}
+    </select>
+
+</mapper>

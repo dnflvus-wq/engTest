@@ -28,12 +28,12 @@ public class LogController {
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getLogs(
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String action,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "action", required = false) String action,
+            @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
 
         Map<String, Object> result = activityLogService.getLogs(userId, action, startDate, endDate, page, size);
         return ResponseEntity.ok(result);
@@ -52,10 +52,10 @@ public class LogController {
      */
     @GetMapping("/export")
     public ResponseEntity<List<ActivityLog>> exportLogs(
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String action,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "action", required = false) String action,
+            @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
 
         List<ActivityLog> logs = activityLogService.getLogsForExport(userId, action, startDate, endDate);
         return ResponseEntity.ok(logs);

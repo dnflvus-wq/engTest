@@ -25,6 +25,7 @@ public class ExamService {
     private final ExamAnswerMapper examAnswerMapper;
     private final QuestionMapper questionMapper;
     private final RoundMapper roundMapper;
+    private final AchievementService achievementService;
 
     /**
      * 영어 축약형 → 풀어쓴 형태 매핑 테이블
@@ -223,6 +224,9 @@ public class ExamService {
         if (completedCount >= 4) {
             roundMapper.updateStatus(exam.getRoundId(), "COMPLETED");
         }
+
+        // 업적 체크 (비동기)
+        achievementService.checkAchievements(exam.getUserId(), "EXAM_COMPLETE");
 
         return exam;
     }

@@ -2,6 +2,7 @@ package com.example.engTest.controller;
 
 import com.example.engTest.dto.User;
 import com.example.engTest.dto.UserStats;
+import com.example.engTest.service.AchievementService;
 import com.example.engTest.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final AchievementService achievementService;
 
     @GetMapping
     @io.swagger.v3.oas.annotations.Operation(summary = "전체 사용자 조회", description = "시스템에 등록된 모든 사용자를 조회합니다.")
@@ -45,6 +47,10 @@ public class UserController {
         User user = userService.getOrCreateUser(name.trim());
         session.setAttribute("userId", user.getId());
         session.setAttribute("userName", user.getName());
+
+        // 업적 체크 (비동기)
+        achievementService.checkAchievements(user.getId(), "LOGIN");
+
         return ResponseEntity.ok(user);
     }
 

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.UserActionCounterMapper">
+
+    <resultMap id="counterResultMap" type="com.example.engTest.dto.UserActionCounter">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="action" column="action"/>
+        <result property="count" column="count"/>
+        <result property="lastPerformedAt" column="last_performed_at"/>
+    </resultMap>
+
+    <insert id="incrementOrInsert">
+        INSERT INTO user_action_counters (user_id, action, count)
+        VALUES (#{userId}, #{action}, 1)
+        ON DUPLICATE KEY UPDATE count = count + 1, last_performed_at = NOW()
+    </insert>
+
+    <select id="getCount" resultType="int">
+        SELECT COALESCE((SELECT count FROM user_action_counters WHERE user_id = #{userId} AND action = #{action}), 0)
+    </select>
+
+    <select id="findByUser" resultMap="counterResultMap">
+        SELECT * FROM user_action_counters WHERE user_id = #{userId}
+    </select>
+
+    <select id="getDistinctDates" resultType="string">
+        SELECT DISTINCT DATE(last_performed_at) as action_date
+        FROM user_action_counters
+        WHERE user_id = #{userId} AND action = #{action}
+        ORDER BY action_date
+    </select>
+
+</mapper>

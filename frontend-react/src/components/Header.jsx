@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ProfileBadges from './achievements/ProfileBadges';
 
 const Header = ({ toggleSidebar }) => {
     const navigate = useNavigate();
@@ -69,6 +70,7 @@ const Header = ({ toggleSidebar }) => {
                         <div className="avatar-circle">
                             <i className="fa-solid fa-user"></i>
                         </div>
+                        <ProfileBadges />
                         <span id="headerUserName">{user?.name || 'Guest'}</span>
                         <i className="fa-solid fa-caret-down"></i>
                     </div>

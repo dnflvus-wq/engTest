@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import AchievementUnlockModal from './achievements/AchievementUnlockModal';
 
 const Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -21,6 +22,8 @@ const Layout = () => {
                     <Outlet />
                 </div>
             </main>
+
+            <AchievementUnlockModal />
         </div>
     );
 };

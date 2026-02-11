@@ -60,6 +60,17 @@ const Dashboard = () => {
                     </div>
                     <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
                 </div>
+
+                <div className="clay-card widget" onClick={() => navigate('/achievements')}>
+                    <div className="widget-icon color-gold">
+                        <i className="fa-solid fa-trophy"></i>
+                    </div>
+                    <div className="widget-info">
+                        <h3>Achievements</h3>
+                        <p>Badges & rewards</p>
+                    </div>
+                    <div className="widget-arrow"><i className="fa-solid fa-chevron-right"></i></div>
+                </div>
             </div>
         </section>
     );

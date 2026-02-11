@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.engTest.mapper.AchievementMapper">
+
+    <resultMap id="achievementResultMap" type="com.example.engTest.dto.Achievement">
+        <id property="id" column="id"/>
+        <result property="category" column="category"/>
+        <result property="nameKr" column="name_kr"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="descriptionKr" column="description_kr"/>
+        <result property="icon" column="icon"/>
+        <result property="isHidden" column="is_hidden"/>
+        <result property="isTiered" column="is_tiered"/>
+        <result property="tierThresholds" column="tier_thresholds"/>
+        <result property="grantsBadgeAt" column="grants_badge_at"/>
+        <result property="badgeId" column="badge_id"/>
+        <result property="displayOrder" column="display_order"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="currentValue" column="current_value"/>
+        <result property="targetValue" column="target_value"/>
+        <result property="currentTier" column="current_tier"/>
+        <result property="nextTier" column="next_tier"/>
+        <result property="unlocked" column="unlocked"/>
+    </resultMap>
+
+    <resultMap id="userAchievementResultMap" type="com.example.engTest.dto.UserAchievement">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="achievementId" column="achievement_id"/>
+        <result property="tier" column="tier"/>
+        <result property="currentValue" column="current_value"/>
+        <result property="unlockedAt" column="unlocked_at"/>
+        <result property="isNotified" column="is_notified"/>
+        <result property="nameKr" column="name_kr"/>
+        <result property="nameEn" column="name_en"/>
+        <result property="descriptionKr" column="description_kr"/>
+        <result property="icon" column="icon"/>
+        <result property="category" column="category"/>
+        <result property="badgeId" column="badge_id"/>
+        <result property="grantsBadgeAt" column="grants_badge_at"/>
+    </resultMap>
+
+    <resultMap id="progressResultMap" type="com.example.engTest.dto.AchievementProgress">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="achievementId" column="achievement_id"/>
+        <result property="currentValue" column="current_value"/>
+        <result property="targetValue" column="target_value"/>
+        <result property="nextTier" column="next_tier"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="achievementResultMap">
+        SELECT * FROM achievements ORDER BY display_order
+    </select>
+
+    <select id="findById" resultMap="achievementResultMap">
+        SELECT * FROM achievements WHERE id = #{id}
+    </select>
+
+    <select id="findByCategory" resultMap="achievementResultMap">
+        SELECT * FROM achievements WHERE category = #{category} ORDER BY display_order
+    </select>
+
+    <select id="findAllWithProgress" resultMap="achievementResultMap">
+        SELECT a.*,
+               ap.current_value,
+               ap.target_value,
+               ap.next_tier,
+               (SELECT MAX(ua.tier) FROM user_achievements ua WHERE ua.user_id = #{userId} AND ua.achievement_id = a.id) as current_tier,
+               (SELECT COUNT(*) > 0 FROM user_achievements ua WHERE ua.user_id = #{userId} AND ua.achievement_id = a.id) as unlocked
+        FROM achievements a
+        LEFT JOIN achievement_progress ap ON a.id = ap.achievement_id AND ap.user_id = #{userId}
+        ORDER BY a.display_order
+    </select>
+
+    <select id="findUserAchievements" resultMap="userAchievementResultMap">
+        SELECT ua.*, a.name_kr, a.name_en, a.description_kr, a.icon, a.category, a.badge_id, a.grants_badge_at
+        FROM user_achievements ua
+        JOIN achievements a ON ua.achievement_id = a.id
+        WHERE ua.user_id = #{userId}
+        ORDER BY ua.unlocked_at DESC
+    </select>
+
+    <select id="findUnnotified" resultMap="userAchievementResultMap">
+        SELECT ua.*, a.name_kr, a.name_en, a.description_kr, a.icon, a.category, a.badge_id, a.grants_badge_at
+        FROM user_achievements ua
+        JOIN achievements a ON ua.achievement_id = a.id
+        WHERE ua.user_id = #{userId} AND ua.is_notified = FALSE
+        ORDER BY ua.unlocked_at ASC
+    </select>
+
+    <select id="findUserAchievement" resultMap="userAchievementResultMap">
+        SELECT ua.*, a.name_kr, a.name_en, a.description_kr, a.icon, a.category, a.badge_id, a.grants_badge_at
+        FROM user_achievements ua
+        JOIN achievements a ON ua.achievement_id = a.id
+        WHERE ua.user_id = #{userId} AND ua.achievement_id = #{achievementId}
+        <if test="tier != null">AND ua.tier = #{tier}</if>
+        <if test="tier == null">AND ua.tier IS NULL</if>
+    </select>
+
+    <insert id="insertUserAchievement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_achievements (user_id, achievement_id, tier, current_value, is_notified)
+        VALUES (#{userId}, #{achievementId}, #{tier}, #{currentValue}, FALSE)
+    </insert>
+
+    <update id="markAsNotified">
+        UPDATE user_achievements SET is_notified = TRUE
+        WHERE user_id = #{userId} AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </update>
+
+    <select id="findProgress" resultMap="progressResultMap">
+        SELECT * FROM achievement_progress
+        WHERE user_id = #{userId} AND achievement_id = #{achievementId}
+    </select>
+
+    <insert id="upsertProgress">
+        INSERT INTO achievement_progress (user_id, achievement_id, current_value, target_value, next_tier)
+        VALUES (#{userId}, #{achievementId}, #{currentValue}, #{targetValue}, #{nextTier})
+        ON DUPLICATE KEY UPDATE current_value = #{currentValue}, target_value = #{targetValue}, next_tier = #{nextTier}
+    </insert>
+
+    <select id="countUnlockedByUser" resultType="int">
+        SELECT COUNT(DISTINCT achievement_id) FROM user_achievements WHERE user_id = #{userId}
+    </select>
+
+    <select id="countGoldOrAboveByUser" resultType="int">
+        SELECT COUNT(DISTINCT achievement_id) FROM user_achievements
+        WHERE user_id = #{userId} AND (tier = 'GOLD' OR tier = 'DIAMOND')
+    </select>
+
+    <!-- 업적 체크용 쿼리들 -->
+
+    <select id="countCompletedExams" resultType="int">
+        SELECT COUNT(*) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED'
+    </select>
+
+    <select id="countPassedExams" resultType="int">
+        SELECT COUNT(*) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED' AND is_passed = TRUE
+    </select>
+
+    <select id="getMaxCorrectCount" resultType="java.lang.Integer">
+        SELECT MAX(correct_count) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED'
+    </select>
+
+    <select id="getAvgScore" resultType="java.lang.Double">
+        SELECT AVG(correct_count) FROM exams
+        WHERE user_id = #{userId} AND status = 'COMPLETED'
+        HAVING COUNT(*) >= #{minExams}
+    </select>
+
+    <select id="countOnlineExams" resultType="int">
+        SELECT COUNT(*) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED' AND mode = 'ONLINE'
+    </select>
+
+    <select id="countOfflineExams" resultType="int">
+        SELECT COUNT(*) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED' AND mode = 'OFFLINE'
+    </select>
+
+    <select id="countTotalCorrect" resultType="int">
+        SELECT COALESCE(SUM(correct_count), 0) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED'
+    </select>
+
+    <select id="countPerfectScores" resultType="int">
+        SELECT COUNT(*) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED' AND correct_count = total_count
+    </select>
+
+    <select id="countDistinctRounds" resultType="int">
+        SELECT COUNT(DISTINCT round_id) FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED'
+    </select>
+
+    <select id="countWeekendExams" resultType="int">
+        SELECT COUNT(*) FROM exams
+        WHERE user_id = #{userId} AND status = 'COMPLETED'
+        AND DAYOFWEEK(submitted_at) IN (1, 7)
+    </select>
+
+    <select id="getLoginDates" resultType="string">
+        SELECT DISTINCT DATE(created_at) as login_date
+        FROM activity_logs
+        WHERE user_id = #{userId} AND action = 'LOGIN_SUCCESS'
+        ORDER BY login_date
+    </select>
+
+    <select id="getExamDates" resultType="string">
+        SELECT DISTINCT DATE(submitted_at) as exam_date
+        FROM exams
+        WHERE user_id = #{userId} AND status = 'COMPLETED'
+        ORDER BY exam_date
+    </select>
+
+    <select id="getUserRanksPerRound" resultType="map">
+        SELECT sub.round_id, sub.user_rank
+        FROM (
+            SELECT e.round_id, e.user_id,
+                   RANK() OVER (PARTITION BY e.round_id ORDER BY e.correct_count DESC, e.submitted_at ASC) as user_rank
+            FROM exams e
+            WHERE e.status = 'COMPLETED'
+        ) sub
+        WHERE sub.user_id = #{userId}
+    </select>
+
+    <select id="getRecentScores" resultType="int">
+        SELECT correct_count FROM exams
+        WHERE user_id = #{userId} AND status = 'COMPLETED'
+        ORDER BY submitted_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="getExamDurations" resultType="map">
+        SELECT id as exam_id, correct_count, is_passed,
+               TIMESTAMPDIFF(MINUTE, started_at, submitted_at) as duration_minutes,
+               HOUR(submitted_at) as submit_hour,
+               DAYOFWEEK(submitted_at) as submit_dow,
+               DATE(submitted_at) as submit_date
+        FROM exams
+        WHERE user_id = #{userId} AND status = 'COMPLETED'
+        ORDER BY submitted_at DESC
+    </select>
+
+    <select id="getMaxExamsInOneDay" resultType="int">
+        SELECT COALESCE(MAX(cnt), 0) FROM (
+            SELECT COUNT(*) as cnt FROM exams
+            WHERE user_id = #{userId} AND status = 'COMPLETED'
+            GROUP BY DATE(submitted_at)
+        ) t
+    </select>
+
+    <select id="countFullParticipationRounds" resultType="int">
+        SELECT COUNT(*) FROM (
+            SELECT round_id FROM exams WHERE status = 'COMPLETED'
+            GROUP BY round_id HAVING COUNT(DISTINCT user_id) >= 4
+        ) full_rounds
+        WHERE full_rounds.round_id IN (
+            SELECT round_id FROM exams WHERE user_id = #{userId} AND status = 'COMPLETED'
+        )
+    </select>
+
+    <select id="countSameScoreExams" resultType="int">
+        SELECT COUNT(*) FROM exams e1
+        WHERE e1.user_id = #{userId} AND e1.status = 'COMPLETED'
+        AND EXISTS (
+            SELECT 1 FROM exams e2
+            WHERE e2.round_id = e1.round_id AND e2.user_id != e1.user_id
+            AND e2.status = 'COMPLETED' AND e2.correct_count = e1.correct_count
+        )
+    </select>
+
+    <select id="getLastSecondPattern" resultType="map">
+        SELECT
+            (SELECT COUNT(*) FROM exam_answers ea
+             JOIN questions q ON ea.question_id = q.id
+             WHERE ea.exam_id = #{examId} AND ea.is_correct = TRUE
+             AND q.seq_no > #{totalCount} - 5) as last5_correct,
+            (SELECT COUNT(*) FROM exam_answers ea
+             JOIN questions q ON ea.question_id = q.id
+             WHERE ea.exam_id = #{examId} AND ea.is_correct = TRUE
+             AND q.seq_no &lt;= #{totalCount} / 2) as first_half_correct,
+            #{totalCount} / 2 as half_count
+    </select>
+
+</mapper>
