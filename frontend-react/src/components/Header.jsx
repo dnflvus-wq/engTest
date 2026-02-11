@@ -3,13 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ProfileBadges from './achievements/ProfileBadges';
+import api from '../utils/api';
 
-const Header = ({ toggleSidebar }) => {
+const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
     const { isDark, toggleTheme } = useTheme();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [stats, setStats] = useState(null);
+    const [achievementSummary, setAchievementSummary] = useState(null);
 
     const toggleProfile = (e) => {
         e.stopPropagation();
@@ -17,8 +20,14 @@ const Header = ({ toggleSidebar }) => {
     };
 
     const handleLogout = async () => {
+        setIsProfileOpen(false);
         await logout();
         navigate('/');
+    };
+
+    const handleNavigate = (path) => {
+        setIsProfileOpen(false);
+        navigate(path);
     };
 
     useEffect(() => {
@@ -27,19 +36,36 @@ const Header = ({ toggleSidebar }) => {
         return () => window.removeEventListener('click', closeProfile);
     }, []);
 
+    // 드롭다운 열릴 때 유저 통계 fetch
+    useEffect(() => {
+        if (!isProfileOpen || !user?.id) return;
+        const load = async () => {
+            try {
+                const [s, a] = await Promise.all([
+                    api.get(`/users/${user.id}/stats`),
+                    api.get('/achievements/summary')
+                ]);
+                setStats(s);
+                setAchievementSummary(a);
+            } catch (e) {
+                console.error('Failed to load profile stats:', e);
+            }
+        };
+        load();
+    }, [isProfileOpen, user?.id]);
+
     const noBackButtonPaths = ['/', '/dashboard'];
     const isShowBackButton = !noBackButtonPaths.includes(location.pathname);
+    const initial = user?.name?.charAt(0) || '?';
 
     return (
         <header className="top-header">
             <div className="header-title" id="headerTitleArea">
                 <div className="header-left-mobile mobile-only">
-                    {isShowBackButton ? (
+                    {isShowBackButton && (
                         <i className="fa-solid fa-arrow-left" onClick={() => navigate(-1)}></i>
-                    ) : (
-                        <i className="fa-solid fa-bars" onClick={toggleSidebar}></i>
                     )}
-                    <div className="logo-area-mobile">
+                    <div className="logo-area-mobile" onClick={() => navigate('/dashboard')}>
                         <i className="fa-solid fa-layer-group"></i>
                         <span>EstellExam</span>
                     </div>
@@ -53,23 +79,11 @@ const Header = ({ toggleSidebar }) => {
             </div>
 
             <div className="header-right">
-                <div
-                    className="theme-toggle-header"
-                    onClick={toggleTheme}
-                    title="Toggle Dark Mode"
-                >
-                    <i
-                        id="themeIcon"
-                        className={`fa-solid ${isDark ? 'fa-sun' : 'fa-moon'}`}
-                        style={{ color: isDark ? '#fbbf24' : 'var(--text-sub)' }}
-                    ></i>
-                </div>
-
                 <ProfileBadges />
                 <div className="user-profile-container" id="userProfileArea">
                     <div className="user-profile" onClick={toggleProfile}>
-                        <div className="avatar-circle">
-                            <i className="fa-solid fa-user"></i>
+                        <div className="avatar-circle avatar-initial">
+                            {initial}
                         </div>
                         <span id="headerUserName">{user?.name || 'Guest'}</span>
                         <i className="fa-solid fa-caret-down"></i>
@@ -81,7 +95,65 @@ const Header = ({ toggleSidebar }) => {
                             id="profileDropdown"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="dropdown-item" onClick={handleLogout}>
+                            {/* 미니 프로필 카드 */}
+                            <div className="profile-card-header">
+                                <div className="avatar-circle avatar-initial avatar-lg">
+                                    {initial}
+                                </div>
+                                <div className="profile-card-info">
+                                    <div className="profile-card-name">{user?.name}</div>
+                                    {stats && <div className="profile-card-rank">Rank #{stats.rank || '-'}</div>}
+                                </div>
+                            </div>
+
+                            {stats && (
+                                <div className="profile-stats">
+                                    <div className="profile-stat">
+                                        <i className="fa-solid fa-pen-to-square"></i>
+                                        <span>시험 {stats.totalExams || 0}회</span>
+                                    </div>
+                                    <div className="profile-stat">
+                                        <i className="fa-solid fa-chart-line"></i>
+                                        <span>평균 {stats.avgScore != null ? Number(stats.avgScore).toFixed(0) : '-'}점</span>
+                                    </div>
+                                    {achievementSummary && (
+                                        <div className="profile-stat">
+                                            <i className="fa-solid fa-trophy"></i>
+                                            <span>업적 {achievementSummary.unlockedCount}/{achievementSummary.totalAchievements}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="profile-menu-divider" />
+
+                            <div className="dropdown-item" onClick={() => handleNavigate('/achievements')}>
+                                <i className="fa-solid fa-medal"></i>
+                                Achievements
+                                <i className="fa-solid fa-chevron-right dropdown-item-arrow"></i>
+                            </div>
+                            <div className="dropdown-item" onClick={() => handleNavigate('/history')}>
+                                <i className="fa-solid fa-clock-rotate-left"></i>
+                                History
+                                <i className="fa-solid fa-chevron-right dropdown-item-arrow"></i>
+                            </div>
+                            <div className="dropdown-item" onClick={() => handleNavigate('/analytics')}>
+                                <i className="fa-solid fa-chart-pie"></i>
+                                Analytics
+                                <i className="fa-solid fa-chevron-right dropdown-item-arrow"></i>
+                            </div>
+
+                            <div className="dropdown-item dropdown-item-toggle" onClick={(e) => { e.stopPropagation(); toggleTheme(); }}>
+                                <i className={`fa-solid ${isDark ? 'fa-sun' : 'fa-moon'}`}></i>
+                                Dark Mode
+                                <div className={`theme-switch ${isDark ? 'active' : ''}`}>
+                                    <div className="theme-switch-knob" />
+                                </div>
+                            </div>
+
+                            <div className="profile-menu-divider" />
+
+                            <div className="dropdown-item dropdown-item-logout" onClick={handleLogout}>
                                 <i className="fa-solid fa-right-from-bracket"></i>
                                 Logout
                             </div>

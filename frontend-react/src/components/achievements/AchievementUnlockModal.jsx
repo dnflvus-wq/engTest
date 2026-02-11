@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../utils/api';
 
 const TIER_COLORS = {
@@ -34,12 +34,18 @@ const getNextGoal = (achievement) => {
 const AchievementUnlockModal = () => {
     const [queue, setQueue] = useState([]);
     const [current, setCurrent] = useState(null);
+    const shownIdsRef = useRef(new Set());
 
     const checkUnread = useCallback(async () => {
         try {
             const data = await api.get('/achievements/unread');
             if (data && data.length > 0) {
-                setQueue(prev => [...prev, ...data]);
+                const newItems = data.filter(a => !shownIdsRef.current.has(a.id));
+                if (newItems.length > 0) {
+                    newItems.forEach(a => shownIdsRef.current.add(a.id));
+                    setQueue(prev => [...prev, ...newItems]);
+                    api.post('/achievements/mark-read', { ids: newItems.map(a => a.id) }).catch(() => {});
+                }
             }
         } catch {
             // silently ignore - user might not be logged in
@@ -61,12 +67,7 @@ const AchievementUnlockModal = () => {
         }
     }, [current, queue]);
 
-    const handleDismiss = async () => {
-        if (current) {
-            try {
-                await api.post('/achievements/mark-read', { ids: [current.id] });
-            } catch { /* ignore */ }
-        }
+    const handleDismiss = () => {
         setCurrent(null);
     };
 
