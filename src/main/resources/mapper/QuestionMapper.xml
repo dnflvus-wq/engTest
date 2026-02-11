@@ -66,4 +66,8 @@
         DELETE FROM questions WHERE round_id = #{roundId} AND is_review = TRUE
     </delete>
 
+    <select id="getMaxSeqNo" resultType="int">
+        SELECT COALESCE(MAX(seq_no), 0) FROM questions WHERE round_id = #{roundId}
+    </select>
+
 </mapper>

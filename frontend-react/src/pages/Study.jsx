@@ -13,6 +13,8 @@ const Study = () => {
     const [activeAccordions, setActiveAccordions] = useState([]);
     const [playingVideoId, setPlayingVideoId] = useState(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [hideMode, setHideMode] = useState('none');
+    const [revealedIds, setRevealedIds] = useState(new Set());
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -63,6 +65,16 @@ const Study = () => {
             prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
         );
     };
+
+    const toggleReveal = (id) => {
+        setRevealedIds(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    useEffect(() => setRevealedIds(new Set()), [hideMode]);
 
     const speakWord = (text) => {
         if ('speechSynthesis' in window) {
@@ -190,18 +202,28 @@ const Study = () => {
                                     <span>No vocabulary for this round</span>
                                 </p>
                             ) : (
-                                vocabulary.map(v => (
-                                    <div key={v.id} className="vocab-card">
-                                        <div className="vocab-english">
-                                            {v.english}
-                                            <button className="speak-btn" onClick={() => speakWord(v.english)}>
-                                                <i className="fa-solid fa-volume-high"></i>
-                                            </button>
+                                vocabulary.map(v => {
+                                    const isRevealed = revealedIds.has(v.id);
+                                    const hideEn = hideMode === 'english' && !isRevealed;
+                                    const hideKr = hideMode === 'korean' && !isRevealed;
+
+                                    return (
+                                        <div
+                                            key={v.id}
+                                            className={`vocab-card ${hideMode !== 'none' ? 'revealable' : ''}`}
+                                            onClick={hideMode !== 'none' ? () => toggleReveal(v.id) : undefined}
+                                        >
+                                            <div className={`vocab-english ${hideEn ? 'vocab-hidden' : ''}`}>
+                                                <span>{v.english}</span>
+                                                <button className="speak-btn" onClick={(e) => { e.stopPropagation(); speakWord(v.english); }}>
+                                                    <i className="fa-solid fa-volume-high"></i>
+                                                </button>
+                                            </div>
+                                            {v.phonetic && <div className={`vocab-phonetic ${hideEn ? 'vocab-hidden' : ''}`}>{v.phonetic}</div>}
+                                            <div className={`vocab-korean ${hideKr ? 'vocab-hidden' : ''}`}>{v.korean || ''}</div>
                                         </div>
-                                        {v.phonetic && <div className="vocab-phonetic">{v.phonetic}</div>}
-                                        <div className="vocab-korean">{v.korean || ''}</div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     </div>
@@ -338,6 +360,20 @@ const Study = () => {
                     </div>
                 </div>
             </div>
+
+            {activeAccordions.includes('vocabAccordion') && vocabulary.length > 0 && (
+                <div className="vocab-mode-float">
+                    <button className={hideMode === 'none' ? 'active' : ''} onClick={() => setHideMode('none')}>
+                        <i className="fa-solid fa-eye"></i> {isMobile ? '' : '전체'}
+                    </button>
+                    <button className={hideMode === 'english' ? 'active' : ''} onClick={() => setHideMode('english')}>
+                        EN 가리기
+                    </button>
+                    <button className={hideMode === 'korean' ? 'active' : ''} onClick={() => setHideMode('korean')}>
+                        KR 가리기
+                    </button>
+                </div>
+            )}
         </section>
     );
 };

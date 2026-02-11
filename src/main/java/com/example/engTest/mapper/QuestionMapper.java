@@ -26,4 +26,6 @@ public interface QuestionMapper {
     List<Question> findByRoundIds(@Param("roundIds") List<Long> roundIds);
 
     void deleteReviewByRoundId(@Param("roundId") Long roundId);
+
+    int getMaxSeqNo(@Param("roundId") Long roundId);
 }

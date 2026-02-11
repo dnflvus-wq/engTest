@@ -20,7 +20,7 @@
         FROM exam_answers ea
         LEFT JOIN questions q ON ea.question_id = q.id
         WHERE ea.exam_id = #{examId}
-        ORDER BY q.seq_no
+        ORDER BY q.id
     </select>
 
     <select id="findById" resultMap="examAnswerResultMap">
@@ -84,7 +84,7 @@
         FROM exam_answers ea
         LEFT JOIN questions q ON ea.question_id = q.id
         WHERE ea.exam_id = #{examId} AND ea.is_correct = FALSE
-        ORDER BY q.seq_no
+        ORDER BY q.id
     </select>
 
 </mapper>

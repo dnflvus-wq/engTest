@@ -47,11 +47,13 @@ const History = () => {
                             const date = exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString() : 'In Progress';
                             const statusText = exam.status === 'COMPLETED' ? (exam.isPassed ? 'PASS' : 'FAIL') : 'In Progress';
                             const statusClass = exam.status === 'COMPLETED' ? (exam.isPassed ? 'pass' : 'fail') : 'in-progress';
+                            const pct = exam.totalCount > 0 ? Math.round((exam.correctCount / exam.totalCount) * 100) : 0;
+                            const scoreClass = pct >= 90 ? 'score-excellent' : pct >= 80 ? 'score-great' : pct >= 70 ? 'score-good' : 'score-low';
 
                             return (
                                 <div
                                     key={exam.id}
-                                    className="history-item"
+                                    className={`history-item ${statusClass}`}
                                     onClick={() => navigate(`/result/${exam.id}`)}
                                 >
                                     <div className="history-info">
@@ -59,7 +61,7 @@ const History = () => {
                                         <div className="history-date">{date}</div>
                                     </div>
                                     <div className="history-score">
-                                        <span className="history-score-value">{Math.floor(exam.score) || 0}</span>
+                                        <span className={`history-score-value ${scoreClass}`}>{pct}</span>
                                         <span className="history-score-detail">{exam.correctCount || 0} / {exam.totalCount || 0}</span>
                                     </div>
                                     <span className={`history-status ${statusClass}`}>{statusText}</span>

@@ -2,6 +2,7 @@ package com.example.engTest.service;
 
 import com.example.engTest.config.ApiConfig;
 import com.example.engTest.dto.Question;
+import com.example.engTest.mapper.QuestionMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class GeminiService {
     private final ApiConfig apiConfig;
     private final ObjectMapper objectMapper;
     private final WebClient.Builder webClientBuilder;
+    private final QuestionMapper questionMapper;
 
     private static final String UPLOAD_DIR = "uploads/";
 
@@ -414,7 +416,7 @@ public class GeminiService {
         JsonNode questionsArray = objectMapper.readTree(jsonContent);
 
         List<Question> questions = new ArrayList<>();
-        int seqNo = 1;
+        int seqNo = questionMapper.getMaxSeqNo(roundId) + 1;
 
         for (JsonNode q : questionsArray) {
             String questionText = q.path("questionText").asText();
@@ -633,7 +635,7 @@ public class GeminiService {
         JsonNode questionsArray = objectMapper.readTree(jsonContent);
 
         List<Question> questions = new ArrayList<>();
-        int seqNo = 1;
+        int seqNo = questionMapper.getMaxSeqNo(roundId) + 1;
 
         for (JsonNode q : questionsArray) {
             String questionText = q.path("questionText").asText();
