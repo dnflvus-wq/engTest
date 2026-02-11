@@ -66,13 +66,15 @@ public class ProgressService {
                 List<ProgressData.ChapterStatus> chapterStatuses = new ArrayList<>();
                 for (BookChapter ch : partEntry.getValue()) {
                     boolean isCompleted = completedSet.contains(ch.getId());
-                    if (isCompleted) completedCount++;
+                    boolean isManual = ch.getSeqNo() <= 2; // 0회차 수기 진행분
+                    if (isCompleted || isManual) completedCount++;
                     chapterStatuses.add(ProgressData.ChapterStatus.builder()
                             .chapterId(ch.getId())
                             .chapterLabel(ch.getChapterLabel())
                             .chapterTitle(ch.getChapterTitle())
                             .seqNo(ch.getSeqNo())
                             .completed(isCompleted)
+                            .manuallyCompleted(isManual && !isCompleted)
                             .build());
                 }
                 parts.add(ProgressData.PartProgress.builder()

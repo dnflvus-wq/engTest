@@ -27,7 +27,7 @@ const BookSection = ({ book, colorTheme }) => {
     const labelPrefix = isMint ? 'Unit ' : 'Day ';
 
     const formatPartTitle = (part) => {
-        const count = part.chapters.filter(c => c.completed).length;
+        const count = part.chapters.filter(c => c.completed || c.manuallyCompleted).length;
         // Book 1: partTitle is "Part 1" etc, Book 2: partTitle is topic name
         if (!isMint) {
             return `Part ${part.partNumber}: ${part.partTitle} (${count}/${part.chapters.length})`;
@@ -60,8 +60,8 @@ const BookSection = ({ book, colorTheme }) => {
                             return (
                                 <div
                                     key={ch.chapterId}
-                                    className={`progress-cell ${ch.completed ? completedClass : ''}`}
-                                    title={`${ch.chapterLabel} - ${ch.chapterTitle || ''}${ch.completed ? ' ✓' : ''}`}
+                                    className={`progress-cell ${ch.manuallyCompleted ? (isMint ? 'completed-manual' : 'completed-manual-purple') : ch.completed ? completedClass : ''}`}
+                                    title={`${ch.chapterLabel} - ${ch.chapterTitle || ''}${ch.completed ? ' ✓' : ch.manuallyCompleted ? ' (수기완료)' : ''}`}
                                 >
                                     <span className="progress-cell-number">
                                         {ch.chapterLabel.replace(labelPrefix, '')}

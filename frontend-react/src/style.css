@@ -4799,6 +4799,28 @@ body.dark-mode .custom-select-trigger:hover {
     opacity: 1;
 }
 
+.progress-cell.completed-manual {
+    background: linear-gradient(135deg, #5eead4, #14b8a6);
+    box-shadow: 0 2px 8px rgba(94, 234, 212, 0.4);
+}
+
+.progress-cell.completed-manual .progress-cell-number,
+.progress-cell.completed-manual .progress-cell-keyword {
+    color: white;
+    opacity: 1;
+}
+
+.progress-cell.completed-manual-purple {
+    background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+    box-shadow: 0 2px 8px rgba(196, 181, 253, 0.4);
+}
+
+.progress-cell.completed-manual-purple .progress-cell-number,
+.progress-cell.completed-manual-purple .progress-cell-keyword {
+    color: white;
+    opacity: 1;
+}
+
 .progress-cell:hover {
     transform: translateY(-2px);
 }

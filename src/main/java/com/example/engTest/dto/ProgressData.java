@@ -49,5 +49,6 @@ public class ProgressData {
         private String chapterTitle;
         private Integer seqNo;
         private boolean completed;
+        private boolean manuallyCompleted;
     }
 }
