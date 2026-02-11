@@ -260,9 +260,27 @@ public class ExamService {
     }
 
     /**
+     * Gemini AI 채점 결과를 저장하고 정답 수를 반환
+     */
+    @Transactional
+    public int saveGeminiGradeResults(Long examId, List<GeminiService.OfflineGradeResult> results, List<Question> questions) {
+        int correctCount = 0;
+        for (GeminiService.OfflineGradeResult result : results) {
+            if (result.questionNumber() > 0 && result.questionNumber() <= questions.size()) {
+                Question question = questions.get(result.questionNumber() - 1);
+                submitAnswer(examId, question.getId(), result.userAnswer(), null, result.isCorrect());
+                if (result.isCorrect()) {
+                    correctCount++;
+                }
+            }
+        }
+        return correctCount;
+    }
+
+    /**
      * 답안 정규화: 축약형 확장 후 소문자 변환 + 영숫자만 유지
      */
-    public String normalizeAnswer(String answer) {
+    private String normalizeAnswer(String answer) {
         if (answer == null) {
             return "";
         }

@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,8 +82,7 @@ public class RoundController {
             }
 
             // 기존 시험 기록 및 문제 삭제 (FK 에러 방지)
-            examService.deleteByRoundId(id);
-            questionService.deleteQuestionsByRoundId(id);
+            cleanupRoundData(id);
 
             // Gemini로 새 문제 생성
             List<Question> questions = geminiService.generateQuestions(id, prompt, count, difficulty, questionType);
@@ -127,12 +125,6 @@ public class RoundController {
     public ResponseEntity<Void> deleteRound(@PathVariable("id") Long id) {
         roundService.deleteRound(id);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/stats")
-    @io.swagger.v3.oas.annotations.Operation(summary = "전체 회차 통계", description = "모든 회차의 통계를 조회합니다.")
-    public ResponseEntity<List<RoundStats>> getRoundStats() {
-        return ResponseEntity.ok(roundService.getRoundStats());
     }
 
     @GetMapping("/{id}/stats")
@@ -182,43 +174,6 @@ public class RoundController {
     }
 
     /**
-     * 이미지들에서 단어 추출
-     */
-    @PostMapping("/extract-words")
-    @io.swagger.v3.oas.annotations.Operation(summary = "이미지에서 단어 추출", description = "이미지(단어장 사진 등)에서 OCR로 단어를 추출합니다.")
-    public ResponseEntity<?> extractWordsFromImages(
-            @RequestParam("images") List<MultipartFile> images,
-            @RequestParam(value = "prompt", required = false) String customPrompt) {
-        try {
-            // 유효성 검사
-            if (images == null || images.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "이미지를 업로드해주세요."));
-            }
-
-            log.info("Extracting words from {} images", images.size());
-
-            List<String> words = geminiService.extractWordsFromImages(images, customPrompt);
-
-            if (words.isEmpty()) {
-                log.warn("No words extracted from images");
-                return ResponseEntity.ok()
-                        .body(Map.of(
-                                "words", words,
-                                "warning", "추출된 단어가 없습니다. 이미지에 텍스트가 명확한지 확인해주세요."));
-            }
-
-            log.info("Successfully extracted {} words", words.size());
-            return ResponseEntity.ok(Map.of("words", words));
-        } catch (Exception e) {
-            log.error("Failed to extract words from images", e);
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "알 수 없는 오류가 발생했습니다";
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "단어 추출 실패: " + errorMessage));
-        }
-    }
-
-    /**
      * 추출된 단어로 문제 생성
      */
     @PostMapping("/{id}/generate-from-words")
@@ -241,8 +196,7 @@ public class RoundController {
                     : 30;
 
             // 기존 시험 기록 및 문제 삭제 (FK 에러 방지)
-            examService.deleteByRoundId(id);
-            questionService.deleteQuestionsByRoundId(id);
+            cleanupRoundData(id);
 
             List<Question> questions;
 
@@ -446,5 +400,10 @@ public class RoundController {
             log.error("Failed to delete review questions", e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private void cleanupRoundData(Long roundId) {
+        examService.deleteByRoundId(roundId);
+        questionService.deleteQuestionsByRoundId(roundId);
     }
 }

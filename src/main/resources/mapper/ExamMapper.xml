@@ -18,53 +18,42 @@
         <result property="roundTitle" column="round_title"/>
     </resultMap>
 
-    <select id="findAll" resultMap="examResultMap">
+    <sql id="examSelectJoin">
         SELECT e.*, u.name as user_name, r.title as round_title
         FROM exams e
         LEFT JOIN users u ON e.user_id = u.id
         LEFT JOIN rounds r ON e.round_id = r.id
+    </sql>
+
+    <select id="findAll" resultMap="examResultMap">
+        <include refid="examSelectJoin"/>
         ORDER BY e.started_at DESC
     </select>
 
     <select id="findByUserId" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
+        <include refid="examSelectJoin"/>
         WHERE e.user_id = #{userId} AND e.status = 'COMPLETED'
         ORDER BY e.started_at DESC
     </select>
 
     <select id="findInProgressByUserId" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
+        <include refid="examSelectJoin"/>
         WHERE e.user_id = #{userId} AND e.status = 'IN_PROGRESS'
     </select>
 
     <select id="findByRoundId" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
+        <include refid="examSelectJoin"/>
         WHERE e.round_id = #{roundId}
         ORDER BY e.score DESC
     </select>
 
     <select id="findById" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
+        <include refid="examSelectJoin"/>
         WHERE e.id = #{id}
     </select>
 
     <select id="findByUserAndRound" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
+        <include refid="examSelectJoin"/>
         WHERE e.user_id = #{userId} AND e.round_id = #{roundId}
         ORDER BY e.started_at DESC
         LIMIT 1
@@ -94,10 +83,7 @@
     </delete>
 
     <select id="getRankingByRound" resultMap="examResultMap">
-        SELECT e.*, u.name as user_name, r.title as round_title
-        FROM exams e
-        LEFT JOIN users u ON e.user_id = u.id
-        LEFT JOIN rounds r ON e.round_id = r.id
+        <include refid="examSelectJoin"/>
         WHERE e.round_id = #{roundId} AND e.status = 'COMPLETED'
         ORDER BY e.score DESC, e.submitted_at ASC
     </select>

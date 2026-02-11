@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../utils/api';
-
-const TIER_COLORS = {
-    BRONZE: '#cd7f32', SILVER: '#c0c0c0', GOLD: '#ffd700', DIAMOND: '#b9f2ff'
-};
-
-const TIER_ORDER = ['BRONZE', 'SILVER', 'GOLD', 'DIAMOND'];
+import { TIER_COLORS, TIER_ORDER } from '../../constants/badge';
 
 const formatModalDescription = (achievement) => {
     let desc = achievement.descriptionKr || '';

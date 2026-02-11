@@ -80,15 +80,9 @@ public interface AchievementMapper {
     // 시험 시간 관련
     List<java.util.Map<String, Object>> getExamDurations(@Param("userId") Long userId);
 
-    // 같은 날 시험 횟수
-    int getMaxExamsInOneDay(@Param("userId") Long userId);
-
     // 4명 완료 회차 확인
     int countFullParticipationRounds(@Param("userId") Long userId);
 
     // 동점자 확인
     int countSameScoreExams(@Param("userId") Long userId);
-
-    // 앞뒤 문제 정답 패턴
-    java.util.Map<String, Object> getLastSecondPattern(@Param("examId") Long examId, @Param("totalCount") int totalCount);
 }

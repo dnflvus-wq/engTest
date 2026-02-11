@@ -3,6 +3,7 @@ package com.example.engTest.service;
 import com.example.engTest.dto.RoundMaterial;
 import com.example.engTest.mapper.MaterialMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MaterialService {
@@ -26,10 +28,6 @@ public class MaterialService {
 
     public List<RoundMaterial> getMaterialsByRoundId(Long roundId) {
         return materialMapper.findByRoundId(roundId);
-    }
-
-    public RoundMaterial getMaterialById(Long id) {
-        return materialMapper.findById(id);
     }
 
     @Transactional
@@ -50,20 +48,17 @@ public class MaterialService {
 
     @Transactional
     public RoundMaterial addPptMaterial(Long roundId, String title, MultipartFile file) throws IOException {
-        // 업로드 디렉토리 생성
         Path uploadDir = Paths.get(uploadPath);
         if (!Files.exists(uploadDir)) {
             Files.createDirectories(uploadDir);
         }
 
-        // 파일명 생성 (UUID + 원본 파일명)
         String originalFilename = file.getOriginalFilename();
         String extension = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf("."))
                 : "";
         String newFilename = UUID.randomUUID().toString() + extension;
 
-        // 파일 저장
         Path filePath = uploadDir.resolve(newFilename);
         Files.copy(file.getInputStream(), filePath);
 
@@ -85,40 +80,29 @@ public class MaterialService {
     @Transactional
     public void deleteMaterial(Long id) {
         RoundMaterial material = materialMapper.findById(id);
-        if (material != null && "PPT".equals(material.getMaterialType())) {
-            // PPT 파일인 경우 실제 파일도 삭제
-            try {
-                String url = material.getUrl();
-                if (url != null && url.startsWith("/uploads/materials/")) {
-                    String filename = url.substring("/uploads/materials/".length());
-                    Path filePath = Paths.get(uploadPath, filename);
-                    Files.deleteIfExists(filePath);
-                }
-            } catch (IOException e) {
-                // 파일 삭제 실패해도 DB 레코드는 삭제
-            }
-        }
+        deletePptFile(material);
         materialMapper.delete(id);
     }
 
     @Transactional
     public void deleteByRoundId(Long roundId) {
-        // 먼저 파일들 삭제
         List<RoundMaterial> materials = materialMapper.findByRoundId(roundId);
         for (RoundMaterial m : materials) {
-            if ("PPT".equals(m.getMaterialType())) {
-                try {
-                    String url = m.getUrl();
-                    if (url != null && url.startsWith("/uploads/materials/")) {
-                        String filename = url.substring("/uploads/materials/".length());
-                        Path filePath = Paths.get(uploadPath, filename);
-                        Files.deleteIfExists(filePath);
-                    }
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
+            deletePptFile(m);
         }
         materialMapper.deleteByRoundId(roundId);
+    }
+
+    private void deletePptFile(RoundMaterial material) {
+        if (material == null || !"PPT".equals(material.getMaterialType())) return;
+        try {
+            String url = material.getUrl();
+            if (url != null && url.startsWith("/uploads/materials/")) {
+                String filename = url.substring("/uploads/materials/".length());
+                Files.deleteIfExists(Paths.get(uploadPath, filename));
+            }
+        } catch (IOException e) {
+            log.warn("Failed to delete PPT file: {}", material.getUrl(), e);
+        }
     }
 }

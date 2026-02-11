@@ -1,11 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../utils/api';
-
-const RARITY_COLORS = {
-    RARE: '#3b82f6',
-    EPIC: '#8b5cf6',
-    LEGENDARY: '#fbbf24',
-};
+import { RARITY_COLORS } from '../../constants/badge';
 
 const ProfileBadges = () => {
     const [badges, setBadges] = useState([]);

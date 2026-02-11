@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
                 localStorage.setItem('user', JSON.stringify(userData));
             } else if (localUser) {
                 // Session expired but we have local user - auto re-login
-                console.log('Session expired, auto re-logging in...');
+                // Session expired - auto re-login
                 try {
                     const reloginResponse = await fetch('/api/users/login', {
                         method: 'POST',
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
                         const userData = await reloginResponse.json();
                         setUser(userData);
                         localStorage.setItem('user', JSON.stringify(userData));
-                        console.log('Auto re-login successful');
+                        // Auto re-login successful
                     } else {
                         // Re-login failed, clear local data
                         localStorage.removeItem('user');

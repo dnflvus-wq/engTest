@@ -1,8 +1,4 @@
-const RARITY_COLORS = {
-    RARE: '#3b82f6',
-    EPIC: '#8b5cf6',
-    LEGENDARY: '#fbbf24',
-};
+import { RARITY_COLORS } from '../../constants/badge';
 
 const BadgeSlots = ({ equippedBadges = [], onSlotClick, onUnequip, editable = false, compact = false }) => {
     const slots = [1, 2, 3, 4, 5];

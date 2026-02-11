@@ -7,7 +7,6 @@ import com.example.engTest.mapper.BookChapterMapper;
 import com.example.engTest.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,24 +15,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProgressService {
 
+    /** 0회차 수기 진행분으로 간주하는 seqNo 임계값 */
+    private static final int MANUAL_COMPLETION_THRESHOLD = 2;
+
     private final BookChapterMapper bookChapterMapper;
     private final UserMapper userMapper;
-
-    public List<BookChapter> getAllChaptersWithUsage() {
-        return bookChapterMapper.findAllWithUsage();
-    }
-
-    public List<BookChapter> getChaptersByRoundId(Long roundId) {
-        return bookChapterMapper.findByRoundId(roundId);
-    }
-
-    @Transactional
-    public void setRoundChapters(Long roundId, List<Long> chapterIds) {
-        bookChapterMapper.deleteRoundChapters(roundId);
-        if (chapterIds != null && !chapterIds.isEmpty()) {
-            bookChapterMapper.insertRoundChapters(roundId, chapterIds);
-        }
-    }
 
     public ProgressData getUserProgress(Long userId) {
         User user = userMapper.findById(userId);
@@ -66,7 +52,7 @@ public class ProgressService {
                 List<ProgressData.ChapterStatus> chapterStatuses = new ArrayList<>();
                 for (BookChapter ch : partEntry.getValue()) {
                     boolean isCompleted = completedSet.contains(ch.getId());
-                    boolean isManual = ch.getSeqNo() <= 2; // 0회차 수기 진행분
+                    boolean isManual = ch.getSeqNo() <= MANUAL_COMPLETION_THRESHOLD;
                     if (isCompleted || isManual) completedCount++;
                     chapterStatuses.add(ProgressData.ChapterStatus.builder()
                             .chapterId(ch.getId())

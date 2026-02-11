@@ -1,14 +1,4 @@
-const RARITY_COLORS = {
-    RARE: '#3b82f6',
-    EPIC: '#8b5cf6',
-    LEGENDARY: '#fbbf24',
-};
-
-const RARITY_LABELS = {
-    RARE: 'Rare',
-    EPIC: 'Epic',
-    LEGENDARY: 'Legendary',
-};
+import { RARITY_COLORS, RARITY_LABELS } from '../../constants/badge';
 
 const BadgeSelectModal = ({ isOpen, slotNumber, badges = [], equippedBadges = [], onSelect, onClose }) => {
     if (!isOpen) return null;

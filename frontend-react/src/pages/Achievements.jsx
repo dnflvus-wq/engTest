@@ -5,6 +5,7 @@ import { LoadingSpinner } from '../components/common';
 import BadgeSlots from '../components/achievements/BadgeSlots';
 import BadgeSelectModal from '../components/achievements/BadgeSelectModal';
 import api from '../utils/api';
+import { TIER_COLORS, TIER_ORDER } from '../constants/badge';
 
 const CATEGORIES = [
     { id: 'FIRST_STEPS', name: '첫 걸음', icon: 'fa-seedling', color: '#10b981' },
@@ -19,12 +20,6 @@ const CATEGORIES = [
     { id: 'HIDDEN', name: '숨겨진 업적', icon: 'fa-question', color: '#6b7280' },
     { id: 'LEGEND', name: '레전드', icon: 'fa-crown', color: '#fbbf24' },
 ];
-
-const TIER_COLORS = {
-    BRONZE: '#cd7f32', SILVER: '#c0c0c0', GOLD: '#ffd700', DIAMOND: '#b9f2ff'
-};
-
-const TIER_ORDER = ['BRONZE', 'SILVER', 'GOLD', 'DIAMOND'];
 
 const getTierIndex = (tier) => TIER_ORDER.indexOf(tier);
 

@@ -3,12 +3,14 @@ package com.example.engTest.service;
 import com.example.engTest.dto.VocabularyWord;
 import com.example.engTest.mapper.VocabularyMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VocabularyService {
@@ -59,7 +61,7 @@ public class VocabularyService {
                 phoneticsMap = geminiService.generatePhonetics(englishWordsToGenerate);
             } catch (Exception e) {
                 // 발음기호 생성 실패 시 로그를 남기고 빈 맵으로 진행 (단어 저장은 문제없게)
-                System.err.println("Failed to generate phonetics: " + e.getMessage());
+                log.warn("Failed to generate phonetics: {}", e.getMessage());
             }
         }
 

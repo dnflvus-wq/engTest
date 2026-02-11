@@ -37,6 +37,8 @@ public class GeminiService {
 
     private static final String UPLOAD_DIR = "uploads/";
 
+    // ========== Public API Methods ==========
+
     /**
      * AI를 사용하여 영어 문제 자동 생성
      */
@@ -54,19 +56,11 @@ public class GeminiService {
     /**
      * 이미지 기반 채점 (Vision API로 손글씨 인식 + 정답 비교)
      */
-    /**
-     * 이미지 기반 채점 (Vision API로 손글씨 인식 + 정답 비교)
-     */
     public GradeResult gradeImageAnswer(MultipartFile image, String promptTemplate, String correctAnswer)
             throws IOException {
-        // 이미지 저장
         String imagePath = saveImage(image);
-
-        // 이미지를 Base64로 인코딩
         String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
         String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
-
-        // Gemini Vision으로 이미지 분석 및 채점
         String prompt = String.format(promptTemplate, correctAnswer);
 
         try {
@@ -79,9 +73,6 @@ public class GeminiService {
     }
 
     /**
-     * 텍스트 기반 채점 (유사도 비교)
-     */
-    /**
      * 텍스트 기반 채점 (AI 사용 - 철자 엄격, 대소문자/띄어쓰기 무시)
      */
     public GradeResult gradeTextAnswer(String userAnswer, String correctAnswer) {
@@ -89,7 +80,6 @@ public class GeminiService {
             return new GradeResult(userAnswer, false, "답을 입력하지 않았습니다.", null);
         }
 
-        // 프롬프트 생성
         String prompt = String.format("""
                 당신은 영어 시험 채점관입니다.
                 다음 사용자의 답안을 정답과 비교하여 채점해주세요.
@@ -119,7 +109,6 @@ public class GeminiService {
             return parseGradeResult(response, correctAnswer, null);
         } catch (Exception e) {
             log.error("AI grading failed, falling back to simple check", e);
-            // Fallback: Simple string matching
             String n1 = normalizeText(userAnswer);
             String n2 = normalizeText(correctAnswer);
             boolean simpleCorrect = n1.equals(n2);
@@ -128,9 +117,6 @@ public class GeminiService {
         }
     }
 
-    /**
-     * 이미지 파일 저장
-     */
     public String saveImage(MultipartFile file) throws IOException {
         Path uploadPath = Paths.get(UPLOAD_DIR);
         if (!Files.exists(uploadPath)) {
@@ -144,22 +130,18 @@ public class GeminiService {
 
         String filename = UUID.randomUUID() + extension;
         Path filePath = uploadPath.resolve(filename);
-
         Files.copy(file.getInputStream(), filePath);
-
         return filePath.toString();
     }
 
     /**
      * 이미지들에서 영어 단어/문장 추출
-     * 모든 이미지를 한 번에 Gemini에 전송하여 번호 매칭이 가능하도록 함
      */
     public List<String> extractWordsFromImages(List<MultipartFile> images, String customPrompt) throws IOException {
         if (images == null || images.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // 모든 이미지를 Base64로 변환
         List<Map<String, Object>> imageParts = new ArrayList<>();
         for (MultipartFile image : images) {
             String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
@@ -175,7 +157,6 @@ public class GeminiService {
         }
 
         try {
-            // 모든 이미지를 한 번에 전송
             String response = callGeminiWithMultipleImages(customPrompt, imageParts);
             return parseExtractedWords(response);
         } catch (Exception e) {
@@ -212,7 +193,6 @@ public class GeminiService {
             questionInfo.append(String.format("%d번: 정답=%s\n", i + 1, q.getAnswer()));
         }
 
-        // 프론트엔드에서 받은 템플릿에 문제 정보 주입
         String prompt = String.format(promptTemplate, questionInfo);
 
         try {
@@ -225,7 +205,7 @@ public class GeminiService {
     }
 
     /**
-     * 오프라인 답안지 이미지에서 OCR로 답안만 추출 (채점 없음)
+     * 오프라인 답안지 이미지에서 OCR로 답안만 추출
      */
     public List<OcrResult> extractAnswersFromImage(MultipartFile answerSheet, int questionCount) throws IOException {
         String base64Image = Base64.getEncoder().encodeToString(answerSheet.getBytes());
@@ -258,46 +238,6 @@ public class GeminiService {
             throw new RuntimeException("답안 추출에 실패했습니다: " + e.getMessage());
         }
     }
-
-    /**
-     * OCR 결과 파싱
-     */
-    private List<OcrResult> parseOcrResults(String response) throws Exception {
-        JsonNode root = objectMapper.readTree(response);
-        JsonNode candidates = root.path("candidates");
-
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
-        }
-
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String jsonContent = content.asText();
-
-        if (jsonContent.contains("```")) {
-            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
-        }
-
-        JsonNode resultsArray = objectMapper.readTree(jsonContent);
-
-        List<OcrResult> results = new ArrayList<>();
-        for (JsonNode r : resultsArray) {
-            int questionNumber = r.path("questionNumber").asInt();
-            String userAnswer = r.path("userAnswer").asText("");
-            results.add(new OcrResult(questionNumber, userAnswer));
-        }
-
-        return results;
-    }
-
-    /**
-     * OCR 결과를 담는 레코드
-     */
-    public record OcrResult(
-            int questionNumber,
-            String userAnswer) {
-    }
-
-    // ========== Private Methods ==========
 
     /**
      * 단어 목록에 대한 발음기호 생성
@@ -335,45 +275,69 @@ public class GeminiService {
         }
     }
 
-    private Map<String, String> parsePhonetics(String response) throws Exception {
+    // ========== Gemini Response Parsing Helpers ==========
+
+    /**
+     * Gemini 응답에서 텍스트 콘텐츠를 추출하고 마크다운 코드블록을 제거하여 JSON 문자열 반환
+     */
+    private String extractJsonFromResponse(String response) throws Exception {
         JsonNode root = objectMapper.readTree(response);
         JsonNode candidates = root.path("candidates");
-
         if (!candidates.isArray() || candidates.isEmpty()) {
-            return new HashMap<>();
+            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
+        }
+        String text = candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+        if (text.contains("```")) {
+            text = text.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+        }
+        return text;
+    }
+
+    /**
+     * Gemini 응답에서 텍스트 콘텐츠만 추출 (JSON 파싱 불필요한 경우)
+     */
+    private String extractTextFromResponse(String response) throws Exception {
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode candidates = root.path("candidates");
+        if (!candidates.isArray() || candidates.isEmpty()) {
+            return null;
+        }
+        return candidates.get(0).path("content").path("parts").get(0).path("text").asText();
+    }
+
+    private List<OcrResult> parseOcrResults(String response) throws Exception {
+        String jsonContent = extractJsonFromResponse(response);
+        JsonNode resultsArray = objectMapper.readTree(jsonContent);
+
+        List<OcrResult> results = new ArrayList<>();
+        for (JsonNode r : resultsArray) {
+            results.add(new OcrResult(r.path("questionNumber").asInt(), r.path("userAnswer").asText("")));
+        }
+        return results;
+    }
+
+    private Map<String, String> parsePhonetics(String response) throws Exception {
+        String text = extractTextFromResponse(response);
+        if (text == null) return new HashMap<>();
+
+        if (text.contains("```")) {
+            text = text.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
         }
 
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String jsonContent = content.asText();
-
-        if (jsonContent.contains("```")) {
-            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
-        }
-
-        JsonNode jsonNode = objectMapper.readTree(jsonContent);
+        JsonNode jsonNode = objectMapper.readTree(text);
         Map<String, String> result = new HashMap<>();
-
         Iterator<Map.Entry<String, JsonNode>> fields = jsonNode.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> field = fields.next();
             result.put(field.getKey(), field.getValue().asText());
         }
-
         return result;
     }
 
     private List<String> parseExtractedWords(String response) throws Exception {
-        JsonNode root = objectMapper.readTree(response);
-        JsonNode candidates = root.path("candidates");
+        String textContent = extractTextFromResponse(response);
+        if (textContent == null) return new ArrayList<>();
 
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String textContent = content.asText();
-
-        // 마크다운 코드 블록 제거 (혹시 모델이 넣었을 경우)
         if (textContent.contains("```")) {
             textContent = textContent.replaceAll("```(\\w+)?", "").replaceAll("```", "");
         }
@@ -383,36 +347,17 @@ public class GeminiService {
 
         for (String line : lines) {
             line = line.trim();
-            if (line.isEmpty())
-                continue;
-
-            // "영어:한글" 형식 파싱 (콜론이 없는 경우도 일단 추가할지, 아니면 엄격하게 할지 고민)
-            // 일단 단순하게 라인 자체를 추가하되, 불필요한 기호(글머리 기호 등)가 있다면 제거
-            line = line.replaceAll("^[-*•\\d.]+\\s*", ""); // 글머리 기호 제거
-
+            if (line.isEmpty()) continue;
+            line = line.replaceAll("^[-*•\\d.]+\\s*", "");
             if (!line.isEmpty()) {
                 words.add(line);
             }
         }
-
         return words;
     }
 
     private List<Question> parseQuestionsWithType(String response, Long roundId, String difficulty) throws Exception {
-        JsonNode root = objectMapper.readTree(response);
-        JsonNode candidates = root.path("candidates");
-
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
-        }
-
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String jsonContent = content.asText();
-
-        if (jsonContent.contains("```")) {
-            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
-        }
-
+        String jsonContent = extractJsonFromResponse(response);
         JsonNode questionsArray = objectMapper.readTree(jsonContent);
 
         List<Question> questions = new ArrayList<>();
@@ -429,7 +374,6 @@ public class GeminiService {
                 options.add(opt.asText());
             }
 
-            // 객관식이면 정답 포함하여 셔플
             if ("CHOICE".equals(answerType) && !options.isEmpty()) {
                 options.add(answer);
                 Collections.shuffle(options);
@@ -450,52 +394,86 @@ public class GeminiService {
 
             questions.add(question);
         }
-
         return questions;
     }
 
     private List<OfflineGradeResult> parseOfflineGradeResults(String response) throws Exception {
-        JsonNode root = objectMapper.readTree(response);
-        JsonNode candidates = root.path("candidates");
-
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
-        }
-
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String jsonContent = content.asText();
-
-        if (jsonContent.contains("```")) {
-            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
-        }
-
+        String jsonContent = extractJsonFromResponse(response);
         JsonNode resultsArray = objectMapper.readTree(jsonContent);
 
         List<OfflineGradeResult> results = new ArrayList<>();
         for (JsonNode r : resultsArray) {
-            int questionNumber = r.path("questionNumber").asInt();
-            String userAnswer = r.path("userAnswer").asText("");
-            boolean isCorrect = r.path("isCorrect").asBoolean(false);
-            String feedback = r.path("feedback").asText("");
-
-            results.add(new OfflineGradeResult(questionNumber, userAnswer, isCorrect, feedback));
+            results.add(new OfflineGradeResult(
+                    r.path("questionNumber").asInt(),
+                    r.path("userAnswer").asText(""),
+                    r.path("isCorrect").asBoolean(false),
+                    r.path("feedback").asText("")));
         }
-
         return results;
     }
 
-    // ========== Original Private Methods ==========
+    private List<Question> parseQuestions(String response, Long roundId, String questionType) throws Exception {
+        String jsonContent = extractJsonFromResponse(response);
+        JsonNode questionsArray = objectMapper.readTree(jsonContent);
 
-    private String callGemini(String prompt) {
+        List<Question> questions = new ArrayList<>();
+        int seqNo = questionMapper.getMaxSeqNo(roundId) + 1;
+
+        for (JsonNode q : questionsArray) {
+            String questionText = q.path("questionText").asText();
+            String answer = q.path("answer").asText();
+
+            JsonNode optionsNode = q.path("options");
+            List<String> options = new ArrayList<>();
+            for (JsonNode opt : optionsNode) {
+                options.add(opt.asText());
+            }
+
+            options.add(answer);
+            Collections.shuffle(options);
+
+            Question question = Question.builder()
+                    .roundId(roundId)
+                    .questionType(questionType)
+                    .questionText(questionText)
+                    .answer(answer)
+                    .option1(options.size() > 0 ? options.get(0) : null)
+                    .option2(options.size() > 1 ? options.get(1) : null)
+                    .option3(options.size() > 2 ? options.get(2) : null)
+                    .option4(options.size() > 3 ? options.get(3) : null)
+                    .seqNo(seqNo++)
+                    .build();
+
+            questions.add(question);
+        }
+        return questions;
+    }
+
+    private GradeResult parseGradeResult(String response, String correctAnswer, String imagePath) throws Exception {
+        String jsonContent = extractJsonFromResponse(response);
+        JsonNode result = objectMapper.readTree(jsonContent);
+
+        String extractedText = result.path("extractedText").asText("");
+        boolean isCorrect = result.path("isCorrect").asBoolean(false);
+        String feedback = result.path("feedback").asText("");
+
+        return new GradeResult(extractedText, isCorrect, feedback, imagePath);
+    }
+
+    // ========== Gemini API Call Methods ==========
+
+    private String getGeminiApiUrl() {
         String apiKey = apiConfig.getGemini().getKey();
-        String model = apiConfig.getGemini().getModel();
-        String baseUrl = apiConfig.getGemini().getUrl();
-
         if (apiKey == null || apiKey.isEmpty()) {
             throw new RuntimeException("Gemini API 키가 설정되지 않았습니다.");
         }
+        String model = apiConfig.getGemini().getModel();
+        String baseUrl = apiConfig.getGemini().getUrl();
+        return String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
+    }
 
-        String url = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
+    private String callGemini(String prompt) {
+        String url = getGeminiApiUrl();
 
         Map<String, Object> textPart = new HashMap<>();
         textPart.put("text", prompt);
@@ -521,21 +499,11 @@ public class GeminiService {
     }
 
     private String callGeminiWithImage(String prompt, String base64Image, String mimeType) {
-        String apiKey = apiConfig.getGemini().getKey();
-        String model = apiConfig.getGemini().getModel();
-        String baseUrl = apiConfig.getGemini().getUrl();
+        String url = getGeminiApiUrl();
 
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new RuntimeException("Gemini API 키가 설정되지 않았습니다.");
-        }
-
-        String url = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
-
-        // 텍스트 파트
         Map<String, Object> textPart = new HashMap<>();
         textPart.put("text", prompt);
 
-        // 이미지 파트
         Map<String, Object> inlineData = new HashMap<>();
         inlineData.put("mimeType", mimeType);
         inlineData.put("data", base64Image);
@@ -568,25 +536,12 @@ public class GeminiService {
         return response;
     }
 
-    /**
-     * 여러 이미지를 한 번에 Gemini에 전송 (번호 매칭을 위해)
-     */
     private String callGeminiWithMultipleImages(String prompt, List<Map<String, Object>> imageParts) {
-        String apiKey = apiConfig.getGemini().getKey();
-        String model = apiConfig.getGemini().getModel();
-        String baseUrl = apiConfig.getGemini().getUrl();
+        String url = getGeminiApiUrl();
 
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new RuntimeException("Gemini API 키가 설정되지 않았습니다.");
-        }
-
-        String url = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
-
-        // 텍스트 파트
         Map<String, Object> textPart = new HashMap<>();
         textPart.put("text", prompt);
 
-        // parts 리스트 구성: 텍스트 + 모든 이미지들
         List<Map<String, Object>> parts = new ArrayList<>();
         parts.add(textPart);
         parts.addAll(imageParts);
@@ -616,84 +571,6 @@ public class GeminiService {
         return response;
     }
 
-    private List<Question> parseQuestions(String response, Long roundId, String questionType) throws Exception {
-        JsonNode root = objectMapper.readTree(response);
-        JsonNode candidates = root.path("candidates");
-
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
-        }
-
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String jsonContent = content.asText();
-
-        // JSON 배열 추출 (마크다운 코드 블록 제거)
-        if (jsonContent.contains("```")) {
-            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
-        }
-
-        JsonNode questionsArray = objectMapper.readTree(jsonContent);
-
-        List<Question> questions = new ArrayList<>();
-        int seqNo = questionMapper.getMaxSeqNo(roundId) + 1;
-
-        for (JsonNode q : questionsArray) {
-            String questionText = q.path("questionText").asText();
-            String answer = q.path("answer").asText();
-
-            JsonNode optionsNode = q.path("options");
-            List<String> options = new ArrayList<>();
-            for (JsonNode opt : optionsNode) {
-                options.add(opt.asText());
-            }
-
-            // 정답을 포함하여 4개 보기 만들기 (셔플)
-            options.add(answer);
-            Collections.shuffle(options);
-
-            Question question = Question.builder()
-                    .roundId(roundId)
-                    .questionType(questionType)
-                    .questionText(questionText)
-                    .answer(answer)
-                    .option1(options.size() > 0 ? options.get(0) : null)
-                    .option2(options.size() > 1 ? options.get(1) : null)
-                    .option3(options.size() > 2 ? options.get(2) : null)
-                    .option4(options.size() > 3 ? options.get(3) : null)
-                    .seqNo(seqNo++)
-                    .build();
-
-            questions.add(question);
-        }
-
-        return questions;
-    }
-
-    private GradeResult parseGradeResult(String response, String correctAnswer, String imagePath) throws Exception {
-        JsonNode root = objectMapper.readTree(response);
-        JsonNode candidates = root.path("candidates");
-
-        if (!candidates.isArray() || candidates.isEmpty()) {
-            throw new RuntimeException("Gemini 응답에서 candidates를 찾을 수 없습니다.");
-        }
-
-        JsonNode content = candidates.get(0).path("content").path("parts").get(0).path("text");
-        String jsonContent = content.asText();
-
-        // JSON 추출 (마크다운 코드 블록 제거)
-        if (jsonContent.contains("```")) {
-            jsonContent = jsonContent.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
-        }
-
-        JsonNode result = objectMapper.readTree(jsonContent);
-
-        String extractedText = result.path("extractedText").asText("");
-        boolean isCorrect = result.path("isCorrect").asBoolean(false);
-        String feedback = result.path("feedback").asText("");
-
-        return new GradeResult(extractedText, isCorrect, feedback, imagePath);
-    }
-
     private String normalizeText(String text) {
         return text.toLowerCase()
                 .replaceAll("[^a-z0-9\\s]", "")
@@ -703,9 +580,6 @@ public class GeminiService {
 
     // ========== Inner Classes ==========
 
-    /**
-     * 채점 결과를 담는 레코드
-     */
     public record GradeResult(
             String extractedText,
             boolean isCorrect,
@@ -713,13 +587,15 @@ public class GeminiService {
             String imagePath) {
     }
 
-    /**
-     * 오프라인 채점 결과를 담는 레코드
-     */
     public record OfflineGradeResult(
             int questionNumber,
             String userAnswer,
             boolean isCorrect,
             String feedback) {
+    }
+
+    public record OcrResult(
+            int questionNumber,
+            String userAnswer) {
     }
 }

@@ -40,10 +40,6 @@ public class QuestionService {
         questionMapper.deleteByRoundId(roundId);
     }
 
-    public int countByRoundId(Long roundId) {
-        return questionMapper.countByRoundId(roundId);
-    }
-
     public List<Question> getQuestionsByRoundIds(List<Long> roundIds) {
         return questionMapper.findByRoundIds(roundIds);
     }

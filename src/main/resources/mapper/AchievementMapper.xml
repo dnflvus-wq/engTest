@@ -243,14 +243,6 @@
         ORDER BY submitted_at DESC
     </select>
 
-    <select id="getMaxExamsInOneDay" resultType="int">
-        SELECT COALESCE(MAX(cnt), 0) FROM (
-            SELECT COUNT(*) as cnt FROM exams
-            WHERE user_id = #{userId} AND status = 'COMPLETED'
-            GROUP BY DATE(submitted_at)
-        ) t
-    </select>
-
     <select id="countFullParticipationRounds" resultType="int">
         SELECT COUNT(*) FROM (
             SELECT round_id FROM exams WHERE status = 'COMPLETED'
@@ -269,19 +261,6 @@
             WHERE e2.round_id = e1.round_id AND e2.user_id != e1.user_id
             AND e2.status = 'COMPLETED' AND e2.correct_count = e1.correct_count
         )
-    </select>
-
-    <select id="getLastSecondPattern" resultType="map">
-        SELECT
-            (SELECT COUNT(*) FROM exam_answers ea
-             JOIN questions q ON ea.question_id = q.id
-             WHERE ea.exam_id = #{examId} AND ea.is_correct = TRUE
-             AND q.seq_no > #{totalCount} - 5) as last5_correct,
-            (SELECT COUNT(*) FROM exam_answers ea
-             JOIN questions q ON ea.question_id = q.id
-             WHERE ea.exam_id = #{examId} AND ea.is_correct = TRUE
-             AND q.seq_no &lt;= #{totalCount} / 2) as first_half_correct,
-            #{totalCount} / 2 as half_count
     </select>
 
 </mapper>

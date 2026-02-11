@@ -75,7 +75,7 @@ public class ExamController {
 
             Long userId = Long.valueOf(String.valueOf(request.get("userId")));
             Long roundId = Long.valueOf(String.valueOf(request.get("roundId")));
-            String mode = (String) request.getOrDefault("mode", "ONLINE"); // 기본값 ONLINE
+            String mode = (String) request.getOrDefault("mode", "ONLINE");
 
             Exam exam = examService.startExam(userId, roundId, mode);
             return ResponseEntity.ok(exam);
@@ -98,13 +98,10 @@ public class ExamController {
             @RequestParam("image") MultipartFile image,
             @RequestParam("prompt") String prompt) {
         try {
-            // 정답 확인
             Question question = questionService.getQuestionById(questionId);
 
-            // Gemini Vision으로 이미지 채점
             GeminiService.GradeResult result = geminiService.gradeImageAnswer(image, prompt, question.getAnswer());
 
-            // 답안 저장
             examService.submitAnswer(examId, questionId, result.extractedText(), result.extractedText(),
                     result.isCorrect());
 
@@ -128,14 +125,10 @@ public class ExamController {
             @RequestBody Map<String, String> request) {
         try {
             String userAnswer = request.get("answer");
-
-            // 정답 확인
             Question question = questionService.getQuestionById(questionId);
 
-            // Gemini로 텍스트 채점
             GeminiService.GradeResult result = geminiService.gradeTextAnswer(userAnswer, question.getAnswer());
 
-            // 답안 저장
             examService.submitAnswer(examId, questionId, userAnswer, null, result.isCorrect());
 
             return ResponseEntity.ok(Map.of(
@@ -186,77 +179,55 @@ public class ExamController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 오프라인 답안지 OCR (답안 추출만, 채점 X)
-     */
     @PostMapping("/{examId}/ocr")
     @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안 OCR 추출", description = "오프라인 답안지 이미지를 업로드하여 답안 텍스트만 추출합니다 (채점 X).")
     public ResponseEntity<?> extractAnswersFromImage(
             @PathVariable("examId") Long examId,
             @RequestParam("answerSheet") MultipartFile answerSheet) {
         try {
-            Exam exam = examService.getExamById(examId);
-            if (exam == null) {
-                return ResponseEntity.notFound().build();
-            }
+            ExamWithQuestions ew = getExamWithQuestions(examId);
+            if (ew == null) return ResponseEntity.notFound().build();
 
-            // 해당 회차의 문제 수 조회
-            List<Question> questions = questionService.getQuestionsByRoundId(exam.getRoundId());
-
-            // Gemini로 OCR 수행 (채점 없이 답안만 추출)
             List<GeminiService.OcrResult> ocrResults = geminiService.extractAnswersFromImage(answerSheet,
-                    questions.size());
+                    ew.questions.size());
 
             return ResponseEntity.ok(Map.of(
                     "examId", examId,
                     "ocrResults", ocrResults,
-                    "questionCount", questions.size()));
+                    "questionCount", ew.questions.size()));
         } catch (Exception e) {
             log.error("Failed to extract answers from image", e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
-    /**
-     * 사용자 확인/수정된 오프라인 답안 채점
-     */
     @PostMapping("/{examId}/submit-offline-graded")
     @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안 최종 제출", description = "OCR 후 사용자가 검토한 답안을 최종 제출하고 채점합니다.")
     public ResponseEntity<?> submitOfflineGradedAnswers(
             @PathVariable("examId") Long examId,
             @RequestBody List<Map<String, Object>> answers) {
         try {
-            Exam exam = examService.getExamById(examId);
-            if (exam == null) {
-                return ResponseEntity.notFound().build();
-            }
+            ExamWithQuestions ew = getExamWithQuestions(examId);
+            if (ew == null) return ResponseEntity.notFound().build();
 
-            // 해당 회차의 문제 목록 조회
-            List<Question> questions = questionService.getQuestionsByRoundId(exam.getRoundId());
-
-            // 입력을 OfflineAnswerInput으로 변환
             List<ExamService.OfflineAnswerInput> answerInputs = answers.stream()
                     .map(a -> new ExamService.OfflineAnswerInput(
                             ((Number) a.get("questionNumber")).intValue(),
                             (String) a.get("userAnswer")))
                     .toList();
 
-            // 정규화 비교로 채점
-            Exam completedExam = examService.gradeOfflineAnswers(examId, answerInputs, questions);
+            Exam completedExam = examService.gradeOfflineAnswers(examId, answerInputs, ew.questions);
 
             return ResponseEntity.ok(Map.of(
                     "exam", completedExam,
                     "correctCount", completedExam.getCorrectCount(),
-                    "totalCount", questions.size()));
+                    "totalCount", ew.questions.size()));
         } catch (Exception e) {
             log.error("Failed to grade offline answers", e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
-    /**
-     * 오프라인 답안지 제출 및 채점 (레거시 - 이전 방식 호환용)
-     */
     @PostMapping("/{examId}/submit-offline")
     @io.swagger.v3.oas.annotations.Operation(summary = "오프라인 답안지 제출 (구버전)", description = "[Legacy] 답안지 이미지를 업로드하여 즉시 채점합니다.")
     public ResponseEntity<?> submitOfflineAnswerSheet(
@@ -264,41 +235,35 @@ public class ExamController {
             @RequestParam("answerSheet") MultipartFile answerSheet,
             @RequestParam("prompt") String prompt) {
         try {
-            Exam exam = examService.getExamById(examId);
-            if (exam == null) {
-                return ResponseEntity.notFound().build();
-            }
+            ExamWithQuestions ew = getExamWithQuestions(examId);
+            if (ew == null) return ResponseEntity.notFound().build();
 
-            // 해당 회차의 문제 목록 조회
-            List<Question> questions = questionService.getQuestionsByRoundId(exam.getRoundId());
-
-            // Gemini로 답안지 채점
             List<GeminiService.OfflineGradeResult> results = geminiService.gradeOfflineAnswerSheet(answerSheet, prompt,
-                    questions);
+                    ew.questions);
 
-            // 각 답안 저장 및 정답 카운트
-            int correctCount = 0;
-            for (GeminiService.OfflineGradeResult result : results) {
-                if (result.questionNumber() > 0 && result.questionNumber() <= questions.size()) {
-                    Question question = questions.get(result.questionNumber() - 1);
-                    examService.submitAnswer(examId, question.getId(), result.userAnswer(), null, result.isCorrect());
-                    if (result.isCorrect()) {
-                        correctCount++;
-                    }
-                }
-            }
+            int correctCount = examService.saveGeminiGradeResults(examId, results, ew.questions);
 
-            // 시험 제출 처리
             Exam completedExam = examService.submitExam(examId);
 
             return ResponseEntity.ok(Map.of(
                     "exam", completedExam,
                     "results", results,
                     "correctCount", correctCount,
-                    "totalCount", questions.size()));
+                    "totalCount", ew.questions.size()));
         } catch (Exception e) {
             log.error("Failed to grade offline answer sheet", e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // === Private helpers ===
+
+    private record ExamWithQuestions(Exam exam, List<Question> questions) {}
+
+    private ExamWithQuestions getExamWithQuestions(Long examId) {
+        Exam exam = examService.getExamById(examId);
+        if (exam == null) return null;
+        List<Question> questions = questionService.getQuestionsByRoundId(exam.getRoundId());
+        return new ExamWithQuestions(exam, questions);
     }
 }

@@ -4,7 +4,7 @@ import com.example.engTest.dto.Achievement;
 import com.example.engTest.dto.AchievementProgress;
 import com.example.engTest.dto.UserAchievement;
 import com.example.engTest.mapper.AchievementMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.example.engTest.utils.TierUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class AchievementService {
             Map<String, String> existingTiers = new HashMap<>();
             for (UserAchievement ua : existing) {
                 String current = existingTiers.get(ua.getAchievementId());
-                if (current == null || compareTier(ua.getTier(), current) > 0) {
+                if (current == null || TierUtils.compareTier(ua.getTier(), current) > 0) {
                     existingTiers.put(ua.getAchievementId(), ua.getTier());
                 }
             }
@@ -82,19 +82,18 @@ public class AchievementService {
 
         // 티어 업적인 경우, 중간 티어도 모두 기록
         if (achievement.getIsTiered() != null && achievement.getIsTiered() && tier != null) {
-            String[] tierOrder = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
-            int targetIdx = indexOf(tierOrder, tier);
+            int targetIdx = TierUtils.indexOf(tier);
             for (int i = 0; i <= targetIdx; i++) {
-                UserAchievement check = achievementMapper.findUserAchievement(userId, achievement.getId(), tierOrder[i]);
+                UserAchievement check = achievementMapper.findUserAchievement(userId, achievement.getId(), TierUtils.TIER_ORDER[i]);
                 if (check == null) {
                     UserAchievement ua = UserAchievement.builder()
                             .userId(userId)
                             .achievementId(achievement.getId())
-                            .tier(tierOrder[i])
+                            .tier(TierUtils.TIER_ORDER[i])
                             .currentValue(value)
                             .build();
                     achievementMapper.insertUserAchievement(ua);
-                    log.info("Achievement unlocked: userId={}, achievement={}, tier={}", userId, achievement.getId(), tierOrder[i]);
+                    log.info("Achievement unlocked: userId={}, achievement={}, tier={}", userId, achievement.getId(), TierUtils.TIER_ORDER[i]);
                 }
             }
         } else {
@@ -125,15 +124,14 @@ public class AchievementService {
     private void updateProgress(Long userId, Achievement achievement, int currentValue) {
         if (achievement.getIsTiered() == null || !achievement.getIsTiered()) return;
 
-        Map<String, Integer> thresholds = parseThresholds(achievement.getTierThresholds());
+        Map<String, Integer> thresholds = TierUtils.parseThresholds(objectMapper, achievement.getTierThresholds());
         if (thresholds == null) return;
 
         // 다음 티어 찾기
-        String[] tierOrder = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
         String nextTier = null;
         int targetValue = 0;
 
-        for (String t : tierOrder) {
+        for (String t : TierUtils.TIER_ORDER) {
             Integer threshold = thresholds.get(t);
             if (threshold != null && currentValue < threshold) {
                 nextTier = t;
@@ -183,29 +181,5 @@ public class AchievementService {
         summary.put("goldOrAbove", achievementMapper.countGoldOrAboveByUser(userId));
         summary.put("achievementScore", achievementMapper.calcAchievementScore(userId));
         return summary;
-    }
-
-    // === 헬퍼 ===
-
-    private int compareTier(String a, String b) {
-        String[] order = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
-        return indexOf(order, a) - indexOf(order, b);
-    }
-
-    private int indexOf(String[] arr, String value) {
-        if (value == null) return -1;
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i].equals(value)) return i;
-        }
-        return -1;
-    }
-
-    private Map<String, Integer> parseThresholds(String json) {
-        if (json == null || json.isBlank()) return null;
-        try {
-            return objectMapper.readValue(json, new TypeReference<>() {});
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

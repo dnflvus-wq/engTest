@@ -3,7 +3,7 @@ package com.example.engTest.service;
 import com.example.engTest.mapper.AchievementMapper;
 import com.example.engTest.mapper.UserActionCounterMapper;
 import com.example.engTest.mapper.BookChapterMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.example.engTest.utils.TierUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -95,10 +95,10 @@ public class AchievementCheckService {
                 case "STUDY_STREAK" -> checkTiered(calcMaxConsecutiveDays(counterMapper.getDistinctDates(userId, "STUDY_PAGE_VISIT")), tierThresholds, currentTier);
 
                 // 스피드
-                case "FAST_EXAM" -> checkTieredReverse(calcFastestExam(userId), tierThresholds, currentTier);
-                case "FIRST_SUBMIT" -> checkSimple(calcFirstSubmitCount(userId) > 0 ? 1 : 0, 1, currentTier);
-                case "FIRST_SUBMIT_COUNT" -> checkTiered(calcFirstSubmitCount(userId), tierThresholds, currentTier);
-                case "SPEED_PASS" -> checkTieredReverse(calcFastestPass(userId), tierThresholds, currentTier);
+                case "FAST_EXAM" -> checkTiered(calcFastestExam(userId), tierThresholds, currentTier, true);
+                case "FIRST_SUBMIT" -> checkSimple(calcRankFirstCount(userId) > 0 ? 1 : 0, 1, currentTier);
+                case "FIRST_SUBMIT_COUNT" -> checkTiered(calcRankFirstCount(userId), tierThresholds, currentTier);
+                case "SPEED_PASS" -> checkTiered(calcFastestPass(userId), tierThresholds, currentTier, true);
                 case "SLOW_AND_STEADY" -> checkSimple(calcSlowPass(userId) ? 1 : 0, 1, currentTier);
 
                 // 경쟁
@@ -162,17 +162,27 @@ public class AchievementCheckService {
     }
 
     private CheckResult checkTiered(int value, String thresholdsJson, String currentTier) {
-        Map<String, Integer> thresholds = parseThresholds(thresholdsJson);
+        return checkTiered(value, thresholdsJson, currentTier, false);
+    }
+
+    /**
+     * 티어 체크 (reverse=true: 값이 작을수록 좋음, 스피드 업적용)
+     */
+    private CheckResult checkTiered(int value, String thresholdsJson, String currentTier, boolean reverse) {
+        if (reverse && value <= 0) return CheckResult.unchanged(0);
+        Map<String, Integer> thresholds = TierUtils.parseThresholds(objectMapper, thresholdsJson);
         if (thresholds == null) return CheckResult.unchanged(value);
 
-        String[] tierOrder = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
         String highestNew = null;
-        int currentTierIndex = currentTier != null ? indexOf(tierOrder, currentTier) : -1;
+        int currentTierIndex = TierUtils.indexOf(currentTier);
 
-        for (int i = 0; i < tierOrder.length; i++) {
-            Integer threshold = thresholds.get(tierOrder[i]);
-            if (threshold != null && value >= threshold && i > currentTierIndex) {
-                highestNew = tierOrder[i];
+        for (int i = 0; i < TierUtils.TIER_ORDER.length; i++) {
+            Integer threshold = thresholds.get(TierUtils.TIER_ORDER[i]);
+            boolean met = reverse
+                    ? (threshold != null && value <= threshold)
+                    : (threshold != null && value >= threshold);
+            if (met && i > currentTierIndex) {
+                highestNew = TierUtils.TIER_ORDER[i];
             }
         }
 
@@ -180,46 +190,6 @@ public class AchievementCheckService {
             return CheckResult.unlocked(value, highestNew);
         }
         return CheckResult.unchanged(value);
-    }
-
-    // 스피드 업적: 값이 작을수록 좋음 (역순)
-    private CheckResult checkTieredReverse(int value, String thresholdsJson, String currentTier) {
-        if (value <= 0) return CheckResult.unchanged(0);
-        Map<String, Integer> thresholds = parseThresholds(thresholdsJson);
-        if (thresholds == null) return CheckResult.unchanged(value);
-
-        String[] tierOrder = {"BRONZE", "SILVER", "GOLD", "DIAMOND"};
-        String highestNew = null;
-        int currentTierIndex = currentTier != null ? indexOf(tierOrder, currentTier) : -1;
-
-        for (int i = 0; i < tierOrder.length; i++) {
-            Integer threshold = thresholds.get(tierOrder[i]);
-            if (threshold != null && value <= threshold && i > currentTierIndex) {
-                highestNew = tierOrder[i];
-            }
-        }
-
-        if (highestNew != null) {
-            return CheckResult.unlocked(value, highestNew);
-        }
-        return CheckResult.unchanged(value);
-    }
-
-    private Map<String, Integer> parseThresholds(String json) {
-        if (json == null || json.isBlank()) return null;
-        try {
-            return objectMapper.readValue(json, new TypeReference<>() {});
-        } catch (Exception e) {
-            log.error("Failed to parse tier thresholds: {}", json, e);
-            return null;
-        }
-    }
-
-    private int indexOf(String[] arr, String value) {
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i].equals(value)) return i;
-        }
-        return -1;
     }
 
     // === 계산 헬퍼 메서드들 ===
@@ -265,26 +235,9 @@ public class AchievementCheckService {
     }
 
     private int calcPerfectStreak(Long userId) {
-        List<Integer> scores = achievementMapper.getRecentScores(userId, 100);
-        // 최근부터 연속 만점 카운트 - 여기서는 전체에서 최대 연속 찾기
-        List<Map<String, Object>> durations = achievementMapper.getExamDurations(userId);
-        int max = 0, current = 0;
-        // durations는 DESC 정렬이므로 뒤집기
-        List<Map<String, Object>> sorted = new ArrayList<>(durations);
-        Collections.reverse(sorted);
-        for (Map<String, Object> exam : sorted) {
-            Number cc = (Number) exam.get("correct_count");
-            // total_count는 ExamDurations에 없으므로 만점 판별이 어려움
-            // perfect score = countPerfectScores로 대체
-            break;
-        }
-        // 간단한 방식: 완료 시험의 is_passed, correct_count 순서대로 체크
-        // 쿼리에서 처리하는 것이 효율적이지만, 일단 scores(correct_count) 리스트에서 계산
-        // scores는 DESC 정렬 (최근부터)
-        // 만점 여부를 확인하려면 total_count도 필요 → 별도 쿼리가 이상적
-        // 단순화: countPerfectScores로 대체 (연속은 나중에 정교하게)
-        return achievementMapper.countPerfectScores(userId) > 0 ?
-                Math.min(achievementMapper.countPerfectScores(userId), 2) : 0;
+        // TODO: 연속 만점 계산은 total_count 포함 쿼리가 필요. 현재는 만점 수로 대체.
+        int count = achievementMapper.countPerfectScores(userId);
+        return count > 0 ? Math.min(count, 2) : 0;
     }
 
     private int calcPassStreak(Long userId) {
@@ -345,16 +298,6 @@ public class AchievementCheckService {
         });
     }
 
-    private int calcFirstSubmitCount(Long userId) {
-        List<Map<String, Object>> ranks = achievementMapper.getUserRanksPerRound(userId);
-        // "first submit" = 해당 라운드에서 가장 먼저 제출 → rank 1 by submitted_at
-        // 현재 rank는 점수 기준이므로, 별도 처리 필요
-        // 간단히: 랭킹 데이터에서 rank=1인 횟수로 대체 (점수 1등)
-        return (int) ranks.stream()
-                .filter(r -> r.get("user_rank") != null && ((Number) r.get("user_rank")).intValue() == 1)
-                .count();
-    }
-
     private int calcRankFirstCount(Long userId) {
         List<Map<String, Object>> ranks = achievementMapper.getUserRanksPerRound(userId);
         return (int) ranks.stream()
@@ -381,7 +324,6 @@ public class AchievementCheckService {
     }
 
     private int calcRivalWinMax(Long userId) {
-        // 간단화: 1등 횟수로 대체
         return calcRankFirstCount(userId);
     }
 
@@ -395,26 +337,18 @@ public class AchievementCheckService {
 
     private int calcBookProgress(Long userId, int bookId) {
         List<Long> completedIds = bookChapterMapper.findCompletedChapterIdsByUserId(userId);
-        int totalChapters = bookId == 1 ? 83 : 100;
-        // book_chapters에서 해당 bookId의 챕터 ID 확인 필요
-        // 간단화: completedIds에서 bookId 구분 → bookChapterMapper에 추가 쿼리 필요
-        // 현재 구조상 completedIds에 bookId 구분이 없으므로 대략적으로 계산
-        // TODO: bookChapterMapper에 findCompletedChapterIdsByUserIdAndBookId 추가
         long count = completedIds != null ? completedIds.size() : 0;
-        // 전체 183개 중에서의 비율이 아닌, bookId별로 나눠야 함
-        // 현재는 전체 진행률로 간단히 처리
+        // TODO: bookChapterMapper에 findCompletedChapterIdsByUserIdAndBookId 추가
         int total = 183; // Book1(83) + Book2(100)
         return total > 0 ? (int) (count * 100 / total) : 0;
     }
 
     private int calcChapterStreak(Long userId) {
-        // 간단화: 완료 챕터 수
         List<Long> ids = bookChapterMapper.findCompletedChapterIdsByUserId(userId);
         return ids != null ? ids.size() : 0;
     }
 
     private int calcCompletedParts(Long userId) {
-        // 간단화: 진행률 기반
         return 0; // TODO: 파트별 완료 체크 구현
     }
 
@@ -422,8 +356,6 @@ public class AchievementCheckService {
         List<Map<String, Object>> durations = achievementMapper.getExamDurations(userId);
         return durations.stream().anyMatch(d -> {
             int cc = ((Number) d.get("correct_count")).intValue();
-            // total_count가 없으므로, 짝수 점수이고 절반인지 체크 불가
-            // 간단화: correct_count가 15인 경우 (30문제 기준)
             return cc == 15;
         });
     }
