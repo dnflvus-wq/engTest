@@ -5,7 +5,7 @@ import api from '../../utils/api';
 
 const CreateRound = () => {
     const navigate = useNavigate();
-    const { loadRounds } = useOutletContext();
+    const { rounds, loadRounds } = useOutletContext();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
@@ -48,6 +48,22 @@ const CreateRound = () => {
         }));
     }, [chapters]);
 
+    // chapterTitle에서 핵심 키워드 추출
+    const extractKeyword = (ch) => {
+        const title = ch.chapterTitle;
+        if (!title) return ch.chapterLabel;
+
+        if (ch.bookId === 2) {
+            // Book 2: 한글 부분 추출 (영어 앞) → "나에 대해", "하루 루틴"
+            const match = title.match(/^(.+?)\s+[A-Z]/);
+            return match ? match[1].trim() : title;
+        }
+
+        // Book 1: 문법 키워드 추출 → "get", "have", "현재/be+-ing/be going to"
+        const match = title.match(/^(.+?)\s+(?:[가-힣].*(?:말하기|물어보기|묘사하기))/);
+        return match ? match[1].trim() : title;
+    };
+
     // 선택 변경 시 자동 제목 생성
     useEffect(() => {
         if (titleManuallyEdited || selectedIds.size === 0) return;
@@ -59,36 +75,26 @@ const CreateRound = () => {
             byBook[ch.bookId].push(ch);
         });
 
-        const parts = [];
-        for (const [bookId, chs] of Object.entries(byBook)) {
-            if (bookId === '1') {
-                const byPart = {};
-                chs.forEach(c => {
-                    if (!byPart[c.partNumber]) byPart[c.partNumber] = [];
-                    byPart[c.partNumber].push(c);
-                });
-                const partStrs = Object.entries(byPart).map(([pn, pChs]) => {
-                    const labels = pChs.map(c => c.chapterLabel.replace('Unit ', 'U'));
-                    return `P${pn}:${labels.join(',')}`;
-                });
-                parts.push(partStrs.join(' '));
-            } else {
-                const labels = chs.map(c => c.chapterLabel.replace('Day ', 'D'));
-                parts.push(labels.join(','));
-            }
+        // 제목: 회차번호 + 키워드 (예: "5. get, have / 나에 대해, 하루 루틴")
+        const nextNum = (rounds?.length || 0) + 1;
+        const titleParts = [];
+        for (const [, chs] of Object.entries(byBook)) {
+            titleParts.push(chs.map(c => extractKeyword(c)).join(', '));
         }
+        setTitle(`${nextNum}. ${titleParts.join(' / ')}`);
 
-        setTitle(parts.join(' / '));
-
-        // 설명도 자동 생성
+        // 설명: 라벨 + 키워드 (예: "[1분 영어 말하기] Unit 01 (get), Unit 02 (have)")
         const descParts = [];
         for (const [bookId, chs] of Object.entries(byBook)) {
             const bookTitle = bookId === '1' ? '1분 영어 말하기' : '프리토킹 100일';
-            const chapterNames = chs.map(c => `${c.chapterLabel}`).join(', ');
+            const chapterNames = chs.map(c => {
+                const kw = extractKeyword(c);
+                return `${c.chapterLabel} (${kw})`;
+            }).join(', ');
             descParts.push(`[${bookTitle}] ${chapterNames}`);
         }
         setDescription(descParts.join('\n'));
-    }, [selectedIds, chapters, titleManuallyEdited]);
+    }, [selectedIds, chapters, rounds, titleManuallyEdited]);
 
     const toggleChapter = (id, usedInRound) => {
         if (usedInRound) return;

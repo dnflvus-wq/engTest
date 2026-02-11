@@ -13,6 +13,7 @@ const ExamList = () => {
     const [filteredRounds, setFilteredRounds] = useState([]);
     const [filter, setFilter] = useState('ALL');
     const [loading, setLoading] = useState(true);
+    const [userBadges, setUserBadges] = useState({});
 
     useEffect(() => {
         loadRounds();
@@ -38,6 +39,11 @@ const ExamList = () => {
             );
 
             setAllRounds(roundsWithParticipants);
+
+            try {
+                const badgeData = await api.get('/badges/equipped/all');
+                setUserBadges(badgeData || {});
+            } catch { /* badges optional */ }
         } catch (error) {
             console.error('Error fetching rounds:', error);
         } finally {
@@ -139,10 +145,35 @@ const ExamList = () => {
                                                     statusText = 'In Progress';
                                                     statusClass = 'status-in-progress';
                                                 }
+                                                const badges = userBadges[p.userId] || [];
+                                                const topBadges = badges.slice(0, 3);
+                                                const extraCount = badges.length > 3 ? badges.length - 3 : 0;
+
                                                 return (
-                                                    <span key={idx} className={`participant-badge ${statusClass}`}>
-                                                        {p.userName} - {statusText}
-                                                    </span>
+                                                    <div key={idx} className={`participant-badge ${statusClass}`} style={{ display: 'block', width: '100%', padding: '0.6rem 0.8rem' }}>
+                                                        <div className="participant-row">
+                                                            <div className="participant-info">
+                                                                <span className="participant-name">{p.userName}</span>
+                                                                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>{statusText}</span>
+                                                            </div>
+                                                            {badges.length > 0 && (
+                                                                <div className="badge-container">
+                                                                    {topBadges.map(b => (
+                                                                        <div
+                                                                            key={b.slotNumber}
+                                                                            className={`badge-slot slot-${(b.rarity || 'rare').toLowerCase()}`}
+                                                                            title={b.nameKr}
+                                                                        >
+                                                                            <i className={`fa-solid ${b.icon || 'fa-certificate'}`} />
+                                                                        </div>
+                                                                    ))}
+                                                                    {extraCount > 0 && (
+                                                                        <div className="badge-count-slot">+{extraCount}</div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 );
                                             })
                                         ) : (

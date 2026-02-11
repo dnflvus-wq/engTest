@@ -13,7 +13,7 @@ const ProfileBadges = () => {
     useEffect(() => {
         api.get('/badges/equipped')
             .then(data => setBadges(data || []))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     if (badges.length === 0) return null;
@@ -21,14 +21,14 @@ const ProfileBadges = () => {
     return (
         <div className="profile-badges-header">
             {badges.map(badge => (
-                <span
+                <div
                     key={badge.slotNumber}
-                    className={`profile-badge-icon rarity-${(badge.rarity || '').toLowerCase()}`}
+                    className={`badge-slot slot-${(badge.rarity || 'rare').toLowerCase()}`}
                     title={badge.nameKr}
+                    style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}
                 >
-                    <i className={`fa-solid ${badge.icon || 'fa-certificate'}`}
-                       style={{ color: RARITY_COLORS[badge.rarity] || '#999' }} />
-                </span>
+                    <i className={`fa-solid ${badge.icon || 'fa-certificate'}`} />
+                </div>
             ))}
         </div>
     );

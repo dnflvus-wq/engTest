@@ -30,4 +30,6 @@ public interface BadgeMapper {
     void unequipBadgeById(@Param("userId") Long userId, @Param("badgeId") String badgeId);
 
     int countUserBadges(@Param("userId") Long userId);
+
+    List<UserBadge> findAllEquippedBadges();
 }

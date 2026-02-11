@@ -15,6 +15,7 @@ const Result = () => {
     const [showRanking, setShowRanking] = useState(false);
     const [showReview, setShowReview] = useState(false);
     const [filter, setFilter] = useState('ALL');
+    const [userBadges, setUserBadges] = useState({});
 
     useEffect(() => {
         loadResultData();
@@ -35,6 +36,11 @@ const Result = () => {
                 const indexedAnswers = answersData.map((a, i) => ({ ...a, number: i + 1 }));
                 setReviewAnswers(indexedAnswers);
             } catch { /* answers optional */ }
+
+            try {
+                const badgeData = await api.get('/badges/equipped/all');
+                setUserBadges(badgeData || {});
+            } catch { /* badges optional */ }
 
         } catch (error) {
             console.error('Error loading result:', error);
@@ -106,14 +112,38 @@ const Result = () => {
                     ) : (
                         ranking.map((r, i) => {
                             const isMe = r.id === parseInt(examId);
-                            const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+                            const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'iron';
+                            const badges = userBadges[r.userId] || [];
+                            const topBadges = badges.slice(0, 3);
+                            const extraCount = badges.length > 3 ? badges.length - 3 : 0;
+
                             return (
-                                <div key={r.id} className={`ranking-item ${isMe ? 'my-rank' : ''}`}>
-                                    <div className={`ranking-position ${posClass}`}>{i + 1}</div>
-                                    <div className="ranking-info">
-                                        <div className="ranking-name">{r.userName || `User #${r.userId}`}</div>
+                                <div key={r.id} className={`rank-item ${isMe ? 'my-rank' : ''}`}>
+                                    <div className={`rank-number ${posClass}`}>{i + 1}</div>
+                                    <div className="rank-user-info">
+                                        <div className="rank-name-row">
+                                            {r.userName || `User #${r.userId}`}
+                                        </div>
+                                        <div className="ranking-detail" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                            Score: {r.score?.toFixed(1) || '0'}
+                                        </div>
                                     </div>
-                                    <div className="ranking-score">{r.score?.toFixed(1) || '0'}</div>
+                                    {badges.length > 0 && (
+                                        <div className="badge-container">
+                                            {topBadges.map(b => (
+                                                <div
+                                                    key={b.slotNumber}
+                                                    className={`badge-slot slot-${(b.rarity || 'rare').toLowerCase()}`}
+                                                    title={b.nameKr}
+                                                >
+                                                    <i className={`fa-solid ${b.icon || 'fa-certificate'}`} />
+                                                </div>
+                                            ))}
+                                            {extraCount > 0 && (
+                                                <div className="badge-count-slot">+{extraCount}</div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })

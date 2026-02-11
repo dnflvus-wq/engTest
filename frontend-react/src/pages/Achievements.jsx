@@ -214,8 +214,12 @@ const Achievements = () => {
             {/* Summary */}
             <div className="achievement-summary">
                 <div className="achievement-summary-item">
+                    <span className="achievement-summary-value">{summary?.achievementScore || 0}</span>
+                    <span className="achievement-summary-label">Score</span>
+                </div>
+                <div className="achievement-summary-item">
                     <span className="achievement-summary-value">{summary?.unlockedCount || 0}</span>
-                    <span className="achievement-summary-label">/ {summary?.totalAchievements || 74} Earned</span>
+                    <span className="achievement-summary-label">/ {summary?.totalAchievements || 0} Earned</span>
                 </div>
                 <div className="achievement-summary-item">
                     <span className="achievement-summary-value">{summary?.badgeCount || 0}</span>

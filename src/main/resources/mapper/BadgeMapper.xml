@@ -83,4 +83,12 @@
         SELECT COUNT(*) FROM user_badges WHERE user_id = #{userId}
     </select>
 
+    <select id="findAllEquippedBadges" resultMap="userBadgeResultMap">
+        SELECT ub.*, b.name_kr, b.name_en, b.icon, b.rarity, b.profile_effect, b.description_kr
+        FROM user_badges ub
+        JOIN badges b ON ub.badge_id = b.id
+        WHERE ub.slot_number IS NOT NULL
+        ORDER BY ub.user_id, ub.slot_number
+    </select>
+
 </mapper>

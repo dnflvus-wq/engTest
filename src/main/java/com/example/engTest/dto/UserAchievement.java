@@ -30,4 +30,6 @@ public class UserAchievement {
     private String category;
     private String badgeId;
     private String grantsBadgeAt;
+    private String tierThresholds;
+    private Boolean isTiered;
 }

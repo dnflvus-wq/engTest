@@ -18,4 +18,5 @@ public class UserStats {
     private BigDecimal avgScore;
     private BigDecimal maxScore;
     private Integer rank;
+    private Integer achievementScore;
 }

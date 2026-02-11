@@ -361,6 +361,19 @@ body {
     margin-top: 20px;
 }
 
+.mb-medium {
+    margin-bottom: 20px;
+}
+
+.section-heading {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* CLAY UTILITIES (Cards, Buttons, Inputs) */
 .clay-card {
     background: var(--clay-surface);
@@ -1553,6 +1566,19 @@ body {
 .ranking-name {
     font-weight: 700;
     color: var(--text-main);
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0;
+    overflow: hidden;
+}
+
+.ranking-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .ranking-detail {
@@ -1733,7 +1759,8 @@ body {
     padding: 10px;
 }
 
-.ranking-item.my-rank {
+.ranking-item.my-rank,
+.rank-item.my-rank {
     background: linear-gradient(145deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.2));
     border: 2px solid var(--primary);
 }
@@ -3943,7 +3970,8 @@ body.dark-mode .admin-vocab-table thead tr { background: var(--clay-surface); }
 
 /* Participant Status Badges */
 .participant-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 0.75rem;
@@ -5381,20 +5409,8 @@ body.dark-mode .custom-select-trigger:hover {
 /* Profile Badges in Header */
 .profile-badges-header {
     display: flex;
+    align-items: center;
     gap: 4px;
-    align-items: center;
-}
-
-.profile-badge-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.65rem;
-    background: var(--clay-surface);
-    box-shadow: var(--clay-shadow-out-sm);
 }
 
 /* Mobile Responsive */
@@ -5424,6 +5440,333 @@ body.dark-mode .custom-select-trigger:hover {
     }
 
     .profile-badges-header {
+        gap: 2px;
+    }
+}
+
+/* ============================
+   Badge Rarity Visual System
+   ============================ */
+
+/* Badge rarity keyframes */
+@keyframes badge-pulse-epic {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.4)); }
+    50% { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8)); }
+}
+
+@keyframes badge-shimmer-legendary {
+    0% { filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5)); }
+    33% { filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.9)); }
+    66% { filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.7)); }
+    100% { filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5)); }
+}
+
+@keyframes border-shimmer {
+    0% { border-color: #fbbf24; box-shadow: 0 0 6px rgba(251, 191, 36, 0.3); }
+    50% { border-color: #fde68a; box-shadow: 0 0 12px rgba(251, 191, 36, 0.6); }
+    100% { border-color: #fbbf24; box-shadow: 0 0 6px rgba(251, 191, 36, 0.3); }
+}
+
+/* Badge icon (shown in stacks) */
+.rep-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    margin-right: 0;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* Badge Stack - overlapping badge display */
+.badge-stack {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.badge-stack .rep-badge {
+    margin-right: -6px;
+    border: 2px solid var(--clay-surface);
+    position: relative;
+}
+
+.badge-stack .rep-badge:nth-child(1) { z-index: 5; }
+.badge-stack .rep-badge:nth-child(2) { z-index: 4; }
+.badge-stack .rep-badge:nth-child(3) { z-index: 3; }
+.badge-stack .rep-badge:nth-child(4) { z-index: 2; }
+.badge-stack .rep-badge:nth-child(5) { z-index: 1; }
+.badge-stack .rep-badge:last-child { margin-right: 0; }
+
+.badge-count {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+.rep-badge.rarity-rare {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1.5px solid rgba(59, 130, 246, 0.4);
+}
+
+.rep-badge.rarity-epic {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+    border: 1.5px solid rgba(139, 92, 246, 0.5);
+    animation: badge-pulse-epic 2s ease-in-out infinite;
+}
+
+.rep-badge.rarity-legendary {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1.5px solid rgba(251, 191, 36, 0.6);
+    animation: badge-shimmer-legendary 2.5s ease-in-out infinite;
+}
+
+/* Participant tag rarity border + background effects */
+.participant-badge.rarity-border-rare {
+    border: 1.5px solid rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(96, 165, 250, 0.03));
+}
+
+.participant-badge.rarity-border-epic {
+    border: 1.5px solid rgba(139, 92, 246, 0.4);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(167, 139, 250, 0.04));
+    box-shadow: 0 0 6px rgba(139, 92, 246, 0.15);
+}
+
+.participant-badge.rarity-border-legendary {
+    border: 1.5px solid #fbbf24;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(255, 215, 0, 0.05));
+    animation: border-shimmer 3s ease-in-out infinite;
+}
+
+/* Ranking item rarity effects - entire row stands out */
+.ranking-item.rarity-legendary {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(255, 215, 0, 0.03));
+    border: 1.5px solid rgba(251, 191, 36, 0.35);
+    box-shadow: var(--clay-shadow-out-sm), 0 0 12px rgba(251, 191, 36, 0.12);
+}
+
+.ranking-item.rarity-epic {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(167, 139, 250, 0.02));
+    border: 1.5px solid rgba(139, 92, 246, 0.3);
+    box-shadow: var(--clay-shadow-out-sm), 0 0 10px rgba(139, 92, 246, 0.1);
+}
+
+.ranking-item.rarity-rare {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(96, 165, 250, 0.02));
+    border: 1.5px solid rgba(59, 130, 246, 0.25);
+}
+
+/* Achievement Score Tag */
+.achievement-score-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+}
+
+/* ============================
+   Gemini Redesign: Rank Items & Badge Slots
+   ============================ */
+
+/* Ranking item - new design */
+.rank-item {
+    background: var(--clay-surface);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--clay-shadow-out-sm);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: transform 0.2s;
+    margin-bottom: 8px;
+}
+
+.rank-item:hover {
+    transform: translateX(4px);
+}
+
+.rank-number {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1rem;
+    box-shadow: var(--clay-shadow-out-sm);
+    flex-shrink: 0;
+}
+
+/* .rank-number.gold/silver/bronze/iron 스타일은 index.css에서 관리 (원본 shimmer 효과) */
+
+.rank-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rank-name-row {
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Badge container - shared by Rankings & ExamList */
+.badge-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Badge slot - compact version for rankings/participant tags */
+.badge-container .badge-slot {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+}
+
+.badge-slot.slot-rare {
+    color: #3b82f6;
+    box-shadow: var(--clay-shadow-out-sm), 0 0 6px rgba(59, 130, 246, 0.25);
+}
+
+.badge-slot.slot-epic {
+    color: #8b5cf6;
+    box-shadow: var(--clay-shadow-out-sm), 0 0 8px rgba(139, 92, 246, 0.35);
+    animation: badge-pulse-epic 2s ease-in-out infinite;
+}
+
+.badge-slot.slot-legendary {
+    color: #fbbf24;
+    box-shadow: var(--clay-shadow-out-sm), 0 0 10px rgba(251, 191, 36, 0.4);
+    animation: badge-shimmer-legendary 2.5s ease-in-out infinite;
+}
+
+.badge-count-slot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--clay-surface);
+    box-shadow: var(--clay-shadow-in);
+}
+
+/* ExamList participant row layout */
+.participant-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.participant-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.participant-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Header profile badges - badge-slot style override */
+.profile-badges-header .badge-slot {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .rank-item {
+        padding: 10px 14px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .rank-number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+
+    .rank-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Badges go to new row on mobile */
+    .rank-item .badge-container {
+        width: 100%;
+        padding-left: 38px;
+        margin-top: -4px;
+    }
+
+    .badge-container .badge-slot {
+        width: 26px;
+        height: 26px;
+        font-size: 0.65rem;
+    }
+
+    .badge-count-slot {
+        width: 22px;
+        height: 22px;
+        font-size: 0.55rem;
+    }
+
+    .badge-container {
+        gap: 4px;
+    }
+
+    /* Header badges: max 3 on mobile */
+    .profile-badges-header .badge-slot:nth-child(n+4) {
         display: none;
+    }
+
+    .profile-badges-header .badge-slot {
+        width: 26px;
+        height: 26px;
+        font-size: 0.7rem;
+    }
+
+    .achievement-score-tag {
+        margin-left: 4px;
+        padding: 1px 4px;
+        font-size: 0.6rem;
+    }
+
+    .participant-badge {
+        padding: 0.4rem 0.6rem !important;
     }
 }

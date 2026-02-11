@@ -75,7 +75,8 @@
 
 /* Ranking Badge Styles */
 .ranking-position,
-.round-rank-pos {
+.round-rank-pos,
+.rank-number {
     /* Base style (defaults) handled below */
     display: flex;
     align-items: center;
@@ -88,7 +89,8 @@
 
 /* Gold - Premium Shimmer Effect */
 .ranking-position.gold,
-.round-rank-pos.gold {
+.round-rank-pos.gold,
+.rank-number.gold {
     background: linear-gradient(135deg, #FFD700, #FDB931) !important;
     color: #fff !important;
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
@@ -99,7 +101,8 @@
 
 /* The Shimmer Shine */
 .ranking-position.gold::before,
-.round-rank-pos.gold::before {
+.round-rank-pos.gold::before,
+.rank-number.gold::before {
     content: '';
     position: absolute;
     top: 0;
@@ -117,7 +120,8 @@
 }
 
 .ranking-position.silver,
-.round-rank-pos.silver {
+.round-rank-pos.silver,
+.rank-number.silver {
     background: linear-gradient(135deg, #f3f4f6, #9ca3af) !important;
     color: #4b5563 !important;
     box-shadow: 0 2px 6px rgba(156, 163, 175, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.6) !important;
@@ -126,7 +130,8 @@
 }
 
 .ranking-position.bronze,
-.round-rank-pos.bronze {
+.round-rank-pos.bronze,
+.rank-number.bronze {
     background: linear-gradient(135deg, #fdba74, #ea580c) !important;
     color: #fff !important;
     box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.3) !important;
@@ -136,7 +141,8 @@
 
 /* 4th+ Place (Iron/Gray) */
 .ranking-position.iron,
-.round-rank-pos.iron {
+.round-rank-pos.iron,
+.rank-number.iron {
     background: linear-gradient(135deg, #e2e8f0, #cbd5e1) !important;
     color: #64748b !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;

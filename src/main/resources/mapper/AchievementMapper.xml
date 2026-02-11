@@ -38,6 +38,8 @@
         <result property="category" column="category"/>
         <result property="badgeId" column="badge_id"/>
         <result property="grantsBadgeAt" column="grants_badge_at"/>
+        <result property="tierThresholds" column="tier_thresholds"/>
+        <result property="isTiered" column="is_tiered"/>
     </resultMap>
 
     <resultMap id="progressResultMap" type="com.example.engTest.dto.AchievementProgress">
@@ -67,7 +69,8 @@
                ap.current_value,
                ap.target_value,
                ap.next_tier,
-               (SELECT MAX(ua.tier) FROM user_achievements ua WHERE ua.user_id = #{userId} AND ua.achievement_id = a.id) as current_tier,
+               (SELECT ua.tier FROM user_achievements ua WHERE ua.user_id = #{userId} AND ua.achievement_id = a.id
+                ORDER BY CASE ua.tier WHEN 'DIAMOND' THEN 4 WHEN 'GOLD' THEN 3 WHEN 'SILVER' THEN 2 WHEN 'BRONZE' THEN 1 ELSE 0 END DESC LIMIT 1) as current_tier,
                (SELECT COUNT(*) > 0 FROM user_achievements ua WHERE ua.user_id = #{userId} AND ua.achievement_id = a.id) as unlocked
         FROM achievements a
         LEFT JOIN achievement_progress ap ON a.id = ap.achievement_id AND ap.user_id = #{userId}
@@ -83,7 +86,8 @@
     </select>
 
     <select id="findUnnotified" resultMap="userAchievementResultMap">
-        SELECT ua.*, a.name_kr, a.name_en, a.description_kr, a.icon, a.category, a.badge_id, a.grants_badge_at
+        SELECT ua.*, a.name_kr, a.name_en, a.description_kr, a.icon, a.category, a.badge_id, a.grants_badge_at,
+               a.tier_thresholds, a.is_tiered
         FROM user_achievements ua
         JOIN achievements a ON ua.achievement_id = a.id
         WHERE ua.user_id = #{userId} AND ua.is_notified = FALSE
@@ -121,6 +125,10 @@
         ON DUPLICATE KEY UPDATE current_value = #{currentValue}, target_value = #{targetValue}, next_tier = #{nextTier}
     </insert>
 
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM achievements
+    </select>
+
     <select id="countUnlockedByUser" resultType="int">
         SELECT COUNT(DISTINCT achievement_id) FROM user_achievements WHERE user_id = #{userId}
     </select>
@@ -128,6 +136,22 @@
     <select id="countGoldOrAboveByUser" resultType="int">
         SELECT COUNT(DISTINCT achievement_id) FROM user_achievements
         WHERE user_id = #{userId} AND (tier = 'GOLD' OR tier = 'DIAMOND')
+    </select>
+
+    <select id="calcAchievementScore" resultType="int">
+        SELECT COALESCE(SUM(score), 0) FROM (
+            SELECT achievement_id,
+                CASE MAX(CASE tier WHEN 'DIAMOND' THEN 4 WHEN 'GOLD' THEN 3 WHEN 'SILVER' THEN 2 WHEN 'BRONZE' THEN 1 ELSE 0 END)
+                    WHEN 4 THEN 100
+                    WHEN 3 THEN 50
+                    WHEN 2 THEN 25
+                    WHEN 1 THEN 10
+                    ELSE 15
+                END as score
+            FROM user_achievements
+            WHERE user_id = #{userId}
+            GROUP BY achievement_id
+        ) scores
     </select>
 
     <!-- 업적 체크용 쿼리들 -->

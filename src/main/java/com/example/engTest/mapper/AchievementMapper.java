@@ -37,9 +37,13 @@ public interface AchievementMapper {
     void upsertProgress(AchievementProgress progress);
 
     // 통계
+    int countAll();
+
     int countUnlockedByUser(@Param("userId") Long userId);
 
     int countGoldOrAboveByUser(@Param("userId") Long userId);
+
+    int calcAchievementScore(@Param("userId") Long userId);
 
     // 업적 체크에 필요한 쿼리들
     int countCompletedExams(@Param("userId") Long userId);

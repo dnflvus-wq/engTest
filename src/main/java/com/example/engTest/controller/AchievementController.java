@@ -92,6 +92,12 @@ public class AchievementController {
         return ResponseEntity.ok(badgeService.getEquippedBadges(userId));
     }
 
+    @GetMapping("/api/badges/equipped/all")
+    @io.swagger.v3.oas.annotations.Operation(summary = "전체 유저 장착 뱃지", description = "모든 유저의 장착 중인 뱃지를 userId별로 그룹핑하여 반환합니다.")
+    public ResponseEntity<?> getAllEquippedBadges() {
+        return ResponseEntity.ok(badgeService.getAllEquippedBadges());
+    }
+
     @GetMapping("/api/badges/equipped/{userId}")
     @io.swagger.v3.oas.annotations.Operation(summary = "특정 유저 장착 뱃지 (전체공개)", description = "다른 사용자의 장착 중인 뱃지를 조회합니다.")
     public ResponseEntity<?> getUserEquippedBadges(@PathVariable("userId") Long userId) {

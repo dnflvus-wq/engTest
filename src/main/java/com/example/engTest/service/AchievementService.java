@@ -177,10 +177,11 @@ public class AchievementService {
 
     public Map<String, Object> getSummary(Long userId) {
         Map<String, Object> summary = new HashMap<>();
-        summary.put("totalAchievements", 74);
+        summary.put("totalAchievements", achievementMapper.countAll());
         summary.put("unlockedCount", achievementMapper.countUnlockedByUser(userId));
         summary.put("badgeCount", badgeService.countUserBadges(userId));
         summary.put("goldOrAbove", achievementMapper.countGoldOrAboveByUser(userId));
+        summary.put("achievementScore", achievementMapper.calcAchievementScore(userId));
         return summary;
     }
 

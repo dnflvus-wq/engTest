@@ -2,6 +2,7 @@ package com.example.engTest.service;
 
 import com.example.engTest.dto.User;
 import com.example.engTest.dto.UserStats;
+import com.example.engTest.mapper.AchievementMapper;
 import com.example.engTest.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.List;
 public class UserService {
 
     private final UserMapper userMapper;
+    private final AchievementMapper achievementMapper;
 
     public List<User> getAllUsers() {
         return userMapper.findAll();
@@ -35,9 +37,9 @@ public class UserService {
 
     public List<UserStats> getUserStats() {
         List<UserStats> stats = userMapper.getUserStats();
-        // 순위 계산
         for (int i = 0; i < stats.size(); i++) {
             stats.get(i).setRank(i + 1);
+            stats.get(i).setAchievementScore(achievementMapper.calcAchievementScore(stats.get(i).getUserId()));
         }
         return stats;
     }

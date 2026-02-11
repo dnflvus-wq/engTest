@@ -6,6 +6,7 @@ const Analytics = () => {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [roundsWithRanking, setRoundsWithRanking] = useState([]);
+    const [userBadges, setUserBadges] = useState({});
 
     useEffect(() => {
         loadStats();
@@ -29,6 +30,11 @@ const Analytics = () => {
                 );
                 setRoundsWithRanking(roundsData);
             }
+
+            try {
+                const badgeData = await api.get('/badges/equipped/all');
+                setUserBadges(badgeData || {});
+            } catch { /* badges optional */ }
         } catch (error) {
             console.error('Error loading stats:', error);
         } finally {
@@ -79,14 +85,45 @@ const Analytics = () => {
                         {stats?.userStats && stats.userStats.length > 0 ? (
                             stats.userStats.map((userStat, i) => {
                                 const posClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'iron';
+                                const badges = userBadges[userStat.userId] || [];
+                                const topBadges = badges.slice(0, 3);
+                                const extraCount = badges.length > 3 ? badges.length - 3 : 0;
+                                const isTopRank = i < 3;
+
                                 return (
-                                    <div key={userStat.userId} className="ranking-item">
-                                        <div className={`ranking-position ${posClass}`}>{i + 1}</div>
-                                        <div className="ranking-info">
-                                            <div className="ranking-name">{userStat.userName || `User #${userStat.userId}`}</div>
-                                            <div className="ranking-detail">{userStat.totalExams || 0} exams taken</div>
+                                    <div key={userStat.userId} className={`rank-item ${isTopRank ? 'top-rank' : ''} rank-${i + 1}`}>
+                                        <div className={`rank-number ${posClass}`}>{i + 1}</div>
+
+                                        <div className="rank-user-info">
+                                            <div className="rank-name-row">
+                                                {userStat.userName || `User #${userStat.userId}`}
+                                                {userStat.achievementScore > 0 && (
+                                                    <span className="achievement-score-tag" style={{ fontSize: '0.8rem', marginLeft: '0.5rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>
+                                                        <i className="fa-solid fa-star" style={{ color: '#f59e0b' }} /> {userStat.achievementScore}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="ranking-detail" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                {userStat.totalExams || 0} exams · Avg {userStat.avgScore?.toFixed(1) || '0'}
+                                            </div>
                                         </div>
-                                        <div className="ranking-score">{userStat.avgScore?.toFixed(1) || '0'}</div>
+
+                                        <div className="badge-container">
+                                            {topBadges.map(b => (
+                                                <div
+                                                    key={b.slotNumber}
+                                                    className={`badge-slot slot-${(b.rarity || 'rare').toLowerCase()}`}
+                                                    title={`${b.nameKr} (${b.rarity})`}
+                                                >
+                                                    <i className={`fa-solid ${b.icon || 'fa-certificate'}`} />
+                                                </div>
+                                            ))}
+                                            {extraCount > 0 && (
+                                                <div className="badge-count-slot" title={`${extraCount} more badges`}>
+                                                    +{extraCount}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })

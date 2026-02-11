@@ -65,12 +65,12 @@ const Header = ({ toggleSidebar }) => {
                     ></i>
                 </div>
 
+                <ProfileBadges />
                 <div className="user-profile-container" id="userProfileArea">
                     <div className="user-profile" onClick={toggleProfile}>
                         <div className="avatar-circle">
                             <i className="fa-solid fa-user"></i>
                         </div>
-                        <ProfileBadges />
                         <span id="headerUserName">{user?.name || 'Guest'}</span>
                         <i className="fa-solid fa-caret-down"></i>
                     </div>
