@@ -14,6 +14,7 @@
         <result property="option3" column="option3"/>
         <result property="option4" column="option4"/>
         <result property="hint" column="hint"/>
+        <result property="altAnswers" column="alt_answers"/>
         <result property="seqNo" column="seq_no"/>
         <result property="isReview" column="is_review"/>
         <result property="createdAt" column="created_at"/>
@@ -28,15 +29,15 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no, is_review)
-        VALUES (#{roundId}, #{questionType}, #{answerType}, #{questionText}, #{answer}, #{option1}, #{option2}, #{option3}, #{option4}, #{hint}, #{seqNo}, #{isReview})
+        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, alt_answers, seq_no, is_review)
+        VALUES (#{roundId}, #{questionType}, #{answerType}, #{questionText}, #{answer}, #{option1}, #{option2}, #{option3}, #{option4}, #{hint}, #{altAnswers}, #{seqNo}, #{isReview})
     </insert>
 
     <insert id="insertBatch">
-        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, seq_no, is_review)
+        INSERT INTO questions (round_id, question_type, answer_type, question_text, answer, option1, option2, option3, option4, hint, alt_answers, seq_no, is_review)
         VALUES
         <foreach collection="list" item="q" separator=",">
-            (#{q.roundId}, #{q.questionType}, #{q.answerType}, #{q.questionText}, #{q.answer}, #{q.option1}, #{q.option2}, #{q.option3}, #{q.option4}, #{q.hint}, #{q.seqNo}, #{q.isReview})
+            (#{q.roundId}, #{q.questionType}, #{q.answerType}, #{q.questionText}, #{q.answer}, #{q.option1}, #{q.option2}, #{q.option3}, #{q.option4}, #{q.hint}, #{q.altAnswers}, #{q.seqNo}, #{q.isReview})
         </foreach>
     </insert>
 
@@ -46,7 +47,7 @@
             question_text = #{questionText}, answer = #{answer},
             option1 = #{option1}, option2 = #{option2},
             option3 = #{option3}, option4 = #{option4},
-            hint = #{hint}, seq_no = #{seqNo}
+            hint = #{hint}, alt_answers = #{altAnswers}, seq_no = #{seqNo}
         WHERE id = #{id}
     </update>
 

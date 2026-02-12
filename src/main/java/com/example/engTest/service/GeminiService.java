@@ -75,22 +75,27 @@ public class GeminiService {
     /**
      * 텍스트 기반 채점 (AI 사용 - 철자 엄격, 대소문자/띄어쓰기 무시)
      */
-    public GradeResult gradeTextAnswer(String userAnswer, String correctAnswer) {
+    public GradeResult gradeTextAnswer(String userAnswer, String correctAnswer, String altAnswers) {
         if (userAnswer == null || userAnswer.trim().isEmpty()) {
             return new GradeResult(userAnswer, false, "답을 입력하지 않았습니다.", null);
         }
+
+        String altAnswerLine = (altAnswers != null && !altAnswers.isBlank())
+                ? "\n                대체 정답(이것도 정답으로 인정): \"" + altAnswers.replace("|", "\", \"") + "\""
+                : "";
 
         String prompt = String.format("""
                 당신은 영어 시험 채점관입니다.
                 다음 사용자의 답안을 정답과 비교하여 채점해주세요.
 
-                정답: "%s"
+                정답: "%s"%s
                 사용자 답안: "%s"
 
                 채점 기준:
                 1. **철자(Spelling)**: 매우 엄격하게 확인하세요. 틀린 철자가 하나라도 있으면 오답입니다.
                 2. **대소문자/띄어쓰기**: 무시하세요. (예: "apple" == "Apple", "bus stop" == "busstop" 은 정답)
                 3. **문장부호**: 무시하세요.
+                4. **대체 정답**: 위에 대체 정답이 있으면 그것도 정답으로 인정합니다.
 
                 응답 형식 (JSON):
                 {
@@ -102,7 +107,7 @@ public class GeminiService {
                 - 정답이면: "정답입니다!" (칭찬 문구 추가 가능)
                 - 오답이면: 틀린 이유를 구체적으로 한국어로 설명 (예: "철자가 틀렸습니다. 'a'가 빠졌습니다.", "전혀 다른 단어입니다.")
                 - 오직 JSON만 응답하세요.
-                """, correctAnswer, userAnswer);
+                """, correctAnswer, altAnswerLine, userAnswer);
 
         try {
             String response = callGemini(prompt);
@@ -110,8 +115,12 @@ public class GeminiService {
         } catch (Exception e) {
             log.error("AI grading failed, falling back to simple check", e);
             String n1 = normalizeText(userAnswer);
-            String n2 = normalizeText(correctAnswer);
-            boolean simpleCorrect = n1.equals(n2);
+            boolean simpleCorrect = n1.equals(normalizeText(correctAnswer));
+            if (!simpleCorrect && altAnswers != null && !altAnswers.isBlank()) {
+                for (String alt : altAnswers.split("\\|")) {
+                    if (n1.equals(normalizeText(alt.trim()))) { simpleCorrect = true; break; }
+                }
+            }
             return new GradeResult(userAnswer, simpleCorrect,
                     simpleCorrect ? "정답입니다. (AI 연결 실패로 단순 채점됨)" : "오답입니다. (AI 연결 실패로 단순 채점됨)", null);
         }

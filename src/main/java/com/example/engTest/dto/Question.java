@@ -23,6 +23,7 @@ public class Question {
     private String option3;
     private String option4;
     private String hint;
+    private String altAnswers;
     private Integer seqNo;
     private Boolean isReview;
     private LocalDateTime createdAt;

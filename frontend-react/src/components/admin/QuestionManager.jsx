@@ -108,6 +108,7 @@ const QuestionManager = () => {
             answerType: 'TEXT',
             questionText: '',
             answer: '',
+            altAnswers: '',
             option1: '', option2: '', option3: '', option4: '',
             hint: '',
             seqNo: maxSeq + 1,
@@ -177,6 +178,7 @@ const QuestionManager = () => {
                                             <th style={{ width: '60px' }}>유형</th>
                                             <th>문제</th>
                                             <th>정답</th>
+                                            <th>대체정답</th>
                                             <th style={{ width: '50px' }}>답유형</th>
                                             <th>보기1</th>
                                             <th>보기2</th>
@@ -248,6 +250,9 @@ const QuestionRow = ({ data, isEditing, saving, vocabulary, isNew, onEdit, onCan
                 </td>
                 <td data-label="Answer" style={{ fontWeight: 'bold', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {data.answer}
+                </td>
+                <td data-label="Alt" style={{ fontSize: '0.7rem', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
+                    {data.altAnswers || '-'}
                 </td>
                 <td data-label="Ans Type" style={{ fontSize: '0.7rem' }}>{data.answerType}</td>
                 <td data-label="Option 1" style={{ fontSize: '0.7rem' }}>{data.option1 || '-'}</td>
@@ -321,6 +326,10 @@ const QuestionRow = ({ data, isEditing, saving, vocabulary, isNew, onEdit, onCan
             <td data-label="Answer">
                 <input type="text" value={data.answer || ''} onChange={e => onUpdate('answer', e.target.value)}
                     className="clay-input" style={inputStyle} placeholder="정답" />
+            </td>
+            <td data-label="Alt">
+                <input type="text" value={data.altAnswers || ''} onChange={e => onUpdate('altAnswers', e.target.value)}
+                    className="clay-input" style={inputStyle} placeholder="대체1 | 대체2" />
             </td>
             <td data-label="Ans Type">
                 <select value={data.answerType || 'TEXT'} onChange={e => onUpdate('answerType', e.target.value)}

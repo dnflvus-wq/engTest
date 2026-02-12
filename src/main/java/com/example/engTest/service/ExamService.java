@@ -316,12 +316,17 @@ public class ExamService {
     }
 
     /**
-     * 정규화 후 비교하여 채점 (축약형 동등 처리)
+     * 정규화 후 비교하여 채점 (축약형 동등 처리 + 대체 정답)
      */
-    public boolean isCorrectWithNormalization(String userAnswer, String correctAnswer) {
+    public boolean isCorrectWithNormalization(String userAnswer, String correctAnswer, String altAnswers) {
         String normalizedUser = normalizeAnswer(userAnswer);
-        String normalizedCorrect = normalizeAnswer(correctAnswer);
-        return normalizedUser.equals(normalizedCorrect);
+        if (normalizedUser.equals(normalizeAnswer(correctAnswer))) return true;
+        if (altAnswers != null && !altAnswers.isBlank()) {
+            for (String alt : altAnswers.split("\\|")) {
+                if (normalizedUser.equals(normalizeAnswer(alt.trim()))) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -332,7 +337,7 @@ public class ExamService {
         for (OfflineAnswerInput answer : answers) {
             if (answer.questionNumber() > 0 && answer.questionNumber() <= questions.size()) {
                 Question question = questions.get(answer.questionNumber() - 1);
-                boolean isCorrect = isCorrectWithNormalization(answer.userAnswer(), question.getAnswer());
+                boolean isCorrect = isCorrectWithNormalization(answer.userAnswer(), question.getAnswer(), question.getAltAnswers());
                 submitAnswer(examId, question.getId(), answer.userAnswer(), null, isCorrect);
             }
         }

@@ -127,7 +127,7 @@ public class ExamController {
             String userAnswer = request.get("answer");
             Question question = questionService.getQuestionById(questionId);
 
-            GeminiService.GradeResult result = geminiService.gradeTextAnswer(userAnswer, question.getAnswer());
+            GeminiService.GradeResult result = geminiService.gradeTextAnswer(userAnswer, question.getAnswer(), question.getAltAnswers());
 
             examService.submitAnswer(examId, questionId, userAnswer, null, result.isCorrect());
 
