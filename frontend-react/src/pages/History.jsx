@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/common';
+import usePageTracking from '../hooks/usePageTracking';
 import api from '../utils/api';
 
 const History = () => {
+    usePageTracking('HISTORY_PAGE_VISIT');
     const navigate = useNavigate();
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
@@ -47,8 +49,10 @@ const History = () => {
                             const date = exam.submittedAt ? new Date(exam.submittedAt).toLocaleDateString() : 'In Progress';
                             const statusText = exam.status === 'COMPLETED' ? (exam.isPassed ? 'PASS' : 'FAIL') : 'In Progress';
                             const statusClass = exam.status === 'COMPLETED' ? (exam.isPassed ? 'pass' : 'fail') : 'in-progress';
-                            const pct = exam.totalCount > 0 ? Math.round((exam.correctCount / exam.totalCount) * 100) : 0;
-                            const scoreClass = pct >= 90 ? 'score-excellent' : pct >= 80 ? 'score-great' : pct >= 70 ? 'score-good' : 'score-low';
+                            const score = exam.correctCount || 0;
+                            const total = exam.totalCount || 0;
+                            const ratio = total > 0 ? score / total : 0;
+                            const scoreClass = ratio >= 0.9 ? 'score-excellent' : ratio >= 0.8 ? 'score-great' : ratio >= 0.7 ? 'score-good' : 'score-low';
 
                             return (
                                 <div
@@ -61,8 +65,8 @@ const History = () => {
                                         <div className="history-date">{date}</div>
                                     </div>
                                     <div className="history-score">
-                                        <span className={`history-score-value ${scoreClass}`}>{pct}</span>
-                                        <span className="history-score-detail">{exam.correctCount || 0} / {exam.totalCount || 0}</span>
+                                        <span className={`history-score-value ${scoreClass}`}>{score}</span>
+                                        <span className="history-score-detail">/ {total}</span>
                                     </div>
                                     <span className={`history-status ${statusClass}`}>{statusText}</span>
                                 </div>

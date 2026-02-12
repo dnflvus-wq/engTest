@@ -32,6 +32,8 @@ const Study = () => {
         if (selectedRoundId) {
             setPlayingVideoId(null);
             loadStudyMaterials(selectedRoundId);
+            // Track study round visit
+            api.post('/actions/track', { action: 'STUDY_ROUND_VISIT' }).catch(() => {});
         }
     }, [selectedRoundId]);
 
@@ -130,6 +132,9 @@ const Study = () => {
         XLSX.utils.book_append_sheet(wb, ws, 'Vocabulary');
         const filename = `vocabulary_${selectedRoundTitle.replace(/[^a-zA-Z0-9가-힣]/g, '_')}.xlsx`;
         XLSX.writeFile(wb, filename);
+
+        // Track for achievements
+        api.post('/actions/track', { action: 'VOCAB_DOWNLOAD' }).catch(() => {});
 
         try {
             await api.post('/logs/record', {
@@ -334,7 +339,9 @@ const Study = () => {
                                                     </div>
                                                 </div>
                                                 {!isMobile && (
-                                                    <a className="ppt-link" href={m.url} target="_blank" rel="noopener noreferrer" download>
+                                                    <a className="ppt-link" href={m.url} target="_blank" rel="noopener noreferrer" download
+                                                        onClick={() => api.post('/actions/track', { action: 'PDF_DOWNLOAD' }).catch(() => {})}
+                                                    >
                                                         <i className="fa-solid fa-download"></i> Download
                                                     </a>
                                                 )}

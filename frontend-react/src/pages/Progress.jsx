@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '../components/common';
+import usePageTracking from '../hooks/usePageTracking';
 import api from '../utils/api';
 
 const extractKeyword = (title, bookId) => {
@@ -78,6 +79,7 @@ const BookSection = ({ book, colorTheme }) => {
 };
 
 const Progress = () => {
+    usePageTracking('PROGRESS_PAGE_VISIT');
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
 

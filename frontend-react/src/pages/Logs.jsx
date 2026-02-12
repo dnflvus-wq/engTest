@@ -178,7 +178,7 @@ const Logs = () => {
             {showSettingsModal && (
                 <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
                     <div className="clay-card modal-box" style={{ maxWidth: '480px', textAlign: 'left', maxHeight: '90vh', overflowY: 'auto' }}
-                         onClick={e => e.stopPropagation()}>
+                        onClick={e => e.stopPropagation()}>
                         <h3 className="modal-title" style={{ textAlign: 'left' }}>Log Settings</h3>
                         <div className="logs-settings-grid">
                             <div>
@@ -325,16 +325,16 @@ const Logs = () => {
                             <tbody>
                                 {logs.map((log) => (
                                     <tr key={log.id}>
-                                        <td className="nowrap">{formatDate(log.createdAt)}</td>
-                                        <td className="main-text">{log.userName || '-'}</td>
-                                        <td>
+                                        <td className="nowrap" data-label="Time">{formatDate(log.createdAt)}</td>
+                                        <td className="main-text" data-label="User">{log.userName || '-'}</td>
+                                        <td data-label="Action">
                                             <span className={`badge ${getActionBadgeClass(log.action)}`}>
                                                 {log.action}
                                             </span>
                                         </td>
-                                        <td>{log.targetType ? `${log.targetType}:${log.targetId || ''}` : '-'}</td>
-                                        <td className="mono">{log.ipAddress || '-'}</td>
-                                        <td className="center">
+                                        <td data-label="Target">{log.targetType ? `${log.targetType}:${log.targetId || ''}` : '-'}</td>
+                                        <td className="mono" data-label="IP">{log.ipAddress || '-'}</td>
+                                        <td className="center" data-label="Status">
                                             <span style={{
                                                 color: log.responseStatus >= 400 ? 'var(--danger)' : 'var(--success)',
                                                 fontWeight: '600'
@@ -342,7 +342,7 @@ const Logs = () => {
                                                 {log.responseStatus || '-'}
                                             </span>
                                         </td>
-                                        <td className="right small">{log.durationMs ? `${log.durationMs}ms` : '-'}</td>
+                                        <td className="right small" data-label="Duration">{log.durationMs ? `${log.durationMs}ms` : '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
