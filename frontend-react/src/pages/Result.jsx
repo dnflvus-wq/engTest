@@ -78,8 +78,8 @@ const Result = () => {
             <div className="clay-card result-card">
                 <div className="confetti-icon">🎉</div>
                 <h2>Exam Completed!</h2>
-                <div className="score-display-large">{exam.totalCount > 0 ? Math.round((exam.correctCount / exam.totalCount) * 100) : 0}</div>
-                <p className="score-subtitle">{exam.correctCount} / {exam.totalCount} Correct</p>
+                <div className="score-display-large">{exam.correctCount || 0}<span style={{ fontSize: '0.4em', color: 'var(--text-muted)' }}> / {exam.totalCount || 0}</span></div>
+                <p className="score-subtitle">Correct Answers</p>
 
                 <div className={`pass-fail-badge ${exam.isPassed ? 'pass' : 'fail'}`}>
                     {exam.isPassed ? 'PASS' : 'FAIL'}
