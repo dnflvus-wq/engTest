@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,6 +38,21 @@ public class BadgeService {
                     .build();
             badgeMapper.insertUserBadge(ub);
             log.info("Badge awarded: userId={}, badgeId={}", userId, badgeId);
+            autoEquipBadge(userId, badgeId);
+        }
+    }
+
+    private void autoEquipBadge(Long userId, String badgeId) {
+        List<UserBadge> equipped = badgeMapper.findEquippedBadges(userId);
+        Set<Integer> usedSlots = equipped.stream()
+                .map(UserBadge::getSlotNumber)
+                .collect(Collectors.toSet());
+        for (int slot = 1; slot <= 5; slot++) {
+            if (!usedSlots.contains(slot)) {
+                badgeMapper.equipBadge(userId, badgeId, slot);
+                log.info("Badge auto-equipped: userId={}, badgeId={}, slot={}", userId, badgeId, slot);
+                return;
+            }
         }
     }
 
