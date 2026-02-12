@@ -32,4 +32,7 @@ public interface BadgeMapper {
     int countUserBadges(@Param("userId") Long userId);
 
     List<UserBadge> findAllEquippedBadges();
+
+    // 관리자: 뱃지 수정
+    void updateBadge(Badge badge);
 }

@@ -243,6 +243,31 @@ public class ExamService {
         return examMapper.getRankingByRound(roundId);
     }
 
+    /**
+     * 관리자용: 답안 수정 후 점수 재계산
+     */
+    @Transactional
+    public Exam recalculateScore(Long examId) {
+        Exam exam = examMapper.findById(examId);
+        if (exam == null) {
+            throw new IllegalArgumentException("Exam not found: " + examId);
+        }
+
+        int correctCount = examAnswerMapper.countCorrectByExamId(examId);
+        Round round = roundMapper.findById(exam.getRoundId());
+        int passScore = (round != null && round.getPassScore() != null) ? round.getPassScore() : 24;
+
+        exam.setCorrectCount(correctCount);
+        exam.setScore(BigDecimal.valueOf(correctCount));
+        exam.setIsPassed(correctCount >= passScore);
+        examMapper.update(exam);
+
+        // 업적 재체크
+        achievementService.checkAchievements(exam.getUserId(), "EXAM_COMPLETE");
+
+        return exam;
+    }
+
     @Transactional
     public void deleteExam(Long id) {
         examAnswerMapper.deleteByExamId(id);

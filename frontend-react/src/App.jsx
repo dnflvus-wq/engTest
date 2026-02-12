@@ -23,6 +23,9 @@ import Achievements from './pages/Achievements';
 import RoundList from './components/admin/RoundList';
 import CreateRound from './components/admin/CreateRound';
 import RoundDetail from './components/admin/RoundDetail';
+import AchievementManager from './components/admin/AchievementManager';
+import ExamCorrection from './components/admin/ExamCorrection';
+import QuestionManager from './components/admin/QuestionManager';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -75,12 +78,15 @@ function AppRoutes() {
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/progress" element={<Progress />} />
                 <Route path="/achievements" element={<Achievements />} />
-                <Route path="/achievements/:userId" element={<Achievements />} />
+                <Route path="/achievements/user/:userId" element={<Achievements />} /> {/* Modified route */}
                 <Route path="/exam/offline/:roundId" element={<OfflineExam />} />
                 <Route path="/result/:examId" element={<Result />} />
                 <Route path="/admin" element={<Admin />}>
                     <Route index element={<RoundList />} />
                     <Route path="create" element={<CreateRound />} />
+                    <Route path="achievements" element={<AchievementManager />} />
+                    <Route path="questions" element={<QuestionManager />} />
+                    <Route path="exam-correction" element={<ExamCorrection />} />
                     <Route path=":roundId" element={<RoundDetail />} />
                 </Route>
                 <Route path="/logs" element={<Logs />} />

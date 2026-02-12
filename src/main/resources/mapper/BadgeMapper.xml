@@ -91,4 +91,15 @@
         ORDER BY ub.user_id, ub.slot_number
     </select>
 
+    <!-- 관리자: 뱃지 수정 -->
+    <update id="updateBadge">
+        UPDATE badges SET
+            name_kr = #{nameKr},
+            description_kr = #{descriptionKr},
+            icon = #{icon},
+            rarity = #{rarity},
+            achievement_id = #{achievementId}
+        WHERE id = #{id}
+    </update>
+
 </mapper>

@@ -31,4 +31,7 @@ public interface ExamAnswerMapper {
     int countCorrectByExamId(@Param("examId") Long examId);
 
     List<ExamAnswer> findWrongAnswersByExamId(@Param("examId") Long examId);
+
+    // 관리자: 정오답 수정
+    void updateIsCorrect(@Param("id") Long id, @Param("isCorrect") Boolean isCorrect);
 }

@@ -40,6 +40,16 @@
         </foreach>
     </insert>
 
+    <update id="update">
+        UPDATE questions SET
+            question_type = #{questionType}, answer_type = #{answerType},
+            question_text = #{questionText}, answer = #{answer},
+            option1 = #{option1}, option2 = #{option2},
+            option3 = #{option3}, option4 = #{option4},
+            hint = #{hint}, seq_no = #{seqNo}
+        WHERE id = #{id}
+    </update>
+
     <delete id="delete">
         DELETE FROM questions WHERE id = #{id}
     </delete>
