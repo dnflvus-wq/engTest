@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '../components/common';
+import BadgeIcon from '../components/achievements/BadgeIcon';
+import usePageTracking from '../hooks/usePageTracking';
 import api from '../utils/api';
 
 const Analytics = () => {
+    usePageTracking('ANALYTICS_PAGE_VISIT');
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(null);
     const [roundsWithRanking, setRoundsWithRanking] = useState([]);
@@ -110,12 +113,13 @@ const Analytics = () => {
 
                                         <div className="badge-container">
                                             {topBadges.map(b => (
-                                                <div
-                                                    key={b.slotNumber}
-                                                    className={`badge-slot slot-${(b.rarity || 'rare').toLowerCase()}`}
-                                                    title={`${b.nameKr} (${b.rarity})`}
-                                                >
-                                                    <i className={`fa-solid ${b.icon || 'fa-certificate'}`} />
+                                                <div key={b.slotNumber} title={`${b.nameKr} (${b.rarity})`}>
+                                                    <BadgeIcon
+                                                        tier={b.tier}
+                                                        rarity={b.rarity}
+                                                        icon={b.icon}
+                                                        size="sm"
+                                                    />
                                                 </div>
                                             ))}
                                             {extraCount > 0 && (

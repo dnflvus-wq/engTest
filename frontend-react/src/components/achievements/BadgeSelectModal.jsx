@@ -1,4 +1,5 @@
 import { RARITY_COLORS, RARITY_LABELS } from '../../constants/badge';
+import BadgeIcon from './BadgeIcon';
 
 const BadgeSelectModal = ({ isOpen, slotNumber, badges = [], equippedBadges = [], onSelect, onClose }) => {
     if (!isOpen) return null;
@@ -23,13 +24,17 @@ const BadgeSelectModal = ({ isOpen, slotNumber, badges = [], equippedBadges = []
                                 onClick={() => onSelect(badge.badgeId, slotNumber)}
                             >
                                 <div className="badge-select-icon">
-                                    <i className={`fa-solid ${badge.icon || 'fa-certificate'}`}
-                                       style={{ color: RARITY_COLORS[badge.rarity] || '#999' }} />
+                                    <BadgeIcon
+                                        icon={badge.icon}
+                                        tier={badge.tier}
+                                        rarity={badge.rarity}
+                                        size="md"
+                                    />
                                 </div>
                                 <div className="badge-select-info">
                                     <span className="badge-select-name">{badge.nameKr}</span>
                                     <span className="badge-select-rarity"
-                                          style={{ color: RARITY_COLORS[badge.rarity] }}>
+                                        style={{ color: RARITY_COLORS[badge.rarity] }}>
                                         {RARITY_LABELS[badge.rarity] || badge.rarity}
                                     </span>
                                 </div>

@@ -3,9 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { LoadingSpinner } from '../components/common';
+import BadgeIcon from '../components/achievements/BadgeIcon';
+import usePageTracking from '../hooks/usePageTracking';
 import api from '../utils/api';
 
 const ExamList = () => {
+    usePageTracking('EXAM_PAGE_VISIT');
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
@@ -159,12 +162,13 @@ const ExamList = () => {
                                                             {badges.length > 0 && (
                                                                 <div className="badge-container">
                                                                     {topBadges.map(b => (
-                                                                        <div
-                                                                            key={b.slotNumber}
-                                                                            className={`badge-slot slot-${(b.rarity || 'rare').toLowerCase()}`}
-                                                                            title={b.nameKr}
-                                                                        >
-                                                                            <i className={`fa-solid ${b.icon || 'fa-certificate'}`} />
+                                                                        <div key={b.slotNumber} title={b.nameKr}>
+                                                                            <BadgeIcon
+                                                                                tier={b.tier}
+                                                                                rarity={b.rarity}
+                                                                                icon={b.icon}
+                                                                                size="sm"
+                                                                            />
                                                                         </div>
                                                                     ))}
                                                                     {extraCount > 0 && (

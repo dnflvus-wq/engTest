@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import { RARITY_COLORS } from '../../constants/badge';
+import BadgeIcon from './BadgeIcon';
 
 const ProfileBadges = () => {
     const [badges, setBadges] = useState([]);
@@ -18,11 +19,15 @@ const ProfileBadges = () => {
             {badges.map(badge => (
                 <div
                     key={badge.slotNumber}
-                    className={`badge-slot slot-${(badge.rarity || 'rare').toLowerCase()}`}
+                    className="badge-slot-filled"
                     title={badge.nameKr}
-                    style={{ width: '32px', height: '32px', fontSize: '0.9rem' }}
                 >
-                    <i className={`fa-solid ${badge.icon || 'fa-certificate'}`} />
+                    <BadgeIcon
+                        icon={badge.icon}
+                        tier={badge.tier}
+                        rarity={badge.rarity}
+                        size="sm"
+                    />
                 </div>
             ))}
         </div>
