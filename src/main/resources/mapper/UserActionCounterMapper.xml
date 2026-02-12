@@ -31,4 +31,9 @@
         ORDER BY action_date
     </select>
 
+    <select id="countDistinctActions" resultType="int">
+        SELECT COUNT(*) FROM user_action_counters
+        WHERE user_id = #{userId} AND action LIKE CONCAT(#{prefix}, '%')
+    </select>
+
 </mapper>

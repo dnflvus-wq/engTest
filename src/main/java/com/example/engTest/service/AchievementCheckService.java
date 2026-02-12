@@ -86,7 +86,7 @@ public class AchievementCheckService {
                 case "PDF_DOWNLOAD" -> checkTiered(counterMapper.getCount(userId, "PDF_DOWNLOAD"), tierThresholds, currentTier);
                 case "VOCAB_DOWNLOAD" -> checkTiered(counterMapper.getCount(userId, "VOCAB_DOWNLOAD"), tierThresholds, currentTier);
                 case "ALL_MATERIALS" -> checkSimple(counterMapper.getCount(userId, "ALL_MATERIALS_COMPLETE"), 1, currentTier);
-                case "STUDY_ROUNDS" -> checkTiered(counterMapper.getCount(userId, "STUDY_ROUND_VISIT"), tierThresholds, currentTier);
+                case "STUDY_ROUNDS" -> checkTiered(counterMapper.countDistinctActions(userId, "STUDY_ROUND_VISIT_"), tierThresholds, currentTier);
 
                 // 연속 기록
                 case "LOGIN_STREAK" -> checkTiered(calcMaxConsecutiveDays(achievementMapper.getLoginDates(userId)), tierThresholds, currentTier);

@@ -16,4 +16,6 @@ public interface UserActionCounterMapper {
     List<UserActionCounter> findByUser(@Param("userId") Long userId);
 
     List<String> getDistinctDates(@Param("userId") Long userId, @Param("action") String action);
+
+    int countDistinctActions(@Param("userId") Long userId, @Param("prefix") String prefix);
 }

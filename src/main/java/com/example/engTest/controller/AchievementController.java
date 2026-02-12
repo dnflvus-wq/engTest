@@ -141,7 +141,13 @@ public class AchievementController {
         if (action == null || action.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "action is required"));
         }
-        actionCounterService.increment(userId, action);
+        // STUDY_ROUND_VISIT: append roundId for unique round tracking
+        String roundId = request.get("roundId");
+        if ("STUDY_ROUND_VISIT".equals(action) && roundId != null && !roundId.isBlank()) {
+            actionCounterService.increment(userId, "STUDY_ROUND_VISIT_" + roundId);
+        } else {
+            actionCounterService.increment(userId, action);
+        }
         achievementService.checkAchievements(userId, "STUDY_ACTION");
         return ResponseEntity.ok().build();
     }

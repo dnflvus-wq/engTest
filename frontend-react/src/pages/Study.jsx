@@ -32,8 +32,8 @@ const Study = () => {
         if (selectedRoundId) {
             setPlayingVideoId(null);
             loadStudyMaterials(selectedRoundId);
-            // Track study round visit
-            api.post('/actions/track', { action: 'STUDY_ROUND_VISIT' }).catch(() => {});
+            // Track study round visit (per-round for unique count)
+            api.post('/actions/track', { action: 'STUDY_ROUND_VISIT', roundId: String(selectedRoundId) }).catch(() => {});
         }
     }, [selectedRoundId]);
 
