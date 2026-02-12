@@ -71,11 +71,19 @@ const Header = () => {
                     </div>
                 </div>
 
-                {isShowBackButton && (
-                    <button className="clay-btn btn-secondary btn-small pc-only" id="headerCloseBtn" onClick={() => navigate(-1)}>
-                        <i className="fa-solid fa-arrow-left"></i> Back
-                    </button>
-                )}
+                <div className="pc-only" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {isShowBackButton && (
+                        <button className="clay-btn btn-secondary btn-small" id="headerCloseBtn" onClick={() => navigate(-1)}>
+                            <i className="fa-solid fa-arrow-left"></i> Back
+                        </button>
+                    )}
+                    <div className="header-logo" onClick={() => navigate('/dashboard')}>
+                        <div className="logo-icon-sm">
+                            <i className="fa-solid fa-layer-group"></i>
+                        </div>
+                        <span className="logo-text-sm">EstellExam</span>
+                    </div>
+                </div>
             </div>
 
             <div className="header-right">
@@ -107,19 +115,44 @@ const Header = () => {
                             </div>
 
                             {stats && (
-                                <div className="profile-stats">
-                                    <div className="profile-stat">
-                                        <i className="fa-solid fa-pen-to-square"></i>
-                                        <span>시험 {stats.totalExams || 0}회</span>
+                                <div className="profile-stats-container">
+                                    <div className="profile-stats-grid">
+                                        <div className="profile-stat-card">
+                                            <div className="profile-stat-label">Exams</div>
+                                            <div className="profile-stat-value">{stats.totalExams || 0}</div>
+                                            <div className="profile-stat-icon">
+                                                <i className="fa-solid fa-pen-to-square"></i>
+                                            </div>
+                                        </div>
+                                        <div className="profile-stat-card">
+                                            <div className="profile-stat-label">Avg Score</div>
+                                            <div className="profile-stat-value">
+                                                {stats.avgScore != null ? Number(stats.avgScore).toFixed(0) : '-'}
+                                            </div>
+                                            <div className="profile-stat-icon">
+                                                <i className="fa-solid fa-chart-line"></i>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="profile-stat">
-                                        <i className="fa-solid fa-chart-line"></i>
-                                        <span>평균 {stats.avgScore != null ? Number(stats.avgScore).toFixed(0) : '-'}점</span>
-                                    </div>
+
                                     {achievementSummary && (
-                                        <div className="profile-stat">
-                                            <i className="fa-solid fa-trophy"></i>
-                                            <span>업적 {achievementSummary.unlockedCount}/{achievementSummary.totalAchievements}</span>
+                                        <div className="profile-achievement-card" onClick={() => handleNavigate('/achievements')}>
+                                            <div className="achievement-icon">
+                                                <i className="fa-solid fa-trophy"></i>
+                                            </div>
+                                            <div className="achievement-info">
+                                                <div className="achievement-label">Achievements</div>
+                                                <div className="achievement-progress-bar">
+                                                    <div
+                                                        className="achievement-progress-fill"
+                                                        style={{ width: `${(achievementSummary.unlockedCount / achievementSummary.totalAchievements) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                                <div className="achievement-count">
+                                                    {achievementSummary.unlockedCount} / {achievementSummary.totalAchievements}
+                                                </div>
+                                            </div>
+                                            <i className="fa-solid fa-chevron-right achievement-arrow"></i>
                                         </div>
                                     )}
                                 </div>
@@ -127,11 +160,6 @@ const Header = () => {
 
                             <div className="profile-menu-divider" />
 
-                            <div className="dropdown-item" onClick={() => handleNavigate('/achievements')}>
-                                <i className="fa-solid fa-medal"></i>
-                                Achievements
-                                <i className="fa-solid fa-chevron-right dropdown-item-arrow"></i>
-                            </div>
                             <div className="dropdown-item" onClick={() => handleNavigate('/history')}>
                                 <i className="fa-solid fa-clock-rotate-left"></i>
                                 History
