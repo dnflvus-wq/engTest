@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../utils/api';
+import BadgeIcon from './BadgeIcon';
 import { TIER_COLORS, TIER_ORDER } from '../../constants/badge';
+import { useAuth } from '../../context/AuthContext';
 
 const formatModalDescription = (achievement) => {
     let desc = achievement.descriptionKr || '';
@@ -27,9 +29,15 @@ const getNextGoal = (achievement) => {
 };
 
 const AchievementUnlockModal = () => {
+    const { user } = useAuth();
     const [queue, setQueue] = useState([]);
     const [current, setCurrent] = useState(null);
     const shownIdsRef = useRef(new Set());
+
+    // Reset shown IDs on user change (logout/re-login)
+    useEffect(() => {
+        shownIdsRef.current.clear();
+    }, [user?.id]);
 
     const checkUnread = useCallback(async () => {
         try {
@@ -39,7 +47,7 @@ const AchievementUnlockModal = () => {
                 if (newItems.length > 0) {
                     newItems.forEach(a => shownIdsRef.current.add(a.id));
                     setQueue(prev => [...prev, ...newItems]);
-                    api.post('/achievements/mark-read', { ids: newItems.map(a => a.id) }).catch(() => {});
+                    api.post('/achievements/mark-read', { ids: newItems.map(a => a.id) }).catch(() => { });
                 }
             }
         } catch {
@@ -50,8 +58,13 @@ const AchievementUnlockModal = () => {
     // Check on mount and on navigation
     useEffect(() => {
         checkUnread();
-        const interval = setInterval(checkUnread, 30000); // check every 30s
-        return () => clearInterval(interval);
+        // Delayed re-check to catch async achievements (LOGIN race condition)
+        const delayed = setTimeout(checkUnread, 2500);
+        const interval = setInterval(checkUnread, 30000);
+        return () => {
+            clearTimeout(delayed);
+            clearInterval(interval);
+        };
     }, [checkUnread]);
 
     // Show next in queue
@@ -75,7 +88,13 @@ const AchievementUnlockModal = () => {
             <div className="clay-card achievement-unlock-modal" onClick={e => e.stopPropagation()}>
                 <div className="achievement-unlock-glow" style={{ boxShadow: `0 0 60px ${tierColor}40` }} />
                 <div className="achievement-unlock-icon" style={{ color: tierColor }}>
-                    <i className={`fa-solid ${current.icon || 'fa-trophy'}`} />
+                    <BadgeIcon
+                        icon={current.icon}
+                        tier={current.tier}
+                        rarity={current.tier ? 'LEGENDARY' : 'RARE'}
+                        size="xl"
+                        showGlow={true}
+                    />
                 </div>
                 <div className="achievement-unlock-title">Achievement Unlocked!</div>
                 <div className="achievement-unlock-name">{current.nameKr}</div>
