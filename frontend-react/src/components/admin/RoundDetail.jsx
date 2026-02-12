@@ -20,6 +20,9 @@ const RoundDetail = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('vocabulary');
     const [vocabCount, setVocabCount] = useState(0);
+    const [editing, setEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDescription, setEditDescription] = useState('');
 
     useEffect(() => {
         loadRoundDetail();
@@ -60,6 +63,33 @@ const RoundDetail = () => {
         }
     };
 
+    const startEdit = () => {
+        setEditTitle(round.title || '');
+        setEditDescription(round.description || '');
+        setEditing(true);
+    };
+
+    const cancelEdit = () => {
+        setEditing(false);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editTitle.trim()) {
+            toast.warn('제목을 입력하세요.');
+            return;
+        }
+        try {
+            await api.put(`/rounds/${roundId}`, { title: editTitle.trim(), description: editDescription.trim() });
+            toast.success('수정되었습니다.');
+            setEditing(false);
+            loadRoundDetail();
+            loadRounds();
+        } catch (error) {
+            console.error('Update failed:', error);
+            toast.error('수정 실패');
+        }
+    };
+
     const handleDeleteRound = async () => {
         const ok = await confirm('회차 삭제', '정말 이 회차를 삭제하시겠습니까? 모든 관련 데이터가 삭제됩니다.', { confirmVariant: 'danger' });
         if (!ok) return;
@@ -81,26 +111,60 @@ const RoundDetail = () => {
         <div className="section active-section">
             <div className="section-header section-header-wrap">
                 <div className="section-header-left">
-                    <h2>{round.title}</h2>
-                    <span className={`status-badge ${round.status?.toLowerCase() || 'closed'}`}>
-                        {round.status || 'CLOSED'}
-                    </span>
-                </div>
-                <div className="section-header-actions">
-                    {round.status === 'CLOSED' && (
-                        <button onClick={() => handleStatusChange('ACTIVE')} className="clay-btn btn-success btn-small">
-                            <i className="fa-solid fa-play"></i> 활성화
-                        </button>
+                    {editing ? (
+                        <div className="round-edit-form">
+                            <input
+                                type="text"
+                                className="clay-input"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                placeholder="제목"
+                            />
+                            <input
+                                type="text"
+                                className="clay-input"
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                placeholder="설명 (선택)"
+                            />
+                            <div className="round-edit-actions">
+                                <button onClick={handleSaveEdit} className="clay-btn btn-success btn-small">
+                                    <i className="fa-solid fa-check"></i> 저장
+                                </button>
+                                <button onClick={cancelEdit} className="clay-btn btn-secondary btn-small">
+                                    <i className="fa-solid fa-xmark"></i> 취소
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <h2>{round.title}</h2>
+                            <span className={`status-badge ${round.status?.toLowerCase() || 'closed'}`}>
+                                {round.status || 'CLOSED'}
+                            </span>
+                            <button onClick={startEdit} className="clay-btn btn-secondary btn-small" title="수정">
+                                <i className="fa-solid fa-pen"></i>
+                            </button>
+                        </>
                     )}
-                    {round.status === 'ACTIVE' && (
-                        <button onClick={() => handleStatusChange('CLOSED')} className="clay-btn btn-warning btn-small">
-                            <i className="fa-solid fa-stop"></i> 종료
-                        </button>
-                    )}
-                    <button onClick={() => navigate('/admin')} className="clay-btn btn-secondary btn-small">
-                        뒤로
-                    </button>
                 </div>
+                {!editing && (
+                    <div className="section-header-actions">
+                        {round.status === 'CLOSED' && (
+                            <button onClick={() => handleStatusChange('ACTIVE')} className="clay-btn btn-success btn-small">
+                                <i className="fa-solid fa-play"></i> 활성화
+                            </button>
+                        )}
+                        {round.status === 'ACTIVE' && (
+                            <button onClick={() => handleStatusChange('CLOSED')} className="clay-btn btn-warning btn-small">
+                                <i className="fa-solid fa-stop"></i> 종료
+                            </button>
+                        )}
+                        <button onClick={() => navigate('/admin')} className="clay-btn btn-secondary btn-small">
+                            뒤로
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="tab-menu">

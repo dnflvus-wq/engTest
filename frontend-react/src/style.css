@@ -2278,6 +2278,22 @@ body.dark-mode .review-answer-feedback {
     align-items: center;
 }
 
+.round-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.round-edit-form .clay-input {
+    width: 100%;
+}
+
+.round-edit-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .section-danger-zone {
     margin-top: 40px;
     padding-top: 20px;
