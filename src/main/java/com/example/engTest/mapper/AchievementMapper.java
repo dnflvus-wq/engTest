@@ -85,4 +85,16 @@ public interface AchievementMapper {
 
     // 동점자 확인
     int countSameScoreExams(@Param("userId") Long userId);
+
+    // 제출 시간 기준 1등 횟수
+    int countFirstSubmissions(@Param("userId") Long userId);
+
+    // 마지막 문제 정답 횟수
+    int countLastQuestionCorrect(@Param("userId") Long userId);
+
+    // 시험 결과 목록 (만점 연속 계산용)
+    List<java.util.Map<String, Object>> getExamResults(@Param("userId") Long userId);
+
+    // 관리자: 업적 수정
+    void updateAchievement(Achievement achievement);
 }

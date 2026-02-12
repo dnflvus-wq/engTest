@@ -58,6 +58,36 @@
           AND e.status = 'COMPLETED'
     </select>
 
+    <!-- 사용자가 완료한 챕터 ID 목록 (교재별) -->
+    <select id="findCompletedChapterIdsByUserIdAndBookId" resultType="java.lang.Long">
+        SELECT DISTINCT rc.chapter_id
+        FROM round_chapters rc
+        INNER JOIN exams e ON e.round_id = rc.round_id
+        INNER JOIN book_chapters bc ON bc.id = rc.chapter_id
+        WHERE e.user_id = #{userId}
+          AND e.status = 'COMPLETED'
+          AND bc.book_id = #{bookId}
+    </select>
+
+    <!-- 완료된 파트 수 (파트 내 모든 챕터가 완료된 경우) -->
+    <select id="countCompletedParts" resultType="int">
+        SELECT COUNT(*) FROM (
+            SELECT bc.book_id, bc.part_number
+            FROM book_chapters bc
+            GROUP BY bc.book_id, bc.part_number
+            HAVING COUNT(bc.id) = (
+                SELECT COUNT(DISTINCT rc.chapter_id)
+                FROM round_chapters rc
+                INNER JOIN exams e ON e.round_id = rc.round_id
+                INNER JOIN book_chapters bc2 ON bc2.id = rc.chapter_id
+                WHERE e.user_id = #{userId}
+                  AND e.status = 'COMPLETED'
+                  AND bc2.book_id = bc.book_id
+                  AND bc2.part_number = bc.part_number
+            )
+        ) completed_parts
+    </select>
+
     <!-- 사용자의 총 외운 단어 수 -->
     <select id="getTotalVocabularyCountByUserId" resultType="java.lang.Integer">
         SELECT COALESCE(COUNT(DISTINCT rv.id), 0)

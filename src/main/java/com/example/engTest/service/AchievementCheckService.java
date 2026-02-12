@@ -96,8 +96,8 @@ public class AchievementCheckService {
 
                 // 스피드
                 case "FAST_EXAM" -> checkTiered(calcFastestExam(userId), tierThresholds, currentTier, true);
-                case "FIRST_SUBMIT" -> checkSimple(calcRankFirstCount(userId) > 0 ? 1 : 0, 1, currentTier);
-                case "FIRST_SUBMIT_COUNT" -> checkTiered(calcRankFirstCount(userId), tierThresholds, currentTier);
+                case "FIRST_SUBMIT" -> checkSimple(calcFirstSubmitCount(userId) > 0 ? 1 : 0, 1, currentTier);
+                case "FIRST_SUBMIT_COUNT" -> checkTiered(calcFirstSubmitCount(userId), tierThresholds, currentTier);
                 case "SPEED_PASS" -> checkTiered(calcFastestPass(userId), tierThresholds, currentTier, true);
                 case "SLOW_AND_STEADY" -> checkSimple(calcSlowPass(userId) ? 1 : 0, 1, currentTier);
 
@@ -108,6 +108,7 @@ public class AchievementCheckService {
                 case "COMEBACK" -> checkSimple(calcComeback(userId) ? 1 : 0, 1, currentTier);
                 case "RIVAL_WIN" -> checkTiered(calcRivalWinMax(userId), tierThresholds, currentTier);
                 case "FULL_PARTICIPATION" -> checkTiered(achievementMapper.countDistinctRounds(userId), tierThresholds, currentTier);
+                case "WIN_STREAK" -> checkTiered(calcWinStreak(userId), tierThresholds, currentTier);
 
                 // 탐험가
                 case "FEATURE_EXPLORER" -> checkSimple(calcFeatureExplorer(userId) ? 1 : 0, 1, currentTier);
@@ -125,7 +126,7 @@ public class AchievementCheckService {
                 // 숨겨진
                 case "EXACTLY_HALF" -> checkSimple(calcExactlyHalf(userId) ? 1 : 0, 1, currentTier);
                 case "SCORE_PALINDROME" -> checkSimple(calcPalindrome(userId) ? 1 : 0, 1, currentTier);
-                case "LAST_SECOND" -> checkSimple(0, 1, currentTier); // 시험 제출 시 직접 체크
+                case "LAST_SECOND" -> checkSimple(achievementMapper.countLastQuestionCorrect(userId), 1, currentTier);
                 case "ZERO_HERO" -> checkSimple(calcZeroHero(userId) ? 1 : 0, 1, currentTier);
                 case "FOUR_COMPLETE" -> checkSimple(achievementMapper.countFullParticipationRounds(userId) > 0 ? 1 : 0, 1, currentTier);
                 case "SAME_SCORE" -> checkSimple(achievementMapper.countSameScoreExams(userId) > 0 ? 1 : 0, 1, currentTier);
@@ -235,9 +236,20 @@ public class AchievementCheckService {
     }
 
     private int calcPerfectStreak(Long userId) {
-        // TODO: 연속 만점 계산은 total_count 포함 쿼리가 필요. 현재는 만점 수로 대체.
-        int count = achievementMapper.countPerfectScores(userId);
-        return count > 0 ? Math.min(count, 2) : 0;
+        List<Map<String, Object>> exams = achievementMapper.getExamResults(userId);
+        if (exams.isEmpty()) return 0;
+        int max = 0, streak = 0;
+        for (Map<String, Object> exam : exams) {
+            int correct = ((Number) exam.get("correct_count")).intValue();
+            int total = ((Number) exam.get("total_count")).intValue();
+            if (correct == total) {
+                streak++;
+                max = Math.max(max, streak);
+            } else {
+                streak = 0;
+            }
+        }
+        return max;
     }
 
     private int calcPassStreak(Long userId) {
@@ -327,6 +339,25 @@ public class AchievementCheckService {
         return calcRankFirstCount(userId);
     }
 
+    private int calcFirstSubmitCount(Long userId) {
+        return achievementMapper.countFirstSubmissions(userId);
+    }
+
+    private int calcWinStreak(Long userId) {
+        List<Map<String, Object>> ranks = achievementMapper.getUserRanksPerRound(userId);
+        int max = 0, streak = 0;
+        for (Map<String, Object> r : ranks) {
+            int rank = ((Number) r.get("user_rank")).intValue();
+            if (rank == 1) {
+                streak++;
+                max = Math.max(max, streak);
+            } else {
+                streak = 0;
+            }
+        }
+        return max;
+    }
+
     private boolean calcFeatureExplorer(Long userId) {
         String[] features = {"STUDY_PAGE_VISIT", "EXAM_PAGE_VISIT", "HISTORY_PAGE_VISIT", "ANALYTICS_PAGE_VISIT", "PROGRESS_PAGE_VISIT"};
         for (String f : features) {
@@ -336,10 +367,9 @@ public class AchievementCheckService {
     }
 
     private int calcBookProgress(Long userId, int bookId) {
-        List<Long> completedIds = bookChapterMapper.findCompletedChapterIdsByUserId(userId);
+        List<Long> completedIds = bookChapterMapper.findCompletedChapterIdsByUserIdAndBookId(userId, bookId);
         long count = completedIds != null ? completedIds.size() : 0;
-        // TODO: bookChapterMapper에 findCompletedChapterIdsByUserIdAndBookId 추가
-        int total = 183; // Book1(83) + Book2(100)
+        int total = (bookId == 1) ? 83 : 100;
         return total > 0 ? (int) (count * 100 / total) : 0;
     }
 
@@ -349,7 +379,7 @@ public class AchievementCheckService {
     }
 
     private int calcCompletedParts(Long userId) {
-        return 0; // TODO: 파트별 완료 체크 구현
+        return bookChapterMapper.countCompletedParts(userId);
     }
 
     private boolean calcExactlyHalf(Long userId) {

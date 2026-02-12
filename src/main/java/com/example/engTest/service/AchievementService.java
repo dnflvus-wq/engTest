@@ -27,7 +27,7 @@ public class AchievementService {
     // 이벤트별 체크할 업적 카테고리 매핑
     private static final Map<String, Set<String>> EVENT_CATEGORIES = Map.of(
             "EXAM_COMPLETE", Set.of("FIRST_STEPS", "EXAM_MASTER", "PERFECTIONIST", "SPEED", "COMPETITION", "EXPLORER", "PROGRESS_MASTER", "HIDDEN", "LEGEND"),
-            "LOGIN", Set.of("FIRST_STEPS", "STREAKS", "LEGEND"),
+            "LOGIN", Set.of("FIRST_STEPS", "EXAM_MASTER", "PERFECTIONIST", "STUDY_KING", "STREAKS", "SPEED", "COMPETITION", "EXPLORER", "PROGRESS_MASTER", "HIDDEN", "LEGEND"),
             "STUDY_ACTION", Set.of("FIRST_STEPS", "STUDY_KING", "STREAKS", "EXPLORER"),
             "ALL", Set.of("FIRST_STEPS", "EXAM_MASTER", "PERFECTIONIST", "STUDY_KING", "STREAKS", "SPEED", "COMPETITION", "EXPLORER", "PROGRESS_MASTER", "HIDDEN", "LEGEND")
     );
@@ -57,16 +57,20 @@ public class AchievementService {
             for (Achievement achievement : allAchievements) {
                 if (!categories.contains(achievement.getCategory())) continue;
 
-                String currentTier = existingTiers.get(achievement.getId());
-                AchievementCheckService.CheckResult result = checkService.check(
-                        userId, achievement.getId(), achievement.getTierThresholds(), currentTier);
+                try {
+                    String currentTier = existingTiers.get(achievement.getId());
+                    AchievementCheckService.CheckResult result = checkService.check(
+                            userId, achievement.getId(), achievement.getTierThresholds(), currentTier);
 
-                // 진행도 업데이트
-                updateProgress(userId, achievement, result.currentValue());
+                    // 진행도 업데이트
+                    updateProgress(userId, achievement, result.currentValue());
 
-                // 새로 달성한 경우
-                if (result.changed()) {
-                    unlockAchievement(userId, achievement, result.highestNewTier(), result.currentValue());
+                    // 새로 달성한 경우
+                    if (result.changed()) {
+                        unlockAchievement(userId, achievement, result.highestNewTier(), result.currentValue());
+                    }
+                } catch (Exception e) {
+                    log.warn("Achievement check skipped: userId={}, achievement={}, error={}", userId, achievement.getId(), e.getMessage());
                 }
             }
         } catch (Exception e) {
@@ -127,13 +131,22 @@ public class AchievementService {
         Map<String, Integer> thresholds = TierUtils.parseThresholds(objectMapper, achievement.getTierThresholds());
         if (thresholds == null) return;
 
+        // 역방향 업적 감지 (낮을수록 좋음: FAST_EXAM, SPEED_PASS 등)
+        Integer bronzeVal = thresholds.get("BRONZE");
+        Integer diamondVal = thresholds.get("DIAMOND");
+        boolean inverted = bronzeVal != null && diamondVal != null && bronzeVal > diamondVal;
+
         // 다음 티어 찾기
         String nextTier = null;
         int targetValue = 0;
 
         for (String t : TierUtils.TIER_ORDER) {
             Integer threshold = thresholds.get(t);
-            if (threshold != null && currentValue < threshold) {
+            if (threshold == null) continue;
+            // 역방향: 현재값 > 기준값이면 아직 미달성 (시간이 더 걸림)
+            // 정방향: 현재값 < 기준값이면 아직 미달성
+            boolean notReached = inverted ? currentValue > threshold : currentValue < threshold;
+            if (notReached) {
                 nextTier = t;
                 targetValue = threshold;
                 break;

@@ -223,6 +223,7 @@
             WHERE e.status = 'COMPLETED'
         ) sub
         WHERE sub.user_id = #{userId}
+        ORDER BY sub.round_id ASC
     </select>
 
     <select id="getRecentScores" resultType="int">
@@ -262,5 +263,52 @@
             AND e2.status = 'COMPLETED' AND e2.correct_count = e1.correct_count
         )
     </select>
+
+    <!-- 제출 시간 기준 1등 횟수 (가장 먼저 제출한 회차 수) -->
+    <select id="countFirstSubmissions" resultType="int">
+        SELECT COUNT(*) FROM (
+            SELECT sub.round_id FROM (
+                SELECT e.round_id, e.user_id,
+                       RANK() OVER (PARTITION BY e.round_id ORDER BY e.submitted_at ASC) as submit_rank
+                FROM exams e
+                WHERE e.status = 'COMPLETED'
+            ) sub
+            WHERE sub.user_id = #{userId} AND sub.submit_rank = 1
+        ) first_subs
+    </select>
+
+    <!-- 마지막 문제 정답 횟수 -->
+    <select id="countLastQuestionCorrect" resultType="int">
+        SELECT COUNT(DISTINCT e.round_id)
+        FROM exam_answers ea
+        JOIN exams e ON ea.exam_id = e.id
+        JOIN questions q ON ea.question_id = q.id
+        WHERE e.user_id = #{userId}
+          AND e.status = 'COMPLETED'
+          AND ea.is_correct = TRUE
+          AND q.seq_no = (SELECT MAX(q2.seq_no) FROM questions q2 WHERE q2.round_id = e.round_id AND q2.is_review = FALSE)
+    </select>
+
+    <!-- 시험 결과 목록 (만점 연속 계산용) -->
+    <select id="getExamResults" resultType="map">
+        SELECT correct_count, total_count
+        FROM exams
+        WHERE user_id = #{userId} AND status = 'COMPLETED'
+        ORDER BY submitted_at ASC
+    </select>
+
+    <!-- 관리자: 업적 수정 -->
+    <update id="updateAchievement">
+        UPDATE achievements SET
+            name_kr = #{nameKr},
+            description_kr = #{descriptionKr},
+            icon = #{icon},
+            is_hidden = #{isHidden},
+            tier_thresholds = #{tierThresholds},
+            badge_id = #{badgeId},
+            grants_badge_at = #{grantsBadgeAt},
+            display_order = #{displayOrder}
+        WHERE id = #{id}
+    </update>
 
 </mapper>

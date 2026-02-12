@@ -21,5 +21,9 @@ public interface BookChapterMapper {
 
     List<Long> findCompletedChapterIdsByUserId(@Param("userId") Long userId);
 
+    List<Long> findCompletedChapterIdsByUserIdAndBookId(@Param("userId") Long userId, @Param("bookId") int bookId);
+
+    int countCompletedParts(@Param("userId") Long userId);
+
     Integer getTotalVocabularyCountByUserId(@Param("userId") Long userId);
 }

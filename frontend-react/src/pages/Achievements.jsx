@@ -87,19 +87,25 @@ const AchievementCard = ({ achievement }) => {
                         })}
                     </div>
                 )}
-                {achievement.isTiered && achievement.currentValue != null && achievement.targetValue > 0 && achievement.nextTier !== 'COMPLETE' && (
-                    <div className="achievement-progress">
-                        <div className="achievement-progress-bar">
-                            <div
-                                className="achievement-progress-fill"
-                                style={{ width: `${Math.min(100, (achievement.currentValue / achievement.targetValue) * 100)}%` }}
-                            />
+                {achievement.isTiered && achievement.currentValue != null && achievement.targetValue > 0 && achievement.nextTier !== 'COMPLETE' && (() => {
+                    const isInverted = thresholds && thresholds.BRONZE > thresholds.DIAMOND;
+                    const pct = isInverted
+                        ? Math.min(100, (achievement.targetValue / achievement.currentValue) * 100)
+                        : Math.min(100, (achievement.currentValue / achievement.targetValue) * 100);
+                    return (
+                        <div className="achievement-progress">
+                            <div className="achievement-progress-bar">
+                                <div
+                                    className="achievement-progress-fill"
+                                    style={{ width: `${pct}%` }}
+                                />
+                            </div>
+                            <span className="achievement-progress-text">
+                                {achievement.currentValue} / {achievement.targetValue}
+                            </span>
                         </div>
-                        <span className="achievement-progress-text">
-                            {achievement.currentValue} / {achievement.targetValue}
-                        </span>
-                    </div>
-                )}
+                    );
+                })()}
             </div>
             {achievement.currentTier && (
                 <div
