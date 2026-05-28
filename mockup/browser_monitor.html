@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoScript - Browser Monitor</title>
+<style>
+/* ===== GenQ Design System ===== */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+:root {
+  --navy: #2A2F4C; --gray-bg: #F1F4F7; --blue: #016DFF; --green: #99FF4B;
+  --purple: #6920D0; --orange: #FF8D0C;
+  --dg1: #191E3C; --dg2: #3B4161; --dg3: #575E83;
+  --g0: #DFE2E9; --g1: #9FA3B7; --g2: #B6B9CA;
+  --ok: #2CED6C; --fail: #E82160; --warn: #FFCA0C;
+  --bg: var(--gray-bg); --card: #FFFFFF; --text: var(--navy); --text2: var(--dg3); --text3: var(--g1); --border: var(--g0);
+  --sidebar-w: 200px;
+}
+.dark { --bg: var(--dg1); --card: #232842; --text: #F1F4F7; --text2: var(--g2); --text3: var(--dg3); --border: var(--dg2); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Pretendard',sans-serif; background:var(--bg); color:var(--text); letter-spacing:-0.02em; line-height:1.4; min-height:100vh; display:flex; transition:background .2s,color .2s; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--dg3); border-radius:80px; }
+::-webkit-scrollbar-thumb { background:var(--green); border-radius:80px; }
+
+/* ===== Sidebar ===== */
+.sidebar { width:var(--sidebar-w); background:var(--navy); color:#fff; display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:50; }
+.sidebar-logo { padding:20px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,0.08); }
+.sidebar-logo .logo-icon { width:32px; height:32px; background:var(--green); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:var(--navy); }
+.sidebar-logo .logo-text { font-size:16px; font-weight:700; }
+.sidebar-logo .logo-text span { color:var(--green); }
+.sidebar-nav { flex:1; padding:12px 8px; display:flex; flex-direction:column; gap:2px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; font-size:13px; font-weight:500; color:var(--g2); cursor:pointer; transition:all .15s; }
+.nav-item:hover { background:rgba(255,255,255,0.06); color:#fff; }
+.nav-item.active { background:rgba(1,109,255,0.15); color:var(--blue); }
+.nav-item .icon { width:20px; text-align:center; font-size:15px; }
+.nav-divider { height:1px; background:rgba(255,255,255,0.06); margin:8px 4px; }
+.sidebar-footer { padding:12px 16px; border-top:1px solid rgba(255,255,255,0.06); }
+.theme-toggle { display:flex; background:rgba(255,255,255,0.06); border-radius:8px; overflow:hidden; }
+.theme-btn { flex:1; padding:6px; text-align:center; font-size:11px; font-weight:600; cursor:pointer; color:var(--g1); transition:all .15s; }
+.theme-btn.active { background:var(--blue); color:#fff; border-radius:6px; }
+
+/* ===== Main Content ===== */
+.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+/* Header */
+.header { padding:14px 24px; display:flex; align-items:center; justify-content:space-between; background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:40; transition:background .2s; }
+.header-title { font-size:18px; font-weight:700; }
+.header-stats { display:flex; gap:10px; }
+.stat-badge { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:4px 12px; border-radius:8px; background:var(--bg); transition:background .2s; }
+.stat-badge .dot { width:7px; height:7px; border-radius:50%; }
+.stat-badge .dot.running { background:var(--orange); animation:pulse 1.5s infinite; }
+.stat-badge .dot.ok { background:var(--ok); }
+.stat-badge .dot.fail { background:var(--fail); }
+.stat-badge .dot.pending { background:var(--g1); }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+/* ===== PAGE: Dashboard ===== */
+.page { display:none; flex:1; }
+.page.active { display:flex; flex-direction:column; }
+.dashboard { padding:20px 24px; flex:1; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+
+/* Tile */
+.tile { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:all .2s; }
+.tile:hover { border-color:var(--blue); box-shadow:0 4px 16px rgba(1,109,255,0.1); transform:translateY(-1px); }
+.tile-hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; }
+.tile-name { font-size:12px; font-weight:600; }
+.badge { font-size:10px; font-weight:600; padding:2px 8px; border-radius:6px; }
+.badge.running { background:rgba(255,141,12,0.12); color:var(--orange); }
+.badge.ok { background:rgba(44,237,108,0.1); color:var(--ok); }
+.badge.fail { background:rgba(232,33,96,0.1); color:var(--fail); }
+.badge.pending { background:rgba(159,163,183,0.1); color:var(--g1); }
+
+/* Preview */
+.tile-preview { position:relative; height:180px; background:var(--bg); border-top:1px solid var(--border); border-bottom:1px solid var(--border); overflow:hidden; transition:background .2s; }
+.mini-browser { display:flex; flex-direction:column; height:100%; }
+.mini-bar { display:flex; align-items:center; gap:5px; padding:5px 8px; background:var(--card); font-size:9px; color:var(--g1); transition:background .2s; }
+.mini-dots { display:flex; gap:3px; }
+.mini-dots span { width:6px; height:6px; border-radius:50%; }
+.mini-dots span:nth-child(1){background:var(--fail)} .mini-dots span:nth-child(2){background:var(--warn)} .mini-dots span:nth-child(3){background:var(--ok)}
+.mini-url { background:var(--bg); padding:2px 6px; border-radius:3px; flex:1; font-size:8px; transition:background .2s; }
+.mini-content { flex:1; padding:8px; display:flex; flex-direction:column; gap:5px; }
+.ph { border-radius:3px; background:var(--border); transition:background .2s; }
+.ph.hd { height:10px; width:55%; }
+.ph.inp { height:20px; background:var(--card); border:1px solid var(--border); }
+.ph.btn { height:22px; width:70px; background:var(--navy); border-radius:4px; }
+.ph.txt { height:6px; width:80%; }
+.ph.card { height:40px; background:var(--card); border:1px solid var(--border); }
+
+/* Overlay */
+.step-ov { position:absolute; bottom:0; left:0; right:0; padding:7px 12px; background:linear-gradient(transparent,rgba(0,0,0,.75)); }
+.step-ov-text { font-size:10px; color:#fff; margin-bottom:3px; }
+.step-ov-text .act { color:var(--green); }
+.prog { height:3px; background:rgba(255,255,255,.15); border-radius:2px; overflow:hidden; }
+.prog .fill { height:100%; border-radius:2px; }
+.prog .fill.running { background:linear-gradient(90deg,var(--orange),#ffa657); }
+.prog .fill.ok { background:var(--ok); }
+.prog .fill.fail { background:var(--fail); }
+
+/* Cursor */
+.cursor-hl { position:absolute; width:20px; height:20px; border:2px solid var(--orange); border-radius:50%; pointer-events:none; animation:cpulse 1s infinite; }
+@keyframes cpulse { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.3} }
+
+.tile-foot { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; font-size:10px; color:var(--g1); }
+.tile-foot .dur { font-family:'Courier New',monospace; }
+
+/* ===== PAGE: Detail ===== */
+.detail-hdr { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:var(--card); border-bottom:1px solid var(--border); transition:background .2s; }
+.detail-hdr .left { display:flex; align-items:center; gap:12px; }
+.back-btn { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.back-btn:hover { background:var(--bg); }
+.detail-hdr .tc-name { font-size:15px; font-weight:700; }
+.detail-hdr .right { display:flex; align-items:center; gap:8px; }
+.ctrl-btn { height:30px; padding:0 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text2); font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all .15s; }
+.ctrl-btn:hover { border-color:var(--blue); color:var(--blue); }
+.ctrl-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+.ctrl-btn.danger { border-color:var(--fail); color:var(--fail); }
+.ctrl-btn.danger:hover { background:var(--fail); color:#fff; }
+.ctrl-btn.record { border-color:var(--fail); color:var(--fail); }
+.ctrl-btn.record.active { background:var(--fail); color:#fff; animation:pulse 1.5s infinite; }
+
+/* Detail Body */
+.detail-body { display:flex; flex:1; overflow:hidden; }
+.browser-pane { flex:1; display:flex; flex-direction:column; border-right:1px solid var(--border); }
+.browser-bar { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--card); border-bottom:1px solid var(--border); transition:background .2s; }
+.browser-bar .dots { display:flex; gap:4px; }
+.browser-bar .dots span { width:9px; height:9px; border-radius:50%; }
+.browser-bar .dots span:nth-child(1){background:var(--fail)} .browser-bar .dots span:nth-child(2){background:var(--warn)} .browser-bar .dots span:nth-child(3){background:var(--ok)}
+.browser-bar .url { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:5px 10px; font-size:11px; color:var(--g1); transition:all .2s; }
+.browser-screen { flex:1; background:#fff; position:relative; overflow:auto; }
+.browser-screen .mock-page { padding:20px; color:#1f2328; }
+.mock-page h2 { font-size:16px; margin-bottom:10px; }
+.mock-page .fg { margin-bottom:10px; }
+.mock-page label { display:block; font-size:11px; color:#656d76; margin-bottom:3px; }
+.mock-page input { width:100%; padding:7px 10px; border:1px solid #d0d7de; border-radius:6px; font-size:12px; background:#f6f8fa; }
+.mock-page input.hl { border-color:var(--blue); box-shadow:0 0 0 3px rgba(1,109,255,.12); background:#fff; }
+.mock-page .mbtn { padding:7px 18px; background:#2da44e; color:#fff; border:none; border-radius:6px; font-size:12px; cursor:pointer; }
+.mock-page .mbtn.hl { box-shadow:0 0 0 3px rgba(255,141,12,.4); }
+.mock-page table { width:100%; border-collapse:collapse; margin-top:10px; font-size:11px; }
+.mock-page th { background:#f6f8fa; padding:7px; text-align:left; border-bottom:1px solid #d0d7de; color:#656d76; }
+.mock-page td { padding:7px; border-bottom:1px solid #d0d7de; }
+
+/* Step bar */
+.step-bar { display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--card); border-top:1px solid var(--border); transition:background .2s; }
+.step-bar .snum { font-size:11px; color:var(--orange); font-weight:700; min-width:60px; }
+.step-bar .sdesc { font-size:11px; flex:1; }
+.step-bar .sprog { width:180px; }
+
+/* Timeline strip */
+.timeline-strip { display:flex; align-items:center; gap:2px; padding:10px 16px; background:var(--card); border-top:1px solid var(--border); overflow-x:auto; transition:background .2s; }
+.tl-item { flex-shrink:0; width:72px; height:48px; border-radius:6px; border:2px solid var(--border); background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:8px; color:var(--g1); cursor:pointer; transition:all .15s; position:relative; }
+.tl-item:hover { border-color:var(--blue); }
+.tl-item.current { border-color:var(--orange); background:rgba(255,141,12,.06); }
+.tl-item.done { border-color:var(--ok); opacity:.7; }
+.tl-item.fail { border-color:var(--fail); background:rgba(232,33,96,.05); }
+.tl-item .tl-num { font-weight:700; font-size:10px; color:var(--text); }
+.tl-arrow { color:var(--g1); font-size:10px; flex-shrink:0; margin:0 2px; }
+
+/* Side panel */
+.side-panel { width:340px; display:flex; flex-direction:column; background:var(--card); transition:background .2s; }
+.side-tabs { display:flex; border-bottom:1px solid var(--border); }
+.side-tab { flex:1; padding:10px 8px; text-align:center; font-size:11px; font-weight:600; color:var(--g1); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; }
+.side-tab:hover { color:var(--text); }
+.side-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+.side-body { flex:1; overflow-y:auto; }
+
+/* Steps */
+.step-item { display:flex; align-items:flex-start; gap:8px; padding:8px 14px; font-size:11px; border-left:2px solid transparent; transition:background .1s; }
+.step-item:hover { background:var(--bg); }
+.step-item.current { background:rgba(255,141,12,.05); border-left-color:var(--orange); }
+.step-item.done { opacity:.6; }
+.sicon { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; }
+.sicon.done { background:rgba(44,237,108,.12); color:var(--ok); }
+.sicon.current { background:rgba(255,141,12,.15); color:var(--orange); }
+.sicon.pending { background:var(--bg); color:var(--g1); }
+.sicon.fail { background:rgba(232,33,96,.12); color:var(--fail); }
+.sdetail { flex:1; }
+.sdetail .slbl { color:var(--text); margin-bottom:1px; }
+.sdetail .smeta { color:var(--g1); font-size:9px; }
+.stime { font-size:9px; color:var(--g1); font-family:'Courier New',monospace; }
+
+/* Console */
+.cline { padding:3px 10px; font-family:'Courier New',monospace; font-size:10px; margin-bottom:1px; border-radius:2px; }
+.cline.log { color:var(--g1); }
+.cline.info { color:var(--blue); }
+.cline.ok { color:var(--ok); background:rgba(44,237,108,.04); }
+.cline.warn { color:var(--orange); background:rgba(255,141,12,.04); }
+.cline.err { color:var(--fail); background:rgba(232,33,96,.04); }
+
+/* Network */
+.nrow { display:flex; align-items:center; padding:5px 12px; gap:6px; font-size:10px; border-bottom:1px solid var(--border); }
+.nrow:hover { background:var(--bg); }
+.nmethod { font-weight:700; width:36px; font-size:9px; }
+.nmethod.get { color:var(--ok); } .nmethod.post { color:var(--orange); }
+.nurl { flex:1; color:var(--g1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nstatus { width:28px; text-align:center; font-weight:700; }
+.nstatus.s2 { color:var(--ok); } .nstatus.s4 { color:var(--fail); }
+.ntime { width:45px; text-align:right; color:var(--g1); font-family:'Courier New',monospace; }
+
+/* ===== PAGE: Analysis ===== */
+.analysis-tabs { display:flex; gap:4px; padding:16px 24px 0; }
+.atab { padding:8px 16px; border-radius:8px 8px 0 0; font-size:12px; font-weight:600; cursor:pointer; color:var(--g1); background:var(--bg); border:1px solid var(--border); border-bottom:none; transition:all .15s; }
+.atab.active { color:var(--blue); background:var(--card); }
+.analysis-body { margin:0 24px 24px; background:var(--card); border:1px solid var(--border); border-radius:0 12px 12px 12px; padding:20px; min-height:400px; transition:background .2s; }
+
+/* Perf waterfall */
+.wf-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:11px; }
+.wf-label { width:120px; text-align:right; color:var(--text2); }
+.wf-track { flex:1; height:18px; background:var(--bg); border-radius:4px; position:relative; overflow:hidden; }
+.wf-bar { height:100%; border-radius:4px; display:flex; align-items:center; padding:0 6px; font-size:9px; color:#fff; font-weight:600; }
+.wf-metric { display:flex; gap:20px; margin-top:16px; }
+.wf-metric .m { text-align:center; }
+.wf-metric .m .val { font-size:24px; font-weight:700; color:var(--text); }
+.wf-metric .m .lbl { font-size:10px; color:var(--g1); margin-top:2px; }
+
+/* DOM diff */
+.diff-container { display:flex; gap:12px; }
+.diff-pane { flex:1; background:var(--bg); border-radius:8px; padding:12px; font-family:'Courier New',monospace; font-size:10px; overflow:auto; max-height:350px; transition:background .2s; }
+.diff-pane .title { font-family:'Pretendard',sans-serif; font-size:12px; font-weight:600; margin-bottom:8px; color:var(--text); }
+.diff-line { padding:1px 4px; border-radius:2px; margin-bottom:1px; }
+.diff-line.add { background:rgba(44,237,108,.1); color:var(--ok); }
+.diff-line.del { background:rgba(232,33,96,.08); color:var(--fail); }
+.diff-line.same { color:var(--g1); }
+
+/* Failure pattern */
+.fp-table { width:100%; border-collapse:collapse; font-size:11px; }
+.fp-table th { padding:8px 12px; text-align:left; background:var(--bg); color:var(--text2); font-weight:600; border-bottom:1px solid var(--border); }
+.fp-table td { padding:8px 12px; border-bottom:1px solid var(--border); }
+.fp-bar { height:8px; border-radius:4px; background:var(--bg); overflow:hidden; }
+.fp-bar .fp-fill { height:100%; border-radius:4px; background:var(--fail); }
+
+/* Failure capture modal */
+.modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:200; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--card); border-radius:12px; width:700px; max-height:80vh; overflow:auto; box-shadow:0 0 40px rgba(0,0,0,.2); }
+.modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border); }
+.modal-hdr h3 { font-size:14px; font-weight:700; }
+.modal-body { padding:16px 20px; }
+.cap-section { margin-bottom:16px; }
+.cap-section .cap-title { font-size:11px; font-weight:600; color:var(--text2); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.cap-section .cap-title .tag { font-size:9px; padding:1px 6px; border-radius:4px; background:rgba(232,33,96,.1); color:var(--fail); }
+.cap-screenshot { background:var(--bg); border:1px solid var(--border); border-radius:8px; height:200px; display:flex; align-items:center; justify-content:center; color:var(--g1); font-size:12px; }
+
+/* Share modal */
+.share-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; align-items:center; gap:8px; }
+.share-box input { flex:1; background:transparent; border:none; font-size:12px; color:var(--text); outline:none; font-family:'Courier New',monospace; }
+.share-box .copy-btn { padding:6px 14px; background:var(--navy); color:#fff; border:none; border-radius:6px; font-size:11px; cursor:pointer; font-weight:600; }
+
+/* Breakpoint indicator */
+.bp-banner { padding:8px 16px; background:rgba(255,141,12,.08); border:1px solid var(--orange); border-radius:8px; display:flex; align-items:center; gap:10px; margin:12px 16px; font-size:11px; }
+.bp-banner .bp-icon { font-size:16px; }
+.bp-banner .bp-text { flex:1; }
+.bp-banner .bp-actions { display:flex; gap:6px; }
+
+/* Intervention banner */
+.iv-banner { padding:8px 16px; background:rgba(105,32,208,.08); border:1px solid var(--purple); border-radius:8px; display:flex; align-items:center; gap:10px; margin:0 16px 12px; font-size:11px; }
+
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">G</div>
+    <div class="logo-text">Gen<span>Q</span></div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">&#9635;</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('detail',0)"><span class="icon">&#9654;</span> Live Session</div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="showPage('analysis')"><span class="icon">&#9776;</span> Analysis</div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" onclick="showPage('failures')"><span class="icon">&#9888;</span> Failures</div>
+    <div class="nav-item" onclick="showModal('shareModal')"><span class="icon">&#128279;</span> Share URL</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="theme-toggle">
+      <div class="theme-btn active" onclick="setTheme('light')">W</div>
+      <div class="theme-btn" onclick="setTheme('dark')">D</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+<!-- ===== PAGE: Dashboard ===== -->
+<div class="page active" id="pg-dashboard">
+  <div class="header">
+    <div class="header-title">AutoScript Monitor</div>
+    <div class="header-stats">
+      <div class="stat-badge"><div class="dot running"></div> 실행중 3</div>
+      <div class="stat-badge"><div class="dot ok"></div> 성공 2</div>
+      <div class="stat-badge"><div class="dot fail"></div> 실패 1</div>
+      <div class="stat-badge"><div class="dot pending"></div> 대기 2</div>
+    </div>
+  </div>
+  <div class="dashboard"><div class="grid" id="grid"></div></div>
+</div>
+
+<!-- ===== PAGE: Detail ===== -->
+<div class="page" id="pg-detail">
+  <div class="detail-hdr">
+    <div class="left">
+      <button class="back-btn" onclick="showPage('dashboard')">&#8592;</button>
+      <span class="badge running" id="d-badge">실행중</span>
+      <span class="tc-name" id="d-name">TC-001</span>
+    </div>
+    <div class="right">
+      <button class="ctrl-btn" id="bp-btn" onclick="toggleBP()">&#9632; Breakpoint</button>
+      <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">&#9208; Pause</button>
+      <button class="ctrl-btn" id="iv-btn" onclick="toggleIV()">&#9997; Intervene</button>
+      <button class="ctrl-btn record" id="rec-btn" onclick="toggleRec()">&#9679; REC</button>
+      <button class="ctrl-btn" onclick="showModal('shareModal')">&#128279; Share</button>
+    </div>
+  </div>
+  <div class="detail-body" style="flex:1;overflow:hidden">
+    <div class="browser-pane">
+      <div class="browser-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url" id="d-url">https://genqlab.comes.co.kr</div>
+      </div>
+      <!-- Breakpoint banner -->
+      <div class="bp-banner hidden" id="bp-banner">
+        <span class="bp-icon">&#9208;</span>
+        <span class="bp-text"><strong>Breakpoint</strong> - Step 3에서 일시정지됨. DOM을 확인하고 계속 진행하세요.</span>
+        <div class="bp-actions">
+          <button class="ctrl-btn" onclick="toggleBP()" style="height:26px;font-size:10px">&#9654; Resume</button>
+          <button class="ctrl-btn" style="height:26px;font-size:10px">&#8631; Skip Step</button>
+        </div>
+      </div>
+      <!-- Intervention banner -->
+      <div class="iv-banner hidden" id="iv-banner">
+        <span class="bp-icon">&#9997;</span>
+        <span class="bp-text"><strong>Manual Intervention</strong> - 자동화 일시정지. 브라우저에서 직접 조작하세요. 완료 후 Resume을 누르면 자동화가 이어집니다.</span>
+        <div class="bp-actions">
+          <button class="ctrl-btn" onclick="toggleIV()" style="height:26px;font-size:10px">&#9654; Resume Auto</button>
+        </div>
+      </div>
+      <div class="browser-screen" id="d-screen"></div>
+      <div class="step-bar">
+        <div class="snum" id="d-snum">Step 3/8</div>
+        <div class="sdesc" id="d-sdesc">로그인 버튼 클릭</div>
+        <div class="sprog"><div class="prog"><div class="fill running" id="d-prog" style="width:37%"></div></div></div>
+      </div>
+      <!-- Timeline strip -->
+      <div class="timeline-strip" id="d-timeline"></div>
+    </div>
+    <div class="side-panel">
+      <div class="side-tabs">
+        <div class="side-tab active" onclick="sTab('steps',this)">Steps</div>
+        <div class="side-tab" onclick="sTab('console',this)">Console</div>
+        <div class="side-tab" onclick="sTab('network',this)">Network</div>
+      </div>
+      <div class="side-body">
+        <div id="sp-steps"></div>
+        <div id="sp-console" class="hidden"></div>
+        <div id="sp-network" class="hidden"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: Analysis ===== -->
+<div class="page" id="pg-analysis">
+  <div class="header"><div class="header-title">Analysis</div></div>
+  <div class="analysis-tabs">
+    <div class="atab active" onclick="aTab('perf',this)">Performance</div>
+    <div class="atab" onclick="aTab('diff',this)">DOM Diff</div>
+    <div class="atab" onclick="aTab('pattern',this)">Failure Patterns</div>
+  </div>
+  <!-- Performance -->
+  <div class="analysis-body" id="ab-perf">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:16px">Page Load Waterfall - TC-001 로그인 페이지</h3>
+    <div class="wf-row"><div class="wf-label">DNS Lookup</div><div class="wf-track"><div class="wf-bar" style="width:8%;background:var(--purple)">12ms</div></div></div>
+    <div class="wf-row"><div class="wf-label">TCP Connect</div><div class="wf-track"><div class="wf-bar" style="width:10%;background:var(--blue);margin-left:8%">18ms</div></div></div>
+    <div class="wf-row"><div class="wf-label">TLS Handshake</div><div class="wf-track"><div class="wf-bar" style="width:14%;background:#0969da;margin-left:18%">24ms</div></div></div>
+    <div class="wf-row"><div class="wf-label">TTFB</div><div class="wf-track"><div class="wf-bar" style="width:22%;background:var(--ok);margin-left:32%">156ms</div></div></div>
+    <div class="wf-row"><div class="wf-label">Content Download</div><div class="wf-track"><div class="wf-bar" style="width:30%;background:var(--green);margin-left:54%">245ms</div></div></div>
+    <div class="wf-row"><div class="wf-label">DOM Parse</div><div class="wf-track"><div class="wf-bar" style="width:18%;background:var(--orange);margin-left:70%">89ms</div></div></div>
+    <div class="wf-row"><div class="wf-label">Render</div><div class="wf-track"><div class="wf-bar" style="width:24%;background:var(--warn);margin-left:76%">348ms</div></div></div>
+    <div class="wf-metric">
+      <div class="m"><div class="val">892<span style="font-size:12px;color:var(--g1)">ms</span></div><div class="lbl">Total Load</div></div>
+      <div class="m"><div class="val">156<span style="font-size:12px;color:var(--g1)">ms</span></div><div class="lbl">TTFB</div></div>
+      <div class="m"><div class="val">1.8<span style="font-size:12px;color:var(--g1)">MB</span></div><div class="lbl">Transfer Size</div></div>
+      <div class="m"><div class="val">42</div><div class="lbl">Requests</div></div>
+      <div class="m"><div class="val" style="color:var(--ok)">89</div><div class="lbl">Performance Score</div></div>
+    </div>
+  </div>
+  <!-- DOM Diff -->
+  <div class="analysis-body hidden" id="ab-diff">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:16px">DOM Diff - TC-005 Admin 모델 설정 (Run #14 vs #15)</h3>
+    <div class="diff-container">
+      <div class="diff-pane">
+        <div class="title">Run #14 (성공) - 2026-03-09 14:30</div>
+        <div class="diff-line same">&lt;div class="admin-models"&gt;</div>
+        <div class="diff-line same">  &lt;div class="model-form"&gt;</div>
+        <div class="diff-line del">-   &lt;input id="modelName" type="text" /&gt;</div>
+        <div class="diff-line del">-   &lt;select id="modelType"&gt;</div>
+        <div class="diff-line del">-     &lt;option&gt;Chat&lt;/option&gt;</div>
+        <div class="diff-line del">-   &lt;/select&gt;</div>
+        <div class="diff-line same">    &lt;button class="save-btn"&gt;저장&lt;/button&gt;</div>
+        <div class="diff-line same">  &lt;/div&gt;</div>
+        <div class="diff-line same">&lt;/div&gt;</div>
+      </div>
+      <div class="diff-pane">
+        <div class="title">Run #15 (실패) - 2026-03-10 09:15</div>
+        <div class="diff-line same">&lt;div class="admin-models"&gt;</div>
+        <div class="diff-line same">  &lt;div class="model-form"&gt;</div>
+        <div class="diff-line add">+   &lt;div class="loading-spinner" /&gt;</div>
+        <div class="diff-line add">+   &lt;!-- modelName input removed --&gt;</div>
+        <div class="diff-line add">+   &lt;!-- modelType select removed --&gt;</div>
+        <div class="diff-line same">    &lt;button class="save-btn"&gt;저장&lt;/button&gt;</div>
+        <div class="diff-line same">  &lt;/div&gt;</div>
+        <div class="diff-line same">&lt;/div&gt;</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:rgba(232,33,96,.05);border:1px solid var(--fail);border-radius:8px;font-size:11px;color:var(--fail)">
+      <strong>원인 추정:</strong> #modelName input이 loading-spinner로 교체됨. API /admin/models/types가 404를 반환하여 폼 렌더링 실패.
+    </div>
+  </div>
+  <!-- Failure Patterns -->
+  <div class="analysis-body hidden" id="ab-pattern">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:16px">Failure Pattern Analysis (최근 30일)</h3>
+    <table class="fp-table">
+      <thead><tr><th>스텝</th><th>TC</th><th>실패 횟수</th><th>빈도</th><th>마지막 실패</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>모델 정보 입력</strong><br><span style="font-size:9px;color:var(--g1)">Element #modelName not found</span></td>
+          <td>TC-005</td>
+          <td style="color:var(--fail);font-weight:700">12</td>
+          <td><div class="fp-bar" style="width:120px"><div class="fp-fill" style="width:80%"></div></div></td>
+          <td>2026-03-10 09:15</td>
+        </tr>
+        <tr>
+          <td><strong>대시보드 로딩 대기</strong><br><span style="font-size:9px;color:var(--g1)">Timeout waiting for selector</span></td>
+          <td>TC-001</td>
+          <td style="color:var(--fail);font-weight:700">7</td>
+          <td><div class="fp-bar" style="width:120px"><div class="fp-fill" style="width:47%"></div></div></td>
+          <td>2026-03-08 16:42</td>
+        </tr>
+        <tr>
+          <td><strong>AI 생성 실행</strong><br><span style="font-size:9px;color:var(--g1)">API timeout after 30s</span></td>
+          <td>TC-002</td>
+          <td style="color:var(--warn);font-weight:700">4</td>
+          <td><div class="fp-bar" style="width:120px"><div class="fp-fill" style="width:27%;background:var(--warn)"></div></div></td>
+          <td>2026-03-07 11:20</td>
+        </tr>
+        <tr>
+          <td><strong>Jira 티켓 동기화</strong><br><span style="font-size:9px;color:var(--g1)">403 Forbidden</span></td>
+          <td>TC-007</td>
+          <td style="color:var(--warn);font-weight:700">3</td>
+          <td><div class="fp-bar" style="width:120px"><div class="fp-fill" style="width:20%;background:var(--warn)"></div></div></td>
+          <td>2026-03-06 14:55</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== PAGE: Failures ===== -->
+<div class="page" id="pg-failures">
+  <div class="header"><div class="header-title">Failure Captures</div><div class="stat-badge"><div class="dot fail"></div> 총 12건 캡처됨</div></div>
+  <div class="dashboard">
+    <!-- Failure List -->
+    <div id="fail-list">
+      <table class="fp-table" style="background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+        <thead><tr><th>시간</th><th>TC</th><th>실패 스텝</th><th>에러</th><th>상세</th></tr></thead>
+        <tbody>
+          <tr onclick="showFailDetail(0)" style="cursor:pointer"><td style="font-family:'Courier New',monospace;font-size:10px">03-10 09:15</td><td><strong>TC-005</strong></td><td>Step 4: 모델 정보 입력</td><td style="color:var(--fail);font-size:10px">#modelName not found (5000ms)</td><td><button class="ctrl-btn" style="height:24px;font-size:10px">보기</button></td></tr>
+          <tr onclick="showFailDetail(1)" style="cursor:pointer"><td style="font-family:'Courier New',monospace;font-size:10px">03-09 16:42</td><td><strong>TC-001</strong></td><td>Step 4: 대시보드 로딩 대기</td><td style="color:var(--fail);font-size:10px">Timeout waiting for #dashboard</td><td><button class="ctrl-btn" style="height:24px;font-size:10px">보기</button></td></tr>
+          <tr onclick="showFailDetail(2)" style="cursor:pointer"><td style="font-family:'Courier New',monospace;font-size:10px">03-09 14:20</td><td><strong>TC-005</strong></td><td>Step 4: 모델 정보 입력</td><td style="color:var(--fail);font-size:10px">#modelName not found (5000ms)</td><td><button class="ctrl-btn" style="height:24px;font-size:10px">보기</button></td></tr>
+          <tr onclick="showFailDetail(3)" style="cursor:pointer"><td style="font-family:'Courier New',monospace;font-size:10px">03-08 11:20</td><td><strong>TC-002</strong></td><td>Step 5: AI 생성 실행</td><td style="color:var(--warn);font-size:10px">API timeout after 30s</td><td><button class="ctrl-btn" style="height:24px;font-size:10px">보기</button></td></tr>
+          <tr onclick="showFailDetail(4)" style="cursor:pointer"><td style="font-family:'Courier New',monospace;font-size:10px">03-07 14:55</td><td><strong>TC-007</strong></td><td>Step 3: Jira 티켓 동기화</td><td style="color:var(--warn);font-size:10px">403 Forbidden</td><td><button class="ctrl-btn" style="height:24px;font-size:10px">보기</button></td></tr>
+          <tr onclick="showFailDetail(5)" style="cursor:pointer"><td style="font-family:'Courier New',monospace;font-size:10px">03-07 10:05</td><td><strong>TC-005</strong></td><td>Step 4: 모델 정보 입력</td><td style="color:var(--fail);font-size:10px">#modelName not found (5000ms)</td><td><button class="ctrl-btn" style="height:24px;font-size:10px">보기</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Failure Detail (shown on click) -->
+    <div id="fail-detail" class="hidden" style="margin-top:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button class="ctrl-btn" onclick="hideFailDetail()" style="height:28px">&#8592; 목록으로</button>
+        <span class="badge fail">실패</span>
+        <span style="font-size:14px;font-weight:700" id="fd-title">TC-005 Step 4: 모델 정보 입력</span>
+        <span style="font-size:11px;color:var(--g1);margin-left:auto" id="fd-time">2026-03-10 09:15:32</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:background .2s">
+          <div class="cap-title">Screenshot <span class="tag">자동 캡처</span></div>
+          <div class="cap-screenshot">
+            <div style="text-align:center">
+              <div style="font-size:24px;margin-bottom:4px">&#128247;</div>
+              <div>실패 시점 스크린샷</div>
+              <div style="font-size:10px;color:var(--fail);margin-top:4px" id="fd-error">Element #modelName not found after 5000ms</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:background .2s">
+          <div class="cap-title">DOM Snapshot</div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'Courier New',monospace;font-size:10px;height:200px;overflow:auto;transition:background .2s" id="fd-dom">
+            <div style="color:var(--fail)">&lt;div class="model-form"&gt;</div>
+            <div style="color:var(--fail);padding-left:12px">&lt;div class="loading-spinner"&gt;Loading...&lt;/div&gt;</div>
+            <div style="color:var(--g1);padding-left:12px">&lt;!-- Expected: input#modelName --&gt;</div>
+            <div style="color:var(--fail)">&lt;/div&gt;</div>
+          </div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:background .2s">
+          <div class="cap-title">Network Log (실패 전후 5초)</div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:background .2s" id="fd-net">
+            <div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/admin/models</div><div class="nstatus s2">200</div><div class="ntime">345ms</div></div>
+            <div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/admin/models/types</div><div class="nstatus s4">404</div><div class="ntime">12ms</div></div>
+          </div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:background .2s">
+          <div class="cap-title">Console Errors</div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px;transition:background .2s" id="fd-console">
+            <div class="cline err">Uncaught TypeError: Cannot read properties of null</div>
+            <div class="cline err">at ModelForm.render (admin-models.js:142:18)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Share URL ===== -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="width:500px">
+    <div class="modal-hdr">
+      <h3>&#128279; 세션 공유</h3>
+      <button class="back-btn" onclick="hideModal('shareModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">이 링크를 공유하면 팀원이 세션 결과를 바로 확인할 수 있습니다.</p>
+      <div class="share-box">
+        <input value="https://genqlab.comes.co.kr/monitor/session/tc001-20260310-143025" readonly id="share-url">
+        <button class="copy-btn" onclick="copyShare()">복사</button>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
+          <input type="checkbox" checked> 스텝 타임라인 포함
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
+          <input type="checkbox" checked> 콘솔 로그 포함
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
+          <input type="checkbox"> 녹화 영상 포함
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const S = [
+  { id:'TC-001', name:'로그인 기능 테스트', st:'running', url:'https://genqlab.comes.co.kr/login', cs:3, ts:8, dur:'00:12', pg:'login',
+    steps:[{l:'로그인 페이지 이동',s:'done',t:'1.2s'},{l:'아이디 입력: shlee2@comes.co.kr',s:'done',t:'0.8s'},{l:'로그인 버튼 클릭',s:'current',t:'...'},{l:'대시보드 로딩 대기',s:'pending',t:''},{l:'워크스페이스 확인',s:'pending',t:''},{l:'사용자 이름 검증',s:'pending',t:''},{l:'메뉴 접근 확인',s:'pending',t:''},{l:'로그아웃',s:'pending',t:''}],
+    con:[{t:'info',x:'[AutoScript] TC-001 시작'},{t:'log',x:'Navigating to /login'},{t:'ok',x:'Page loaded in 892ms'},{t:'log',x:'Filling #email: shlee2@comes.co.kr'},{t:'ok',x:'Input filled'},{t:'info',x:'Clicking: 로그인'}],
+    net:[{m:'GET',u:'/login',s:200,t:'892ms'},{m:'GET',u:'/static/js/main.chunk.js',s:200,t:'124ms'},{m:'POST',u:'/api/v2/auth/login',s:200,t:'...'}] },
+  { id:'TC-002', name:'TC 생성 테스트', st:'running', url:'https://genqlab.comes.co.kr/workspace/211/testcases', cs:4, ts:12, dur:'00:34', pg:'tc',
+    steps:[{l:'워크스페이스 진입',s:'done',t:'1.5s'},{l:'TC 목록 이동',s:'done',t:'0.9s'},{l:'TC 생성 클릭',s:'done',t:'0.3s'},{l:'TC 정보 입력 중',s:'current',t:'...'},{l:'AI 생성 실행',s:'pending',t:''},{l:'생성 결과 확인',s:'pending',t:''},{l:'TC 상세 검증',s:'pending',t:''},{l:'TC 수정',s:'pending',t:''},{l:'TC 삭제',s:'pending',t:''},{l:'휴지통 확인',s:'pending',t:''},{l:'TC 복원',s:'pending',t:''},{l:'최종 검증',s:'pending',t:''}],
+    con:[{t:'info',x:'[AutoScript] TC-002 시작'},{t:'ok',x:'Workspace loaded'},{t:'ok',x:'TC list: 15 items'},{t:'log',x:'Filling TC form...'}],
+    net:[{m:'GET',u:'/api/v2/workspace/211',s:200,t:'234ms'},{m:'GET',u:'/api/v2/testcases?wsSeq=211',s:200,t:'456ms'}] },
+  { id:'TC-003', name:'Copilot 채팅 테스트', st:'running', url:'https://genqlab.comes.co.kr/workspace/211/copilot', cs:2, ts:6, dur:'00:08', pg:'copilot',
+    steps:[{l:'Copilot 페이지 이동',s:'done',t:'1.1s'},{l:'채팅 메시지 입력 중',s:'current',t:'...'},{l:'응답 대기',s:'pending',t:''},{l:'응답 검증',s:'pending',t:''},{l:'도구 실행 확인',s:'pending',t:''},{l:'결과 스크린샷',s:'pending',t:''}],
+    con:[{t:'info',x:'[AutoScript] TC-003 시작'},{t:'ok',x:'Copilot UI loaded'},{t:'log',x:'Typing: "로그인 TC 만들어줘"'}],
+    net:[{m:'GET',u:'/api/v2/copilot/history?wsSeq=211',s:200,t:'178ms'}] },
+  { id:'TC-004', name:'파이프라인 실행 테스트', st:'ok', url:'https://genqlab.comes.co.kr/workspace/211/pipelines', cs:7, ts:7, dur:'01:45', pg:'pipe',
+    steps:[{l:'파이프라인 목록 이동',s:'done',t:'1.0s'},{l:'파이프라인 선택',s:'done',t:'0.5s'},{l:'실행 버튼 클릭',s:'done',t:'0.3s'},{l:'실행 상태 모니터링',s:'done',t:'45.2s'},{l:'결과 페이지 확인',s:'done',t:'1.2s'},{l:'리포트 다운로드',s:'done',t:'2.1s'},{l:'데이터 검증',s:'done',t:'0.8s'}],
+    con:[{t:'info',x:'[AutoScript] TC-004 완료'},{t:'ok',x:'All 7 steps passed'}], net:[] },
+  { id:'TC-005', name:'Admin 모델 설정 테스트', st:'fail', url:'https://genqlab.comes.co.kr/admin/models', cs:4, ts:9, dur:'00:28', pg:'admin',
+    steps:[{l:'Admin 페이지 이동',s:'done',t:'0.9s'},{l:'Models 탭 클릭',s:'done',t:'0.4s'},{l:'모델 추가 버튼 클릭',s:'done',t:'0.3s'},{l:'모델 정보 입력',s:'fail',t:'5.0s'},{l:'저장 확인',s:'pending',t:''},{l:'모델 목록 검증',s:'pending',t:''},{l:'모델 수정',s:'pending',t:''},{l:'모델 삭제',s:'pending',t:''},{l:'최종 검증',s:'pending',t:''}],
+    con:[{t:'info',x:'[AutoScript] TC-005 시작'},{t:'ok',x:'Admin loaded'},{t:'err',x:'AssertionError: #modelName not visible'},{t:'err',x:'Timeout 5000ms'},{t:'warn',x:'TC-005 FAILED at Step 4'}],
+    net:[{m:'GET',u:'/api/v2/admin/models',s:200,t:'345ms'},{m:'GET',u:'/api/v2/admin/models/types',s:404,t:'12ms'}] },
+  { id:'TC-006', name:'검색 기능 테스트', st:'ok', url:'https://genqlab.comes.co.kr/workspace/211/search', cs:5, ts:5, dur:'00:22', pg:'search',
+    steps:[{l:'검색 페이지 이동',s:'done',t:'0.8s'},{l:'검색어 입력: "로그인"',s:'done',t:'0.5s'},{l:'검색 실행',s:'done',t:'1.2s'},{l:'결과 목록 확인',s:'done',t:'0.4s'},{l:'결과 클릭 & 검증',s:'done',t:'0.9s'}],
+    con:[{t:'ok',x:'All 5 steps passed'}], net:[] },
+  { id:'TC-007', name:'Jira 연동 TC 동기화', st:'pending', url:'', cs:0, ts:10, dur:'--:--', pg:'', steps:[], con:[], net:[] },
+  { id:'TC-008', name:'소스코드 스캔 테스트', st:'pending', url:'', cs:0, ts:8, dur:'--:--', pg:'', steps:[], con:[], net:[] },
+];
+
+const SL={running:'실행중',ok:'성공',fail:'실패',pending:'대기'};
+
+function renderGrid(){
+  document.getElementById('grid').innerHTML=S.map((s,i)=>`
+    <div class="tile" onclick="showPage('detail',${i})">
+      <div class="tile-hdr"><div class="tile-name">${s.id}: ${s.name}</div><div class="badge ${s.st}">${SL[s.st]}</div></div>
+      <div class="tile-preview">${tilePrev(s)}${s.st==='running'||s.st==='fail'?stepOv(s):''}${s.st==='running'?cursor(s):''}</div>
+      <div class="tile-foot"><span>${s.cs}/${s.ts} steps</span><span class="dur">${s.dur}</span></div>
+    </div>`).join('');
+}
+
+function tilePrev(s){
+  if(s.st==='pending') return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--g1);font-size:12px">대기중...</div>`;
+  const P={
+    login:`<div class="mini-browser"><div class="mini-bar"><div class="mini-dots"><span></span><span></span><span></span></div><div class="mini-url">${s.url}</div></div><div class="mini-content"><div class="ph hd"></div><div class="ph inp"></div><div class="ph inp"></div><div class="ph btn"></div></div></div>`,
+    tc:`<div class="mini-browser"><div class="mini-bar"><div class="mini-dots"><span></span><span></span><span></span></div><div class="mini-url">${s.url}</div></div><div class="mini-content"><div class="ph hd" style="width:40%"></div><div class="ph card"></div><div class="ph card"></div></div></div>`,
+    copilot:`<div class="mini-browser"><div class="mini-bar"><div class="mini-dots"><span></span><span></span><span></span></div><div class="mini-url">${s.url}</div></div><div class="mini-content"><div class="ph card" style="height:24px;width:65%;margin-left:auto;background:rgba(1,109,255,.15);border-color:rgba(1,109,255,.2)"></div><div class="ph card" style="height:36px"></div><div class="ph inp"></div></div></div>`,
+    pipe:`<div class="mini-browser"><div class="mini-bar"><div class="mini-dots"><span></span><span></span><span></span></div><div class="mini-url">${s.url}</div></div><div class="mini-content"><div class="ph hd" style="width:45%"></div><div style="display:flex;gap:4px;align-items:center"><div style="width:10px;height:10px;border-radius:50%;background:var(--ok)"></div><div class="ph txt" style="width:100px"></div></div><div style="display:flex;gap:4px;align-items:center"><div style="width:10px;height:10px;border-radius:50%;background:var(--ok)"></div><div class="ph txt" style="width:130px"></div></div></div></div>`,
+    admin:`<div class="mini-browser"><div class="mini-bar"><div class="mini-dots"><span></span><span></span><span></span></div><div class="mini-url">${s.url}</div></div><div class="mini-content"><div style="display:flex;gap:3px;margin-bottom:5px"><div style="padding:2px 8px;background:var(--blue);border-radius:3px;font-size:8px;color:#fff">Models</div><div style="padding:2px 8px;background:var(--border);border-radius:3px;font-size:8px;color:var(--g1)">Funcs</div></div><div class="ph card"></div><div style="margin-top:4px;font-size:8px;color:var(--fail);padding:4px;background:rgba(232,33,96,.05);border-radius:3px">Error: Element not found</div></div></div>`,
+    search:`<div class="mini-browser"><div class="mini-bar"><div class="mini-dots"><span></span><span></span><span></span></div><div class="mini-url">${s.url}</div></div><div class="mini-content"><div class="ph inp" style="margin-bottom:5px"></div><div class="ph card" style="height:20px"></div><div class="ph card" style="height:20px"></div><div class="ph card" style="height:20px"></div></div></div>`
+  };
+  return P[s.pg]||'';
+}
+function stepOv(s){
+  const p=s.ts?(s.cs/s.ts*100):0, n=s.steps[s.cs-1]?.l||'', c=s.st==='fail'?'fail':'running';
+  return `<div class="step-ov"><div class="step-ov-text">Step ${s.cs}/${s.ts}: <span class="act">${n}</span></div><div class="prog"><div class="fill ${c}" style="width:${p}%"></div></div></div>`;
+}
+function cursor(s){
+  const P={login:[55,130],tc:[140,90],copilot:[180,135]}, p=P[s.pg]||[80,80];
+  return `<div class="cursor-hl" style="left:${p[0]}px;top:${p[1]}px"></div>`;
+}
+
+// Pages
+function showPage(pg,idx){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(pg==='dashboard'){
+    document.getElementById('pg-dashboard').classList.add('active');
+    document.querySelectorAll('.nav-item')[0].classList.add('active');
+  } else if(pg==='detail'){
+    document.getElementById('pg-detail').classList.add('active');
+    document.querySelectorAll('.nav-item')[1].classList.add('active');
+    loadDetail(idx!=null?idx:0);
+  } else if(pg==='analysis'){
+    document.getElementById('pg-analysis').classList.add('active');
+    document.querySelectorAll('.nav-item')[3].classList.add('active');
+  } else if(pg==='failures'){
+    document.getElementById('pg-failures').classList.add('active');
+    document.querySelectorAll('.nav-item')[4].classList.add('active');
+    hideFailDetail();
+  }
+}
+
+const failData=[
+  {title:'TC-005 Step 4: 모델 정보 입력',time:'2026-03-10 09:15:32',error:'Element #modelName not found after 5000ms',
+   dom:'<div style="color:var(--fail)">&lt;div class="model-form"&gt;</div><div style="color:var(--fail);padding-left:12px">&lt;div class="loading-spinner"&gt;Loading...&lt;/div&gt;</div><div style="color:var(--g1);padding-left:12px">&lt;!-- Expected: input#modelName --&gt;</div><div style="color:var(--fail)">&lt;/div&gt;</div>',
+   net:'<div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/admin/models</div><div class="nstatus s2">200</div><div class="ntime">345ms</div></div><div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/admin/models/types</div><div class="nstatus s4">404</div><div class="ntime">12ms</div></div>',
+   con:'<div class="cline err">Uncaught TypeError: Cannot read properties of null</div><div class="cline err">at ModelForm.render (admin-models.js:142:18)</div>'},
+  {title:'TC-001 Step 4: 대시보드 로딩 대기',time:'2026-03-09 16:42:18',error:'Timeout waiting for selector #dashboard (10000ms)',
+   dom:'<div style="color:var(--g1)">&lt;div id="app"&gt;</div><div style="color:var(--fail);padding-left:12px">&lt;div class="spinner"&gt;Loading...&lt;/div&gt;</div><div style="color:var(--g1);padding-left:12px">&lt;!-- Expected: div#dashboard --&gt;</div><div style="color:var(--g1)">&lt;/div&gt;</div>',
+   net:'<div class="nrow"><div class="nmethod post">POST</div><div class="nurl">/api/v2/auth/login</div><div class="nstatus s2">200</div><div class="ntime">1.2s</div></div><div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/workspace/list</div><div class="nstatus s2">200</div><div class="ntime">8.5s</div></div>',
+   con:'<div class="cline warn">Slow API response: /api/v2/workspace/list took 8.5s</div><div class="cline err">TimeoutError: waiting for selector "#dashboard" failed</div>'},
+  {title:'TC-005 Step 4: 모델 정보 입력',time:'2026-03-09 14:20:05',error:'Element #modelName not found after 5000ms',
+   dom:'<div style="color:var(--fail)">&lt;div class="model-form"&gt;</div><div style="color:var(--fail);padding-left:12px">&lt;div class="loading-spinner" /&gt;</div><div style="color:var(--fail)">&lt;/div&gt;</div>',
+   net:'<div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/admin/models/types</div><div class="nstatus s4">404</div><div class="ntime">15ms</div></div>',
+   con:'<div class="cline err">TypeError: Cannot read properties of null</div>'},
+  {title:'TC-002 Step 5: AI 생성 실행',time:'2026-03-08 11:20:44',error:'API timeout after 30s',
+   dom:'<div style="color:var(--g1)">&lt;div class="tc-generate"&gt;</div><div style="color:var(--warn);padding-left:12px">&lt;div class="generating"&gt;AI 생성 중...&lt;/div&gt;</div><div style="color:var(--g1)">&lt;/div&gt;</div>',
+   net:'<div class="nrow"><div class="nmethod post">POST</div><div class="nurl">/api/v2/testcases/generate</div><div class="nstatus s4">504</div><div class="ntime">30.0s</div></div>',
+   con:'<div class="cline err">AbortError: signal timed out</div><div class="cline warn">API /api/v2/testcases/generate returned 504</div>'},
+  {title:'TC-007 Step 3: Jira 티켓 동기화',time:'2026-03-07 14:55:12',error:'403 Forbidden - Jira API 권한 오류',
+   dom:'<div style="color:var(--g1)">&lt;div class="jira-sync"&gt;</div><div style="color:var(--warn);padding-left:12px">&lt;div class="error-msg"&gt;권한이 없습니다&lt;/div&gt;</div><div style="color:var(--g1)">&lt;/div&gt;</div>',
+   net:'<div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/jira/sync?projectKey=GENQ</div><div class="nstatus s4">403</div><div class="ntime">234ms</div></div>',
+   con:'<div class="cline err">JiraAPIError: 403 Forbidden</div><div class="cline warn">Jira token may have expired</div>'},
+  {title:'TC-005 Step 4: 모델 정보 입력',time:'2026-03-07 10:05:33',error:'Element #modelName not found after 5000ms',
+   dom:'<div style="color:var(--fail)">&lt;div class="model-form"&gt;&lt;/div&gt;</div>',
+   net:'<div class="nrow"><div class="nmethod get">GET</div><div class="nurl">/api/v2/admin/models/types</div><div class="nstatus s4">404</div><div class="ntime">11ms</div></div>',
+   con:'<div class="cline err">TypeError: Cannot read properties of null</div>'},
+];
+
+function showFailDetail(i){
+  const f=failData[i]; if(!f) return;
+  document.getElementById('fail-list').classList.add('hidden');
+  document.getElementById('fail-detail').classList.remove('hidden');
+  document.getElementById('fd-title').textContent=f.title;
+  document.getElementById('fd-time').textContent=f.time;
+  document.getElementById('fd-error').textContent=f.error;
+  document.getElementById('fd-dom').innerHTML=f.dom;
+  document.getElementById('fd-net').innerHTML=f.net;
+  document.getElementById('fd-console').innerHTML=f.con;
+}
+function hideFailDetail(){
+  document.getElementById('fail-list').classList.remove('hidden');
+  document.getElementById('fail-detail').classList.add('hidden');
+}
+
+function loadDetail(i){
+  const s=S[i]; if(!s) return;
+  document.getElementById('d-badge').className='badge '+s.st;
+  document.getElementById('d-badge').textContent=SL[s.st];
+  document.getElementById('d-name').textContent=s.id+': '+s.name;
+  document.getElementById('d-url').textContent=s.url||'about:blank';
+  document.getElementById('d-snum').textContent=`Step ${s.cs}/${s.ts}`;
+  document.getElementById('d-sdesc').textContent=s.steps[s.cs-1]?.l||'--';
+  const p=s.ts?(s.cs/s.ts*100):0;
+  document.getElementById('d-prog').style.width=p+'%';
+  document.getElementById('d-prog').className='fill '+(s.st==='fail'?'fail':s.st==='ok'?'ok':'running');
+
+  // Browser screen
+  const pages={
+    login:`<div class="mock-page"><h2 style="color:var(--navy)">GenQLab</h2><div class="fg"><label>이메일</label><input value="shlee2@comes.co.kr" class="hl" readonly></div><div class="fg"><label>비밀번호</label><input type="password" value="••••••••" readonly></div><button class="mbtn hl">로그인</button></div>`,
+    tc:`<div class="mock-page"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2>테스트케이스</h2><button class="mbtn">+ TC 생성</button></div><table><tr><th>ID</th><th>이름</th><th>상태</th></tr><tr><td>TC-101</td><td>로그인 검증</td><td style="color:#2da44e">Active</td></tr><tr><td>TC-102</td><td>검색 기능</td><td style="color:#2da44e">Active</td></tr></table></div>`,
+    copilot:`<div class="mock-page" style="background:var(--dg1);color:#e1e4e8;height:100%;display:flex;flex-direction:column"><h2 style="color:#e1e4e8;font-size:14px;margin-bottom:8px">Copilot</h2><div style="flex:1"><div style="background:rgba(1,109,255,.15);padding:8px 12px;border-radius:8px;margin-bottom:8px;font-size:11px;max-width:65%;margin-left:auto">로그인 TC 만들어줘</div><div style="background:#232842;padding:8px 12px;border-radius:8px;font-size:11px;max-width:75%">네, 로그인 테스트케이스를 생성하겠습니다...<span style="animation:pulse 1s infinite;display:inline-block">|</span></div></div><input style="width:100%;background:#232842;border:1px solid var(--dg2);border-radius:8px;padding:8px;color:#e1e4e8;font-size:11px" placeholder="메시지 입력..." readonly></div>`,
+    admin:`<div class="mock-page"><h2>Admin - Models</h2><div style="display:flex;gap:4px;margin-bottom:10px"><span style="padding:3px 10px;background:var(--blue);color:#fff;border-radius:4px;font-size:10px">Models</span><span style="padding:3px 10px;background:#f6f8fa;border-radius:4px;font-size:10px;color:#656d76">Functions</span></div><table><tr><th>모델명</th><th>타입</th><th>상태</th></tr><tr><td>GPT-4o</td><td>Chat</td><td style="color:#2da44e">Active</td></tr></table><div style="margin-top:10px;padding:8px;background:#fff5f5;border:1px solid var(--fail);border-radius:6px;font-size:10px;color:var(--fail)">Error: #modelName not found (5000ms)</div></div>`,
+    pipe:`<div class="mock-page"><h2>파이프라인 완료</h2><div style="margin:10px 0"><div style="display:flex;gap:6px;align-items:center;margin-bottom:5px"><div style="width:14px;height:14px;border-radius:50%;background:#2da44e;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center">✓</div><span style="font-size:11px">15/15 passed</span></div></div></div>`,
+    search:`<div class="mock-page"><h2>검색</h2><input value="로그인" style="margin-bottom:10px" readonly><div style="font-size:10px;color:#656d76;margin-bottom:6px">3건</div><div style="padding:6px;border:1px solid #d0d7de;border-radius:6px;margin-bottom:4px;font-size:11px"><strong>TC-101</strong> 로그인 검증</div><div style="padding:6px;border:1px solid #d0d7de;border-radius:6px;font-size:11px"><strong>TC-201</strong> 소셜 로그인</div></div>`
+  };
+  document.getElementById('d-screen').innerHTML=pages[s.pg]||'<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--g1)">대기 중</div>';
+
+  // Timeline
+  document.getElementById('d-timeline').innerHTML=s.steps.map((st,j)=>`${j>0?'<span class="tl-arrow">→</span>':''}<div class="tl-item ${st.s==='current'?'current':st.s==='done'?'done':st.s==='fail'?'fail':''}" title="${st.l}"><div class="tl-num">${j+1}</div><div style="font-size:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60px">${st.l}</div></div>`).join('');
+
+  // Steps
+  document.getElementById('sp-steps').innerHTML=s.steps.map((st,j)=>`<div class="step-item ${st.s==='current'?'current':''} ${st.s==='done'?'done':''}"><div class="sicon ${st.s}">${st.s==='done'?'✓':st.s==='current'?'▶':st.s==='fail'?'✗':(j+1)}</div><div class="sdetail"><div class="slbl">${st.l}</div><div class="smeta">Step ${j+1}</div></div><div class="stime">${st.t}</div></div>`).join('');
+
+  // Console
+  document.getElementById('sp-console').innerHTML=s.con.map(c=>`<div class="cline ${c.t}">${c.x}</div>`).join('')||'<div style="padding:14px;color:var(--g1);font-size:11px">로그 없음</div>';
+
+  // Network
+  document.getElementById('sp-network').innerHTML=s.net.length?
+    `<div class="nrow" style="font-weight:600;color:var(--g1);font-size:9px"><div class="nmethod">Method</div><div class="nurl">URL</div><div class="nstatus">Code</div><div class="ntime">Time</div></div>`+
+    s.net.map(n=>`<div class="nrow"><div class="nmethod ${n.m.toLowerCase()}">${n.m}</div><div class="nurl">${n.u}</div><div class="nstatus ${n.s<300?'s2':'s4'}">${n.s}</div><div class="ntime">${n.t}</div></div>`).join(''):
+    '<div style="padding:14px;color:var(--g1);font-size:11px">요청 없음</div>';
+
+  // Reset states
+  document.getElementById('bp-banner').classList.add('hidden');
+  document.getElementById('iv-banner').classList.add('hidden');
+  document.getElementById('bp-btn').classList.remove('active');
+  document.getElementById('iv-btn').classList.remove('active');
+  document.getElementById('rec-btn').classList.remove('active');
+}
+
+// Side tabs
+function sTab(tab,el){
+  document.querySelectorAll('.side-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['sp-steps','sp-console','sp-network'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('sp-'+tab).classList.remove('hidden');
+}
+
+// Analysis tabs
+function aTab(tab,el){
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['ab-perf','ab-diff','ab-pattern'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('ab-'+tab).classList.remove('hidden');
+}
+
+// Controls
+function toggleBP(){
+  const b=document.getElementById('bp-banner'), btn=document.getElementById('bp-btn');
+  b.classList.toggle('hidden'); btn.classList.toggle('active');
+  if(!b.classList.contains('hidden')) { document.getElementById('iv-banner').classList.add('hidden'); document.getElementById('iv-btn').classList.remove('active'); }
+}
+function togglePause(){
+  const btn=document.getElementById('pause-btn');
+  btn.classList.toggle('active');
+  btn.innerHTML=btn.classList.contains('active')?'&#9654; Resume':'&#9208; Pause';
+}
+function toggleIV(){
+  const b=document.getElementById('iv-banner'), btn=document.getElementById('iv-btn');
+  b.classList.toggle('hidden'); btn.classList.toggle('active');
+  if(!b.classList.contains('hidden')) { document.getElementById('bp-banner').classList.add('hidden'); document.getElementById('bp-btn').classList.remove('active'); }
+}
+function toggleRec(){
+  const btn=document.getElementById('rec-btn');
+  btn.classList.toggle('active');
+  btn.innerHTML=btn.classList.contains('active')?'&#9632; STOP':'&#9679; REC';
+}
+
+// Theme
+function setTheme(t){
+  document.body.classList.toggle('dark',t==='dark');
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Modals
+function showModal(id){ document.getElementById(id).classList.add('active'); }
+function hideModal(id){ document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('active'); }));
+
+function copyShare(){
+  navigator.clipboard?.writeText(document.getElementById('share-url').value);
+  const btn=event.target; btn.textContent='복사됨!'; setTimeout(()=>btn.textContent='복사',1500);
+}
+
+// ESC
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active')); });
+
+// Timer
+setInterval(()=>{S.forEach(s=>{if(s.st==='running'){const p=s.dur.split(':').map(Number);p[1]++;if(p[1]>=60){p[0]++;p[1]=0;}s.dur=p.map(x=>String(x).padStart(2,'0')).join(':');}});renderGrid();},1000);
+
+renderGrid();
+</script>
+</body>
+</html>
